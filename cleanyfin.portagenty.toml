@@ -1,0 +1,57 @@
+# Workspace file for portagenty. See:
+# https://cybersader.github.io/portagenty/reference/schema/
+name = "cleanyfin"
+id = "229bbe21-2126-4e1f-bad7-d09d6fdadf96"
+multiplexer = "zellij"
+
+[[session]]
+name = "shell"
+cwd = "."
+command = "bash"
+kind = "shell"
+description = "plain shell for one-off commands"
+
+[[session]]
+name = "agent"
+cwd = "."
+command = "claude"
+kind = "claude-code"
+description = "main coding agent (Claude Code)"
+
+# ── Docs site (Astro + Starlight) — the public knowledge base ─────────────
+# Activates once docs/ is scaffolded (see .claude/20-ROADMAP.md).
+[[session]]
+name = "docs"
+cwd = "docs"
+command = "bun run dev:host" # Starlight -> http://localhost:4321/cleanyfin/
+kind = "dev-server"
+description = "docs site dev server (HMR), bound 0.0.0.0 for LAN/Tailscale"
+
+[[session]]
+name = "share-docs"
+cwd = "docs"
+command = "bun run share:tailscale" # path-mount -> https://<host>.ts.net/cleanyfin
+kind = "dev-server"
+description = "PHONE-VIEW THE DOCS over Tailscale HTTPS (Level 1 path-mount /cleanyfin; leaves the :8080 root proxy untouched)"
+
+[[session]]
+name = "tests"
+cwd = "docs"
+command = "bun run test:local" # headless Playwright smoke — stupid-easy 'is it still up?' check
+kind = "other"
+description = "run the smoke/layout test suite once (stupid-easy testing)"
+
+# ── App sessions (server API + Jellyfin plugin + marking PWA) ─────────────
+# Added as those packages land. Keep the one-command story: `docker compose up`.
+# [[session]] name = "app"  -> docker compose up   (crowdsourced segment API + PWA)
+
+# ── Handy one-off commands (run from the `shell` session) ──────────────────
+# cd docs && bun run build                     # production build -> docs/dist/
+# cd docs && bun run preview --host 0.0.0.0     # serve built output (mobile / Tailscale)
+# cd docs && bun run test:local                 # headless Playwright smoke tests
+#
+# Remote viewing over the tailnet (per-project HTTPS uses path mounts so the
+# permanent :8080 `/` proxy another project owns is left untouched):
+#   docs Level 1 HTTPS:  bun run share:tailscale -> https://desktop-vkab06c-1.tail910574.ts.net/cleanyfin
+#   docs Level 0 raw:    http://desktop-vkab06c-1.tail910574.ts.net:4321/cleanyfin
+#   unmount the L1:      tailscale serve --set-path=/cleanyfin off

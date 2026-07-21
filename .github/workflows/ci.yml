@@ -1,0 +1,66 @@
+# CI: build + smoke-test gate for the cleanyfin docs site (docs/).
+# "Stupid-easy testing": build the Astro/Starlight site, then run the
+# Playwright smoke suite against a preview of the built output.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - 'docs/**'
+
+# Cancel superseded runs on the same ref to save minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Everything runs inside the docs/ subdirectory.
+        working-directory: docs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      # Cache Bun's global install cache, keyed on the lockfile.
+      - name: Cache Bun install
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('docs/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build site
+        run: bun run build
+
+      # Playwright needs the browser binary + OS libs; chromium is the only
+      # project configured in playwright.config.ts.
+      - name: Install Playwright browser (chromium)
+        run: bunx playwright install --with-deps chromium
+
+      # test:local previews the built dist/ and runs the Playwright smoke suite.
+      - name: Smoke test
+        run: bun run test:local
+
+      # Keep the HTML report for debugging when the smoke suite fails.
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: docs/playwright-report/
+          retention-days: 7

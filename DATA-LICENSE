@@ -1,0 +1,37 @@
+cleanyfin content-segment dataset — Public Domain Dedication (CC0 1.0)
+=====================================================================
+
+SPDX-License-Identifier: CC0-1.0
+
+The cleanyfin crowdsourced DATASET — the tagged content segments (timestamps,
+categories, severities, release fingerprints, and associated metadata)
+contributed to and distributed by cleanyfin — is released under the Creative
+Commons CC0 1.0 Universal Public Domain Dedication.
+
+To the extent possible under law, the cleanyfin contributors have waived all
+copyright and related or neighboring rights (including the EU sui generis
+database right) to the cleanyfin dataset. You can copy, modify, distribute, and
+use the data, even for commercial purposes, all without asking permission.
+
+Full legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+THE DATASET IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+-----------------------------------------------------------------------------
+Scope
+-----------------------------------------------------------------------------
+This dedication covers the DATASET only. The cleanyfin SOURCE CODE (server,
+Jellyfin plugin, companion app, docs tooling, and scripts) is licensed
+separately under AGPL-3.0-or-later — see the LICENSE file.
+
+Rationale (see .claude/41-QUESTIONS-RESOLVED.md, R15): content-filter
+timestamps are factual data with thin-to-no copyright; CC0 maximizes
+federation, mirroring, and reuse, and removes non-commercial ambiguity.
+Copyleft give-back protection lives on the server code via AGPL, not on the
+data.
+
+Note on seeding: because the dataset is CC0, cleanyfin does NOT ingest data
+from sources under incompatible terms (e.g. SponsorBlock and MovieContentFilter
+are CC BY-NC-SA 4.0). cleanyfin interoperates with the .mcf and EDL FORMATS and
+bootstraps its own data via automated subtitle/speech analysis and original
+contributions. Only contribute data you have the right to place under CC0.

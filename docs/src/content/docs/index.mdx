@@ -1,0 +1,48 @@
+---
+title: cleanyfin
+description: An open-source, self-hosted content-filtering layer for Jellyfin, backed by a federated, crowdsourced database of tagged content segments.
+template: splash
+hero:
+  tagline: Watch what you want to watch. The VidAngel experience, the SponsorBlock data model, DMCA-safe by design — open source and self-hosted.
+  actions:
+    - text: Start here
+      link: /cleanyfin/start-here/
+      icon: right-arrow
+      variant: primary
+    - text: Read the vision
+      link: /cleanyfin/vision/vision/
+      variant: minimal
+    - text: GitHub
+      link: https://github.com/cybersader/cleanyfin
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+:::caution[Phase 0 — research & knowledge-ops initialized]
+cleanyfin has **no code yet, on purpose.** This site is the project's researched, cited *brain*. Code starts after two feasibility spikes and one licensing decision — see the [roadmap](/cleanyfin/project/roadmap/). Contributors welcome: read, and poke holes in the [decisions](/cleanyfin/project/decisions/) and [open questions](/cleanyfin/project/open-questions/).
+:::
+
+## What it is
+
+cleanyfin lets a household **skip or mute** the parts of a movie or show it doesn't want — profanity, violence, nudity, and more — gated **per viewer profile**, with a per-title **"request a bypass"** escape hatch. The filtering data is **crowdsourced**: people tag segments while they watch, vote, and **share** their databases. No central authority — communities **federate** and follow the **curators** whose standards they share.
+
+<CardGrid stagger>
+  <Card title="Crowdsourced" icon="pen">
+    A shared database of tagged segments, with voting + moderation. [SponsorBlock](https://sponsor.ajay.app/) is the template. See [Concepts](/cleanyfin/design/concepts/).
+  </Card>
+  <Card title="Federated" icon="random">
+    Nodes work offline and opt-in publish/pull. Subsidiarity via subscribable curators. See [Architecture](/cleanyfin/design/architecture/).
+  </Card>
+  <Card title="DMCA-safe" icon="approve-check">
+    Ships **only** timestamps + metadata, applied to media you already own. Never a frame of A/V, never DRM. See [The problem](/cleanyfin/vision/problem/).
+  </Card>
+  <Card title="Super-easy to self-host" icon="rocket">
+    One `docker compose up`. Backup is copying a file. No hyperscalers, no Kubernetes. See [Tech stack](/cleanyfin/research/tech-stack/).
+  </Card>
+</CardGrid>
+
+## The one rule that makes it legal
+
+cleanyfin distributes **only timestamps + category metadata + edit-decisions** — never audio or video, and it never touches DRM. Filters apply in real time to the copy *you already own*, in *your own* player. That is the exact line U.S. law drew in the [Family Movie Act of 2005](https://www.copyright.gov/legislation/pl109-9.html): why ClearPlay is legal, and why VidAngel lost. [Read the legal deep-dive →](/cleanyfin/research/legal/)

@@ -1,0 +1,29 @@
+{
+  "name": "cleanyfin-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "preflight": "bun scripts/preflight.mjs",
+    "dev": "bun run preflight && astro dev",
+    "dev:host": "bun run preflight && astro dev --host 0.0.0.0",
+    "build": "bun run preflight && astro build",
+    "preview": "bun run preflight && astro preview",
+    "preview:host": "bun run preflight && astro preview --host 0.0.0.0",
+    "share:tailscale": "bun run preflight && bash scripts/share-tailscale.sh",
+    "test:local": "bun run preflight && playwright test",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.38.0",
+    "astro": "^6.0.0",
+    "rehype-external-links": "^3.0.0",
+    "remark-obsidian-callout": "^1.5.1",
+    "remark-wiki-link": "^2.0.1",
+    "sharp": "^0.33.0",
+    "starlight-image-zoom": "^0.14.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

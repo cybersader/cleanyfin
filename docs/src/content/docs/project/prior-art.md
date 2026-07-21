@@ -1,0 +1,38 @@
+---
+title: Prior Art
+description: The parts bin — every mechanism cleanyfin needs already exists somewhere, battle-tested; this is what it borrows and from where.
+sidebar:
+  order: 2
+---
+
+> 📎 Pointer stub. Backed by the deep-dive [prior-art-and-oss-competitors](/cleanyfin/research/prior-art-oss/). cleanyfin is an assembly of proven pieces, not a from-scratch invention — this file is the parts bin. For the *direct competitor* and cleanyfin's opening, see [Existing Work](/cleanyfin/project/existing-work/); for how the pieces fit, [Architecture](/cleanyfin/design/architecture/).
+
+Nothing here is a full solution to "crowdsourced, federated, per-profile content filtering on Jellyfin" — but every mechanism cleanyfin needs already exists somewhere, battle-tested. The design is deliberately *borrow first, invent last* (simplify-first). Each row: what it is, what cleanyfin takes, and the link.
+
+## Reference table
+
+| Project | What it is | What cleanyfin borrows | Link |
+|---|---|---|---|
+| **SponsorBlock / SponsorBlockServer** (ajayyy) | The reference model: crowdsourced timestamped segments, up/down voting, category re-voting, VIP + submitter-override moderation, **public DB dump**, open API, privacy-preserving **hash-prefix** query. Postgres or SQLite. | The whole server architecture — submission → vote → moderate → publish, public dumps as federation v1, account-free identity. The template. (R02, R03, R08) | [server](https://github.com/ajayyy/SponsorBlockServer) · [API](https://wiki.sponsor.ajay.app/w/API_Docs) |
+| **Intro Skipper** (intro-skipper) | Most-installed Jellyfin plugin; auto-detects intros/credits via Chromaprint **audio fingerprinting**; folds the Media Segments write path into itself. | The AUTO-detection pattern (relevant for v2 audio-anchor calibration, not crowdsourcing); the segment write-path reference (Spike B). (R04) | [repo](https://github.com/intro-skipper/intro-skipper) |
+| **TheIntroDB** (jellyfin-plugin) | Crowdsourced timestamp DB (intro/recap/credits/preview) keyed by **TMDB ID**, surfaced as Jellyfin Media Segments → skip buttons. | Proof the *remote crowdsourced segment API → Media Segments* architecture works today; the ID-keyed DB pattern. Closest working analog. (R02, R04) | [repo](https://github.com/TheIntroDB/jellyfin-plugin) |
+| **Chapter Segments Provider** (Jellyfin official) | Reference plugin that turns chapter markers into Media Segments. | The minimal `IMediaSegmentProvider` shape — what a compliant provider must emit. (R02) | [Media Segments docs](https://jellyfin.org/docs/general/server/metadata/media-segments/) |
+| **segment-editor** (intro-skipper) | Web UI (Jellyfin plugin *or* standalone) to create/edit/delete segments of any type, with a **player to copy timestamps while you watch**. TypeScript, GPL-3.0, early. | The frictionless in-player marking UX — direct design/code reference for the contributor marking PWA. (R02) | [repo](https://github.com/intro-skipper/segment-editor) |
+| **endrl/jellyfin-plugin-edl** + **EdlToMediaSegments** | Jellyfin plugins bridging the Kodi **EDL** file format into native Media Segments (read `.edl` sidecars, emit segments). | The EDL↔Media-Segments bridge pattern — how to ingest EDL as a source and emit skips without a custom client. Reinforces EDL as a first-class interop format. (R11) | [jellyfin-plugin-edl](https://github.com/endrl/jellyfin-plugin-edl) |
+| **cleanvid** (mmguero) | Reads `.srt` subtitles (auto-downloads via subliminal), mutes profanity via FFmpeg, and **exports EDL + PlexAutoSkip JSON** — emits edit-decisions, not just cleaned files. BSD-3, active. | Subtitle-driven profanity auto-detection to *seed* the Language category; EDL/JSON output as an import source. Suggestion-only, human-gated. (R10, R11) | [repo](https://github.com/mmguero/cleanvid) |
+| **monkeyplug** (mmguero) | Same idea via **speech recognition** (Whisper/Vosk) for media lacking subtitles — mute or beep. BSD-3, active. | Speech-based profanity detection for subtitle-less media; a second auto-seed path. Also suggestion-only. (R10) | [repo](https://github.com/mmguero/monkeyplug) |
+| **PlexAutoSkip** (mdhiggins) | Server-side Python that watches Plex playback and auto-skips/mutes markers; per-client/user filters; marker export. Maintenance mode, **no shared DB**. | The per-client/per-user filter idea and mute-via-volume-API trick; a cautionary tale — single-instance, non-crowdsourced is exactly the gap. (R09) | [repo](https://github.com/mdhiggins/PlexAutoSkip) |
+| **stremio-cleanstream** (ameen-roayan) | Stremio addon: nudity/violence/language/drugs/fear × low/med/high, community voting, **MCF import/export**, seeded 376+ titles from VideoSkip. Postgres + Docker, MIT. | Validation of the crowdsourced-filter model on another player, MCF as interop, Docker+DB as a pragmatic stack — and that *auto-skip is hard* (it ships warnings first). (R05, R11) | [repo](https://github.com/ameen-roayan/stremio-cleanstream) |
+| **Kodi EDL format** | Oldest, simplest, most portable edit-decision format: `startSeconds endSeconds action` (0=cut, 1=**mute**, 2=scene, 3=commercial); frame-accurate. Supported by Kodi, mpv, mplayer, PVR tools. | First-class import/export target — the only widely-supported way to deliver **real mute** today (Kodi/mpv), covering the native-mute gap. (R07, R11) | [Kodi wiki](https://kodi.wiki/view/Edit_decision_list) |
+| **MovieContentFilter (MCF) standard** (delight-im) | Open `.mcf` filter format (WebVTT-based) + taxonomy (violence/sex/nudity/profanity/drugs… × low/med/high) + skip/mute actions. The real prior-art *standard* behind the direct competitor. | The interchange format to **interoperate with**, not fork — import/export `.mcf`, reuse the taxonomy shape for cold-start seeding. NOT to dismiss. (R11; see [Existing Work](/cleanyfin/project/existing-work/)) | [repo](https://github.com/delight-im/MovieContentFilter) · [site](https://www.moviecontentfilter.com/) |
+
+## What this tells us
+
+- **The architecture is de-risked.** SponsorBlockServer + TheIntroDB together prove a remote crowdsourced segment API mapped onto Jellyfin Media Segments is viable; segment-editor proves the in-player marking UX. cleanyfin's novelty is *combining* them, not any single mechanism. See [Existing Work](/cleanyfin/project/existing-work/) for the four-way gap no one has closed.
+- **Interop is the cold-start cure.** EDL + MCF import/export lets cleanyfin launch with non-empty data (VideoSkip's 376+ titles, MCF-site filters, cleanvid/monkeyplug auto-output) instead of an empty DB — the biggest risk for any crowdsourced project. Caveat: MCF/SponsorBlock seed data is **CC BY-NC-SA**, which collides with a permissive DB license — decide the license *before* seeding (Q40, [Open Questions](/cleanyfin/project/open-questions/)).
+- **Automation is a seeder, not a source of truth.** cleanvid/monkeyplug cover only *language* (not visual categories) and can be wrong; their output is `status='auto_suggested'`, human-gated before `published`. (R10)
+- **Mute is upstream-gated.** Native Jellyfin clients skip today; real word-mute exists only via the EDL bridge (Kodi/mpv) until the Media Segments mute action lands (feature request [#3396](https://features.jellyfin.org/posts/3396/api-support-for-muting-media-for-content-filtering-plugin-support)). Be honest about the gap. (R07, [Trade-offs](/cleanyfin/project/tradeoffs/))
+
+## Sources
+
+Full citations, confidence levels, and the commercial reference points (ClearPlay, VidAngel, TVGuardian) live in the backing deep-dive: [prior-art-and-oss-competitors](/cleanyfin/research/prior-art-oss/).

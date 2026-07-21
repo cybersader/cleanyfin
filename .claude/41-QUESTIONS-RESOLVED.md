@@ -1,0 +1,60 @@
+# Resolved Questions — Decision Log
+
+> The agent-side decision log. Each entry: the decision, the rationale, and the source. When a decision locks in a session, add it here (and propagate to `PROJECT_CONTEXT`/`FOCUS`). "Resolved" means *provisionally locked pending new evidence* — most of these are research-backed leans, not battle-tested facts. The two things gating real code (enforcement spike, data-license) are deliberately still in `40-QUESTIONS-OPEN`.
+
+Locked 2026-07-21 (initialization research fan-out; see `knowledge-base/01-working/`):
+
+**R01 — Metadata only, never media (the legal keystone).**
+cleanyfin distributes only timestamps + category metadata + edit-decisions (EDL / Media Segments), applied to media the user already owns, in the user's own player. Never host, cache, transcode, proxy, export, or decrypt A/V; never bundle clips/screenshots. *Why:* this is the exact distinction the 9th Circuit drew — ClearPlay (edit-decisions only, legal under the Family Movie Act §110(11)) vs VidAngel (made copies + circumvented DRM, lost ~$62M). SponsorBlock has run this posture for years. *Source:* `legal-and-ip-landscape.md`, `prior-art-*` F11.
+
+**R02 — Architecture = thin Jellyfin `IMediaSegmentProvider` plugin + small API server + companion PWA.**
+Build on Jellyfin's native Media Segments (10.10+); the plugin fetches community segments from the server and emits them so native clients render skip buttons. Don't fork clients. *Why:* proven pattern (Intro Skipper, TheIntroDB, chapter-segments provider); inherits client support for free; metadata-only keeps it DMCA-safe. *Source:* `jellyfin-integration-mechanics.md` R1.
+
+**R03 — Federation v1 = SponsorBlock model (open hub + public dumps + trivial mirrors), not S2S protocols.**
+One small self-hostable hub; publish the entire dataset as periodic public dumps; make read-only mirrors a first-class documented feature (sb-mirror pattern). *Why:* delivers real anti-lock-in "federation" + offline/subsidiarity today without ActivityPub/nostr/matrix/CRDT cost. *Source:* `federation-architecture.md` R1–R2, R6.
+
+**R04 — Version matching = fingerprint-keyed segments + per-file offset, fail-safe on low confidence.**
+Key every segment set to `(title_id + release fingerprint)` where fingerprint = OpenSubtitles moviehash + exact duration; each local file resolves to a release + a user-adjustable `calibration_offset`. When confidence is low, prefer over-filtering / prompt rather than silently mis-timing. Chromaprint audio-anchor auto-align is opt-in v2. *Why:* wrong-rip timestamps are the #1 correctness risk and a trust-breaker for a family-safety tool. *Source:* `federation-*` F5/R3, `tagging-taxonomy-*` F6/R2–R3.
+
+**R05 — Taxonomy = fixed 9 categories × severity 0–3 + a small action enum.**
+Categories (closed set for v1, free-form `tags` for the long tail): profanity, sexual_dialogue, sex_scene, nudity, violence, gore, disturbing, substance_use, crude. Severity 0–3 (none/mild/strong/extreme). Actions: mute, skip, mark (blur/crop schema-reserved, rendered as skip in v1). *Why:* all four studied rating systems converge on ~4–5 core categories; ordinal severity gives VidAngel-like control with ~9 sliders instead of 80 toggles (super-easy). Closed enum keeps federated data consistent. *Source:* `tagging-taxonomy-and-data-model.md` R1.
+
+**R06 — Default category→action map; profile resolves the actual action.**
+Defaults: profanity/sexual_dialogue/crude → mute (keep video/plot); sex_scene/nudity/violence/gore/disturbing → skip; substance_use → mark. Store the default on the segment but resolve the real action at playback from the viewer's profile. *Why:* matches ClearPlay/VidAngel behavior and Jellyfin's own "clients decide the action" design, so one shared segment serves households with different preferences. *Source:* `tagging-taxonomy-*` R4, `jellyfin-*` F1.
+
+**R07 — MVP filtering behavior = SKIP-only, on a wider fleet than first assumed; EDL for real mute (Kodi/mpv).**
+Native Jellyfin clients still have **no** mute action (verified 2026-07-21, Spike C — 18 months after it was called "in the works"). Ship skip now. **Updated fleet (Spike C):** native Media Segments skip ships on **Web + Android TV + Roku (3.0.0) + Kodi (native, via `jellyfin-kodi`)**, with **webOS partial** (auto-skip works, ask-to-skip button broken) and **Swiftfin/iOS the known gap** (open request #1525). Real per-word **mute stays EDL-only** — and because `endrl/jellyfin-plugin-edl` is stale, cleanyfin should **emit EDL from its own data** rather than depend on it. Be explicit that native mute is upstream-gated (track #3396 / jellyfin-meta #30). *Why:* skip is the only action working across clients; single-word profanity collapses to a coarse skip, which will feel worse than VidAngel until upstream mute lands (a product-honesty point). *Source:* `spike-c-client-support.md`, `jellyfin-integration-mechanics.md`.
+
+**R08 — Account-free pseudonymous identity + moderation queue.**
+Locally-generated UUID hashed into a public submitter ID; k-anonymity hash-prefix queries; auto-hide at vote score ≤ −2; shadowban vandals; curator-locked segments win over unlocked. No forced accounts. *Why:* matches the maintainer's cross-project dislike of account walls while giving real abuse resistance (SponsorBlock's proven recipe). *Source:* `federation-architecture.md` R4, `prior-art-*` F6.
+
+**R09 — Subsidiarity via subscribable curator profiles inside one open dataset.**
+A household follows curators whose standards it shares; conflicting community norms coexist as competing/overlapping segment sets with a clear precedence rule (subscribed-curator-locked > community-voted > unmoderated), not as separate servers. *Why:* honors "different communities filter differently" without ActivityPub — a small schema change (curator/namespace + subscription list). *Source:* `federation-architecture.md` R5.
+
+**R10 — Automation is suggestion-only, human-in-the-loop.**
+Subtitle+word-list profanity detection (cleanvid/monkeyplug-style) and any AI classification write `status='auto_suggested'`, votes=0; they need human confirmation (or N upvotes) to reach `published`. Run subtitle-audio alignment first. *Why:* auto-seeding solves cold-start for the biggest category (Language) cheaply, but a family-safety tool can't ship unreviewed false negatives/positives. *Source:* `tagging-taxonomy-and-data-model.md` R7.
+
+**R11 — Interop formats are first-class: MCF (.mcf/WebVTT) + Kodi EDL, import & export.**
+Support both so cleanyfin interoperates with the existing MCF ecosystem, Kodi, PlexAutoSkip, Stremio CleanStream, and can seed a non-empty DB from open sources. *Why:* solves the crowdsourced cold-start problem and gives instant compatibility. *Caveat:* seed-data licensing (CC BY-NC-SA) interacts with our own data-license choice — see Q40. *Source:* `prior-art-*` R3.
+
+**R12 — Convention: mirror the sibling-project scaffold.**
+`.claude/` numbered stubs + `knowledge-base/` temperature gradient + an Astro-Starlight `docs/` site (**stood up 2026-07-21**, builds + smoke-tests green) + portagenty sessions (shell/agent/docs/share-docs/tests) with Tailscale path-mount `/cleanyfin` + stupid-easy Playwright smoke testing. *Why:* consistency across Cybersader projects; fast agent onboarding. *Source:* maintainer instruction, `KNOWLEDGE_BASE_PHILOSOPHY.md`.
+
+---
+
+Locked 2026-07-21 (feasibility spikes A/B/C — verified against Jellyfin 10.11 source; see `spike-a-enforcement.md`, `spike-b-segment-write-api.md`, `spike-c-client-support.md`):
+
+**R13 — Enforcement architecture: default global provider (honest opt-in) + optional cleanyfin response-filtering proxy for real per-profile enforcement.** (resolves Q3 / Spike A)
+Verified from 10.11 source: **no seam in Jellyfin's segment pipeline carries per-user context** — `IMediaSegmentProvider.GetMediaSegments` receives only `ItemId` + `ExistingSegments` (user-blind by contract), and `GET /MediaSegments/{itemId}` returns the global set (only a whole-item parental/ACL check is user-aware). So per-profile enforcement is **not obtainable from the provider system**. Decision: **(1) default install** ships a standard `IMediaSegmentProvider` emitting a global segment set; per-profile category *selection* is client-side/opt-in, with the trust boundary documented honestly. **(2) Optional "enforced households" mode** = a thin, opt-in **cleanyfin reverse-proxy/companion** that reads the Jellyfin auth token on each `GET /MediaSegments/{itemId}`, maps user→cleanyfin profile, and **filters the response JSON** — true per-profile enforcement for *unmodified native clients*, staying strictly metadata-only, coupled only to the **stable public HTTP contract** (one extra container, not k8s). **(3) Explicitly do NOT** build enforcement on `ISessionManager` playback events (fragile — broke in 10.11) or per-user physical-file scoping (breaks super-easy setup); use parental/tag gates only for whole-title blocking. *Why:* this is "do it ourselves," done safely on the one upstream surface that is both user-attributable and version-stable — exactly the maintainer's "if tied to upstream, make sure it's trustworthy, else do better ourselves." *Source:* `spike-a-enforcement.md`.
+
+**R14 — Segment write path: PWA → cleanyfin's Go API (source of truth); plugin materializes segments + hosts its OWN thin write controller.** (resolves Q4 / Spike B)
+Verified: **core Jellyfin has no segment create/delete endpoint** (10.10 or 10.11) — only `GET`. The community write route (`/MediaSegmentsApi`) was folded into Intro Skipper and rewritten to be coupled to *its* analysis DB + 5 fixed modes. Decision: the marking PWA POSTs in/out + rich category to **cleanyfin's Go crowdsource API** (source of truth, pseudonymous, no admin token in the client); cleanyfin's `IMediaSegmentProvider` materializes those into Jellyfin at scan/refresh; the plugin hosts **its own ~90-line write controller** under cleanyfin's route namespace (copying the *original* `jellyfin-plugin-ms-api` pattern over `IMediaSegmentManager`) only for *live* insert-without-rescan. **Do not depend on Intro Skipper's route.** *Source:* `spike-b-segment-write-api.md`.
+
+**Correction (Spike B) — the shipped Jellyfin `MediaSegmentDto` has only `Id, ItemId, Type, StartTicks, EndTicks`.** No `StreamIndex`, no `Action`, no `Comment` (those were in the design *proposal* PR #10530, not the shipped model). cleanyfin's rich fields (severity, action, category, votes, provenance) therefore live **entirely in cleanyfin's own DB**; Jellyfin stores only the coarse 6-type enum + tick span. Any earlier grounding that listed `Action`/`StreamIndex` on the Jellyfin segment is superseded here.
+
+---
+
+Locked 2026-07-21 (maintainer decision):
+
+**R15 — Licensing: `CC0-1.0` for the dataset + `AGPL-3.0-or-later` for the code.** (resolves Q2)
+The crowdsourced content-segment **dataset** is dedicated to the public domain under **CC0-1.0**; all **source code** (Go server, Jellyfin plugin, companion PWA, docs tooling, scripts) is **AGPL-3.0-or-later**. *Why:* timestamp/category data is factual (thin-to-no copyright, *Feist*), so CC0 reflects reality and maximizes the locked values — federation, mirroring, reuse, subsidiarity — while killing the "is a paid self-host commercial?" **NC ambiguity** that constrains SponsorBlock/MCF. Copyleft give-back is placed where it's enforceable and meaningful: the **server code** via AGPL. *Accepted consequence:* cleanyfin **cannot bulk-ingest CC-BY-NC-SA data** (SponsorBlock, MovieContentFilter) into a CC0 dataset — SponsorBlock is only a *design* template anyway (wrong domain), and MCF stays a **format** interop target (`.mcf`/EDL, R11), not a data source. **Cold-start** is solved by automated subtitle/speech profanity generation (on the user's own media / public-domain films) + original crowdsourced contributions. *Before seeding any third-party set,* verify its license (e.g. VideoSkip). Files: `LICENSE` (AGPL-3.0), `DATA-LICENSE` (CC0). *Source:* license analysis in `legal-and-ip-landscape.md` / `prior-art-and-oss-competitors.md` / `federation-architecture.md`; maintainer decision.

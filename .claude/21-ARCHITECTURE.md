@@ -1,0 +1,67 @@
+# cleanyfin — Architecture
+
+> 📎 Pointer stub. How the three components fit and why. Backed by `../knowledge-base/01-working/jellyfin-integration-mechanics.md`, `../knowledge-base/01-working/tech-stack-and-devops.md`, and `../knowledge-base/01-working/federation-architecture.md`. Locked shape = (R02). The per-profile enforcement gap is still gated on Spike A — see [20-ROADMAP](./20-ROADMAP.md).
+
+## Overview — three thin pieces around one server
+
+**The server + its open dataset are the product; the plugin and PWA are thin clients.** A thin C# `IMediaSegmentProvider` plugin pulls community-tagged segments from a small self-hostable Go API server and emits them as native Jellyfin Media Segments, so unmodified clients render skip buttons. A companion PWA reads live playback position and submits new segments back. Everything crossing the wire is timestamps + categories + edit-decisions — never A/V (R01, the legal keystone).
+
+## Component diagram
+
+```
+                          SUBMIT (POST segment: fingerprint, start, end, category)
+        ┌───────────────────────────────────────────────────────────────┐
+        │                                                                │
+        v                                                                │
+┌─────────────────┐     GET /Sessions                            ┌──────────────┐
+│  Marking PWA     │───── PlayState.PositionTicks ───────────────>│  Jellyfin    │
+│  (SvelteKit or   │       (ticks / 10,000,000 = seconds)         │  server      │
+│   htmx, static)  │<─── NowPlayingItem / live position ──────────│  10.11+      │
+│  stamp in/out    │                                              │              │
+│  + category      │                                              │  ┌─────────┐ │
+└────────┬─────────┘                                              │  │ cleanyfin│ │
+         │ served by embed.FS                                     │  │ plugin  │ │  native skip
+         │                                                        │  │ (C#/.NET│─┼──> Web /
+         │  POST /api/submit, /api/vote                           │  │  net8/9)│ │   Android TV
+         v                                                        │  └────┬────┘ │   clients
+┌────────────────────────────────────────────┐   GetMediaSegments()    │      │
+│  cleanyfin API SERVER  (Go, ONE static bin) │<── pull segments ───────┘      │
+│  ┌────────────────────────────────────────┐│   for (fingerprint, item)      │
+│  │ HTTP: GET (hash-prefix), submit, vote  ││                                 │
+│  │ moderation: votes, curator-lock, ban   ││   EDL export (action 1 = mute,  │
+│  │ embed.FS → serves the PWA static files ││   0 = cut) ─────────────────────┼──> Kodi /
+│  └────────────────────────────────────────┘│                                 │     mpv
+│  modernc.org/sqlite  (WAL, one file)        │                                 │
+│  + optional Litestream sidecar (off-box DR) │   public dumps + read-only      │
+└────────────────────────────────────────────┘   mirrors (sb-mirror) ──────────┴──> peers
+     one `docker compose up`  |  or binary + systemd
+```
+
+## How it works — the two loops
+
+**Read (filter) loop.** The plugin's `GetMediaSegments(item)` resolves the local file to a `(title_id + release fingerprint)` = moviehash + exact duration (R04), fetches matching community segments from the Go API, and emits native Jellyfin Media Segments. Clients (Web full; Android TV 0.18+) render Skip / Ask-to-skip natively — the plugin does not touch client UI, exactly like Intro Skipper (`jellyfin-integration-mechanics.md` F3–F4). Category → action is a default on the segment, resolved to the real action by the viewer's profile at playback (R06).
+
+**Write (mark) loop.** The PWA authenticates to Jellyfin, polls `/Sessions` for the active `PlayState.PositionTicks` (`tech-stack-and-devops.md` F6), lets the viewer stamp in/out + a category, and POSTs the segment to the cleanyfin API. It is a *side-car*, not a client plugin — there is no official Jellyfin client UI-extension API, so marking runs alongside the player (`jellyfin-integration-mechanics.md` F9, R4).
+
+## Component boundaries
+
+| Component | Language / tech | Role | Why fixed here |
+|---|---|---|---|
+| Plugin | C# / .NET (net8.0 for 10.10, net9.0 for 10.11) | `IMediaSegmentProvider`; pulls segments, emits native ones | Jellyfin plugins MUST be .NET DLLs — the only forced language boundary (R02) |
+| API server | Go, single static binary, `modernc.org/sqlite`, `embed.FS` | The crowdsourced DB, submit/vote/moderation, serves the PWA | CGo-free single artifact = strongest "super-easy setup" story (Hard Constraint #2) |
+| Marking PWA | SvelteKit adapter-static (or htmx) | Reads live position, submits segments | Static export embeds into the Go binary → one process, one port |
+
+Distribution: plugin via a static `manifest.json` repo (GitHub Releases/Pages, auto-built in Actions); server via GHCR image / raw binary+systemd / `docker compose up`. See [20-ROADMAP](./20-ROADMAP.md) Phase 3 and [22-DATA-MODEL](./22-DATA-MODEL.md) for the segment schema.
+
+## Limitations / honest gaps
+
+- **Per-profile enforcement gap.** Segments are **global per item**, not per-user; segment *actions* are chosen per-client, not enforced as a server-side per-profile ACL (`jellyfin-integration-mechanics.md` F10, R5). So "per-profile category settings" and "per-title bypass" are **not** natively enforced. **v1 stance:** accept client-cooperative opt-in and be honest about the trust boundary; a real per-user enforcement layer is a fast-follow pending **Spike A** (does a 10.11 plugin enforce server-side, or only cooperate?). See [20-ROADMAP](./20-ROADMAP.md).
+- **No native mute.** Jellyfin has no client mute action as of 10.11 — only skip-style. VidAngel-style word-mute is not possible on native clients yet (R07). **v1 = SKIP-only** on Web + Android TV; skip drops both audio and video for the span.
+- **EDL export = the real mute path.** For true per-segment mute (EDL action 1) or cut (action 0), export to Kodi/mpv/MPlayer via the EDL format (`jellyfin-integration-mechanics.md` F7, R07). Downside: needs a writeable library; generate on demand for opt-in Kodi/mpv users rather than as a default dependency.
+- **No visual masking.** Blur/crop/black-box for nudity has no Jellyfin primitive (F6); schema-reserved, rendered as skip in v1 (R05).
+- **Category ≠ Jellyfin type.** Jellyfin's segment-type enum is fixed (Intro/Outro/Recap/Preview/Commercial/Annotation) with no content categories — cleanyfin carries its rich taxonomy in its own DB and translates to the nearest Jellyfin type at emit time (F2). See [22-DATA-MODEL](./22-DATA-MODEL.md).
+- **Single-writer DB.** SQLite serializes writes; fine at v1 scale, graduate to Postgres only at SponsorBlock scale (stack lean; `tech-stack-and-devops.md`).
+
+## Reference implementations to clone
+
+Intro Skipper (provider pattern), `jellyfin-plugin-chapter-segments` (simplest `IMediaSegmentProvider`), `jellyfin-plugin-template` (C# scaffold + manifest CI), `endrl/jellyfin-plugin-edl` (EDL export), `intro-skipper/jellyfin-plugin-ms-api` (write-path reference), SponsorBlockServer + sb-mirror (server + dumps/mirrors). See [04-PRIOR-ART](./04-PRIOR-ART.md).

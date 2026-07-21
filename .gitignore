@@ -1,0 +1,38 @@
+# ── OS / editor ───────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ── Secrets / local config ────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Go server (planned) ───────────────────────
+/server/bin/
+/server/*.exe
+*.test
+/server/data/          # SQLite files live in a volume, never in git
+*.db
+*.db-wal
+*.db-shm
+
+# ── Jellyfin plugin, .NET (planned) ───────────
+[Bb]in/
+[Oo]bj/
+*.user
+
+# ── Companion PWA / docs site, Node (planned) ─
+node_modules/
+dist/
+.astro/
+.svelte-kit/
+*.log
+# NOTE: lockfiles (bun.lock, package-lock.json) ARE committed — reproducible
+# builds + CI `--frozen-lockfile` depend on them. Do not ignore them.
+
+# ── Data dumps (generated, not source) ────────
+/dumps/
