@@ -1,0 +1,28 @@
+# cleanyfin — the golden-path self-host. One command:
+#
+#     docker compose up -d --build
+#
+# Backup = copy the `cleanyfin-data` volume's DB file. No external database,
+# no orchestrator (decision: super-easy setup + single-node resilience).
+services:
+  api:
+    build: ./server
+    image: cleanyfin-api:dev
+    container_name: cleanyfin-api
+    restart: unless-stopped
+    ports:
+      - "${CLEANYFIN_PORT:-8080}:8080"
+    environment:
+      CLEANYFIN_ADDR: ":8080"
+      CLEANYFIN_DB: "/data/cleanyfin.db"
+    volumes:
+      - cleanyfin-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  cleanyfin-data:

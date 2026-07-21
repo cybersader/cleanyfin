@@ -38,11 +38,11 @@ Docs site live at `docs/`: **Astro + Starlight** (base `/cleanyfin`, R12), 23 pa
 
 ---
 
-## Phase 3 — Thin vertical slice (first code)
+## Phase 3 — Thin vertical slice (first code) — IN PROGRESS
 
 A demoable end-to-end skip, boring and minimal:
-- **Segment API (Go):** single static binary, `modernc.org/sqlite`, `embed.FS` serving the PWA, SQLite-WAL default. GET (with hash-prefix variant), POST submit, POST vote. (R05, `../knowledge-base/01-working/tech-stack-and-devops.md`)
-- **Golden path:** one `docker compose up` (SQLite file on a named volume, `restart: unless-stopped`, `/healthz`) + a no-Docker binary + systemd alternative.
+- **Segment API (Go): ✅ slice 1 DONE 2026-07-21** (`server/`, branch `feat/segment-api`). Single binary, `modernc.org/sqlite` (WAL), stdlib `net/http` routing, `slog`. Endpoints: `/healthz`, `/readyz`, `GET/POST /api/v1/segments` (fingerprint-keyed, R04), `POST .../vote` with auto-hide ≤ −2 (R08), fixed taxonomy validation (R05/R06). **Verified:** `go vet`/`go test` green + full `docker compose up` smoke (submit→query→validate→downvote→hide). CI gate added (`server-ci.yml`). *Deferred to later slices:* hash-prefix privacy query, release/calibration + curator/profile tables, public dumps, `embed.FS` PWA hosting.
+- **Golden path: ✅ DONE** — one `docker compose up -d --build` (SQLite on a named volume, `restart: unless-stopped`, `/healthz`), verified Healthy. *Still to add:* no-Docker binary + systemd alternative.
 - **Plugin:** clone `jellyfin-plugin-template`; thin C# `IMediaSegmentProvider` whose `GetMediaSegments` fetches from the Go API and emits native segments (R02). Ship a `manifest.json` repo.
 - **Marking PWA:** minimal, reads live `/Sessions` `PlayState.PositionTicks` (ticks/10,000,000 = seconds), stamps in/out + category, POSTs a segment via the Spike-B contract.
 
