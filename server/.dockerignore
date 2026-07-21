@@ -1,0 +1,6 @@
+Dockerfile
+.dockerignore
+README.md
+*.db
+*.db-wal
+*.db-shm

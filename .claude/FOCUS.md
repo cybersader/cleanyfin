@@ -30,7 +30,7 @@ Last updated: 2026-07-21
 1. ~~Two feasibility spikes~~ **DONE 2026-07-21** (A→R13 enforcement, B→R14 write-path, C→R07 client-support; verified vs 10.11 source).
 2. ~~Stand up the docs site~~ **DONE 2026-07-21** (`docs/` Astro+Starlight, 23 pages, build + smoke green). *Remaining:* a GitHub Pages deploy workflow once the repo is pushed.
 3. ~~Decide the data license~~ **DECIDED 2026-07-21 → R15: CC0-1.0 (data) + AGPL-3.0-or-later (code).** `LICENSE` + `DATA-LICENSE` written. Seeding via auto-generation + original contributions (no BY-NC-SA ingest).
-4. **NEXT — skeleton the components** (Phase 3, now unblocked) as thin slices: segment API (Go) + `docker-compose.yml` golden path; plugin (clone `jellyfin-plugin-template`, `IMediaSegmentProvider` + thin write controller per R14); the optional response-filtering proxy per R13; marking PWA. Also: enable GitHub Pages + first push.
+4. **Phase 3 IN PROGRESS — slice 1 (Go segment API + `docker compose up`) ✅ DONE 2026-07-21** on branch `feat/segment-api` (`server/`): compiles, `go test` green, verified via full docker-compose smoke (submit→query→vote→auto-hide R08); CI gate `server-ci.yml` added. **Next slices:** the C# `IMediaSegmentProvider` plugin (+ thin write controller, R14) and the marking PWA — both consume the now-fixed API contract, so they're a good parallel workflow. Then the optional response-filtering proxy (R13).
 
 ## Deliberately NOT Doing Right Now
 
