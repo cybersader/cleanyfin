@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>cleanyfin — mark segments</title>
+</head>
+<body>
+  <main>
+    <h1>cleanyfin <small>· mark segments</small></h1>
+
+    <section class="card">
+      <h2>1 · Connect</h2>
+      <label>Jellyfin server URL <input id="jfBase" type="url" placeholder="http://localhost:8096" /></label>
+      <label>Jellyfin API token <input id="jfToken" type="password" placeholder="access token / API key" /></label>
+      <label>cleanyfin API URL <input id="apiBase" type="url" placeholder="http://localhost:8080" /></label>
+      <label>Your submitter id <input id="submitterId" type="text" placeholder="pseudonymous-id" /></label>
+      <button id="connectBtn">Connect</button>
+      <p id="status" class="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>2 · Now playing</h2>
+      <p id="nowPlaying" class="mono">— (connect to a session that is playing something) —</p>
+      <p>Position: <span id="position" class="mono">0.000</span> s</p>
+    </section>
+
+    <section class="card">
+      <h2>3 · Mark a segment</h2>
+      <div class="row">
+        <button id="markInBtn">Mark IN</button>
+        <span class="mono">in: <span id="inMs">—</span> ms</span>
+        <button id="markOutBtn">Mark OUT</button>
+        <span class="mono">out: <span id="outMs">—</span> ms</span>
+      </div>
+      <label>Category
+        <select id="category">
+          <option value="profanity">profanity</option>
+          <option value="sexual_dialogue">sexual_dialogue</option>
+          <option value="sex_scene">sex_scene</option>
+          <option value="nudity">nudity</option>
+          <option value="violence">violence</option>
+          <option value="gore">gore</option>
+          <option value="disturbing">disturbing</option>
+          <option value="substance_use">substance_use</option>
+          <option value="crude">crude</option>
+        </select>
+      </label>
+      <label>Severity
+        <select id="severity">
+          <option value="0">0 · none</option>
+          <option value="1">1 · mild</option>
+          <option value="2" selected>2 · strong</option>
+          <option value="3">3 · extreme</option>
+        </select>
+      </label>
+      <label>Action
+        <select id="action">
+          <option value="mute">mute</option>
+          <option value="skip" selected>skip</option>
+          <option value="mark">mark</option>
+        </select>
+      </label>
+      <button id="submitBtn">Submit segment</button>
+      <pre id="result" class="result"></pre>
+    </section>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

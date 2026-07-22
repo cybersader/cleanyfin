@@ -84,3 +84,17 @@ func TestSubmitGetVoteHide(t *testing.T) {
 		t.Fatalf("vote on missing segment = %d, want 404", rr.Code)
 	}
 }
+
+// TestCorsPreflight verifies the marking PWA can preflight cross-origin calls.
+func TestCorsPreflight(t *testing.T) {
+	h := newTestServer(t)
+	req := httptest.NewRequest(http.MethodOptions, "/api/v1/segments", nil)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("preflight = %d, want 204", rr.Code)
+	}
+	if rr.Header().Get("Access-Control-Allow-Origin") == "" {
+		t.Fatal("preflight missing Access-Control-Allow-Origin header")
+	}
+}

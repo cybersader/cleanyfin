@@ -1,0 +1,39 @@
+# CI gate for the Jellyfin plugin (plugin/).
+# Restores + builds the C# plugin against Jellyfin.Controller on every change.
+name: plugin-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugin/**'
+      - '.github/workflows/plugin-ci.yml'
+  pull_request:
+    paths:
+      - 'plugin/**'
+      - '.github/workflows/plugin-ci.yml'
+
+concurrency:
+  group: plugin-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore

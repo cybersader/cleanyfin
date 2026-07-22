@@ -10,6 +10,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -41,7 +42,28 @@ func New(st *store.Store, log *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /api/v1/segments", a.getSegments)          // ?fp=<fingerprint>
 	mux.HandleFunc("POST /api/v1/segments", a.postSegment)         // submit
 	mux.HandleFunc("POST /api/v1/segments/{id}/vote", a.postVote)  // up/down vote
-	return a.logMiddleware(mux)
+	return a.corsMiddleware(a.logMiddleware(mux))
+}
+
+// corsMiddleware allows the marking PWA (a separate origin) to call the API.
+// Origin is configurable via CLEANYFIN_CORS_ORIGIN (default "*" for dev);
+// preflight OPTIONS requests are answered here before routing.
+func (a *API) corsMiddleware(next http.Handler) http.Handler {
+	origin := os.Getenv("CLEANYFIN_CORS_ORIGIN")
+	if origin == "" {
+		origin = "*"
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Vary", "Origin")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (a *API) logMiddleware(next http.Handler) http.Handler {
