@@ -1,0 +1,37 @@
+# CI gate for the marking PWA (pwa/).
+# Type-check + build on every change.
+name: pwa-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pwa/**'
+      - '.github/workflows/pwa-ci.yml'
+  pull_request:
+    paths:
+      - 'pwa/**'
+      - '.github/workflows/pwa-ci.yml'
+
+concurrency:
+  group: pwa-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pwa
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Build (tsc + vite)
+        run: bun run build

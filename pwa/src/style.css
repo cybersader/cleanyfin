@@ -1,0 +1,33 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #0b1220;
+  color: #e6ecf5;
+}
+body { margin: 0; padding: 1rem; }
+main { max-width: 640px; margin: 0 auto; }
+h1 { font-size: 1.4rem; }
+h1 small { color: #7f8db0; font-weight: 400; }
+h2 { font-size: 1rem; margin: 0 0 0.75rem; color: #a7b3d4; }
+.card {
+  background: #131c2e;
+  border: 1px solid #223052;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+label { display: block; margin: 0.5rem 0; font-size: 0.85rem; color: #a7b3d4; }
+input, select {
+  display: block; width: 100%; margin-top: 0.2rem; padding: 0.5rem;
+  background: #0b1220; color: #e6ecf5; border: 1px solid #2b3b63; border-radius: 6px;
+  box-sizing: border-box;
+}
+button {
+  margin-top: 0.5rem; padding: 0.5rem 0.9rem; cursor: pointer;
+  background: #2f6df6; color: #fff; border: 0; border-radius: 6px; font-weight: 600;
+}
+button:hover { background: #4a82ff; }
+.row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.mono { font-family: ui-monospace, monospace; }
+.status { min-height: 1.2em; font-size: 0.85rem; }
+.result { background: #0b1220; border: 1px solid #223052; border-radius: 6px; padding: 0.6rem; overflow-x: auto; white-space: pre-wrap; }

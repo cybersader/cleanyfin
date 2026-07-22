@@ -26,6 +26,7 @@ SQLite file from the `cleanyfin-data` volume.
 | `CLEANYFIN_ADDR` | `:8080` | listen address |
 | `CLEANYFIN_DB` | `/data/cleanyfin.db` | SQLite file path |
 | `CLEANYFIN_PORT` | `8080` | (compose) host port to publish |
+| `CLEANYFIN_CORS_ORIGIN` | `*` | origin allowed to call the API (the marking PWA) |
 
 ## API (v1)
 

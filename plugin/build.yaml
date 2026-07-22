@@ -1,0 +1,15 @@
+---
+name: "Cleanyfin"
+guid: "b1f7c2e0-4a3d-4c9a-9f2b-1e6d5a8c0f11"
+version: "0.1.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+overview: "Crowdsourced content-filter segments for Jellyfin (metadata-only)."
+description: >
+  Pulls community-tagged content-filter segments from the cleanyfin API and
+  exposes them to Jellyfin as native Media Segments so clients can skip them.
+  Ships only timestamps + metadata — never audio or video.
+category: "Metadata"
+owner: "cybersader"
+artifacts:
+  - "Jellyfin.Plugin.Cleanyfin.dll"

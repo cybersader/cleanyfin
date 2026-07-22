@@ -1,0 +1,20 @@
+[
+  {
+    "guid": "b1f7c2e0-4a3d-4c9a-9f2b-1e6d5a8c0f11",
+    "name": "Cleanyfin",
+    "description": "Crowdsourced content-filter segments for Jellyfin (metadata-only).",
+    "overview": "Skip community-tagged objectionable segments on media you already own.",
+    "owner": "cybersader",
+    "category": "Metadata",
+    "versions": [
+      {
+        "version": "0.1.0.0",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/cybersader/cleanyfin/releases/download/plugin-v0.1.0/cleanyfin-0.1.0.0.zip",
+        "checksum": "REPLACED-AT-RELEASE-BY-CI-md5-of-zip",
+        "timestamp": "2026-07-22T00:00:00Z",
+        "changelog": "Initial slice: fetch segments from the cleanyfin API and emit them as Media Segments."
+      }
+    ]
+  }
+]

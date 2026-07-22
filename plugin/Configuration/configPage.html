@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cleanyfin</title>
+</head>
+<body>
+<div id="CleanyfinConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-controller="__plugin/cleanyfinConfigPage.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="CleanyfinConfigForm">
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="ApiBaseUrl">cleanyfin API base URL</label>
+                    <input id="ApiBaseUrl" name="ApiBaseUrl" type="url" is="emby-input" required />
+                    <div class="fieldDescription">e.g. http://localhost:8080 — the cleanyfin server that holds the crowdsourced segments.</div>
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="SubmitterId">Submitter id (optional)</label>
+                    <input id="SubmitterId" name="SubmitterId" type="text" is="emby-input" />
+                </div>
+                <button is="emby-button" type="submit" class="raised button-submit block">
+                    <span>Save</span>
+                </button>
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var CleanyfinPluginId = 'b1f7c2e0-4a3d-4c9a-9f2b-1e6d5a8c0f11';
+        document.querySelector('#CleanyfinConfigPage').addEventListener('viewshow', function () {
+            Dashboard.showLoadingMsg();
+            ApiClient.getPluginConfiguration(CleanyfinPluginId).then(function (config) {
+                document.querySelector('#ApiBaseUrl').value = config.ApiBaseUrl || '';
+                document.querySelector('#SubmitterId').value = config.SubmitterId || '';
+                Dashboard.hideLoadingMsg();
+            });
+        });
+        document.querySelector('#CleanyfinConfigForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            Dashboard.showLoadingMsg();
+            ApiClient.getPluginConfiguration(CleanyfinPluginId).then(function (config) {
+                config.ApiBaseUrl = document.querySelector('#ApiBaseUrl').value;
+                config.SubmitterId = document.querySelector('#SubmitterId').value;
+                ApiClient.updatePluginConfiguration(CleanyfinPluginId, config).then(function (result) {
+                    Dashboard.processPluginConfigurationUpdateResult(result);
+                });
+            });
+            return false;
+        });
+    </script>
+</div>
+</body>
+</html>
