@@ -28,15 +28,21 @@ the **cleanyfin API base URL** on the plugin's config page.
 
 `CleanyfinSegmentProvider` implements `IMediaSegmentProvider`. For each item,
 Jellyfin calls `GetMediaSegments`, and the provider:
-1. derives a fingerprint `"jf:" + ItemId`,
+1. computes the release **fingerprint** — the OpenSubtitles-style **moviehash**
+   (`osh:` + filesize/first+last-64KiB checksum) of the item's file (R04), with a
+   `jf:ItemId` fallback if the file can't be read,
 2. `GET`s `{ApiBaseUrl}/api/v1/segments?fp=...` from the cleanyfin server,
 3. maps each returned segment to a `MediaSegmentDto` (start/end ticks = ms × 10000).
 
+The plugin also exposes `GET /Cleanyfin/Fingerprint?itemId=...` so the marking
+PWA can resolve the same fingerprint (the browser can't read file bytes).
+
 ## Honest limits (this slice)
 
-- **Fingerprint is a placeholder** (`jf:` + ItemId). Real cross-rip moviehash
-  calibration (R04) is a later slice — segments only line up for the same Jellyfin
-  item, not across different files/rips yet.
+- **Fingerprint = moviehash** (`osh:`…) so segments line up across anyone with
+  the same file/rip (R04). Not yet handled: differently-encoded rips of the same
+  title (needs a per-file calibration offset / audio-anchor — a later slice), and
+  the `jf:ItemId` fallback still applies when a file can't be read.
 - **No content-filter segment type exists** in Jellyfin, so every segment is
   emitted as `MediaSegmentType.Unknown`; the real category/severity/action lives
   in the cleanyfin DB (R14). Clients currently **skip** these (no native mute yet).
