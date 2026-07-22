@@ -8,6 +8,7 @@ package store
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
@@ -76,16 +77,63 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
-	return &Store{db: db}, nil
+	s := &Store{db: db}
+	if err := s.migrate(context.Background()); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return s, nil
 }
 
-func (s *Store) Close() error                      { return s.db.Close() }
-func (s *Store) Ping(ctx context.Context) error    { return s.db.PingContext(ctx) }
+func (s *Store) Close() error                   { return s.db.Close() }
+func (s *Store) Ping(ctx context.Context) error { return s.db.PingContext(ctx) }
+
+// migrate adds the fingerprint_hash column (SHA-256 of the fingerprint) used by
+// the hash-prefix k-anonymity query (R08) and backfills any existing rows. Runs
+// on every Open; safe/idempotent.
+func (s *Store) migrate(ctx context.Context) error {
+	// ADD COLUMN errors on pre-existing column; ignore that specific case.
+	_, _ = s.db.ExecContext(ctx, `ALTER TABLE segment ADD COLUMN fingerprint_hash TEXT NOT NULL DEFAULT ''`)
+	if _, err := s.db.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_segment_fp_hash ON segment(fingerprint_hash)`); err != nil {
+		return err
+	}
+	rows, err := s.db.QueryContext(ctx, `SELECT id, fingerprint FROM segment WHERE fingerprint_hash = ''`)
+	if err != nil {
+		return err
+	}
+	type row struct{ id, fp string }
+	var todo []row
+	for rows.Next() {
+		var r row
+		if err := rows.Scan(&r.id, &r.fp); err != nil {
+			rows.Close()
+			return err
+		}
+		todo = append(todo, r)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	for _, r := range todo {
+		if _, err := s.db.ExecContext(ctx, `UPDATE segment SET fingerprint_hash = ? WHERE id = ?`, HashFingerprint(r.fp), r.id); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func newID() string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
+}
+
+// HashFingerprint returns the lowercase-hex SHA-256 of a fingerprint. Clients
+// query by a short prefix of this so the server never learns the exact title.
+func HashFingerprint(fp string) string {
+	sum := sha256.Sum256([]byte(fp))
+	return hex.EncodeToString(sum[:])
 }
 
 // InsertSegment stores a new pending segment and returns it with its assigned id.
@@ -95,9 +143,9 @@ func (s *Store) InsertSegment(ctx context.Context, seg Segment) (Segment, error)
 	seg.Status = "pending"
 	seg.CreatedAt = time.Now().Unix()
 	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO segment (id,fingerprint,duration_ms,start_ms,end_ms,category,severity,action,submitter_id,votes,status,created_at)
-		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-		seg.ID, seg.Fingerprint, seg.DurationMs, seg.StartMs, seg.EndMs,
+		`INSERT INTO segment (id,fingerprint,fingerprint_hash,duration_ms,start_ms,end_ms,category,severity,action,submitter_id,votes,status,created_at)
+		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		seg.ID, seg.Fingerprint, HashFingerprint(seg.Fingerprint), seg.DurationMs, seg.StartMs, seg.EndMs,
 		seg.Category, seg.Severity, seg.Action, seg.SubmitterID, seg.Votes, seg.Status, seg.CreatedAt)
 	if err != nil {
 		return Segment{}, err
@@ -111,6 +159,29 @@ func (s *Store) SegmentsByFingerprint(ctx context.Context, fp string) ([]Segment
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT id,fingerprint,duration_ms,start_ms,end_ms,category,severity,action,submitter_id,votes,status,created_at
 		 FROM segment WHERE fingerprint = ? AND votes > -2 AND status != 'hidden' ORDER BY start_ms`, fp)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]Segment, 0)
+	for rows.Next() {
+		var g Segment
+		if err := rows.Scan(&g.ID, &g.Fingerprint, &g.DurationMs, &g.StartMs, &g.EndMs,
+			&g.Category, &g.Severity, &g.Action, &g.SubmitterID, &g.Votes, &g.Status, &g.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, g)
+	}
+	return out, rows.Err()
+}
+
+// SegmentsByHashPrefix returns visible segments for every fingerprint whose
+// SHA-256 hex starts with prefix (k-anonymity, R08). The caller filters to its
+// exact fingerprint locally, so the server never learns the exact title.
+func (s *Store) SegmentsByHashPrefix(ctx context.Context, prefix string) ([]Segment, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id,fingerprint,duration_ms,start_ms,end_ms,category,severity,action,submitter_id,votes,status,created_at
+		 FROM segment WHERE fingerprint_hash LIKE ? AND votes > -2 AND status != 'hidden' ORDER BY fingerprint, start_ms`, prefix+"%")
 	if err != nil {
 		return nil, err
 	}

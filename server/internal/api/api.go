@@ -40,6 +40,7 @@ func New(st *store.Store, log *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /readyz", a.ready)                         // readiness (DB reachable)
 	mux.HandleFunc("GET /api/v1/stats", a.stats)                   //
 	mux.HandleFunc("GET /api/v1/segments", a.getSegments)          // ?fp=<fingerprint>
+	mux.HandleFunc("GET /api/v1/segments/hash/{prefix}", a.getSegmentsByHash) // k-anonymity (R08)
 	mux.HandleFunc("POST /api/v1/segments", a.postSegment)         // submit
 	mux.HandleFunc("POST /api/v1/segments/{id}/vote", a.postVote)  // up/down vote
 	return a.corsMiddleware(a.logMiddleware(mux))
@@ -121,6 +122,41 @@ func (a *API) getSegments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"fingerprint": fp, "segments": segs})
+}
+
+// getSegmentsByHash serves the k-anonymity query (R08): the client sends the
+// first 4-16 hex chars of SHA-256(fingerprint); the server returns segments for
+// ALL fingerprints sharing that prefix, grouped by fingerprint, and the client
+// filters to its exact one locally — so the server never learns the title.
+func (a *API) getSegmentsByHash(w http.ResponseWriter, r *http.Request) {
+	prefix := strings.ToLower(strings.TrimSpace(r.PathValue("prefix")))
+	if !isHexPrefix(prefix) {
+		writeErr(w, http.StatusBadRequest, "prefix must be 4-16 lowercase hex chars")
+		return
+	}
+	segs, err := a.st.SegmentsByHashPrefix(r.Context(), prefix)
+	if err != nil {
+		a.log.Error("hash-prefix query", "err", err)
+		writeErr(w, http.StatusInternalServerError, "query failed")
+		return
+	}
+	byFingerprint := make(map[string][]store.Segment)
+	for _, s := range segs {
+		byFingerprint[s.Fingerprint] = append(byFingerprint[s.Fingerprint], s)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"prefix": prefix, "byFingerprint": byFingerprint})
+}
+
+func isHexPrefix(p string) bool {
+	if len(p) < 4 || len(p) > 16 {
+		return false
+	}
+	for _, c := range p {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+			return false
+		}
+	}
+	return true
 }
 
 type submitRequest struct {

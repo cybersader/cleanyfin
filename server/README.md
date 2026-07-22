@@ -36,6 +36,7 @@ SQLite file from the `cleanyfin-data` volume.
 | `GET /readyz` | readiness (DB reachable) |
 | `GET /api/v1/stats` | segment counts |
 | `GET /api/v1/segments?fp=<fingerprint>` | visible segments for a release fingerprint (auto-hidden at votes ≤ −2, R08) |
+| `GET /api/v1/segments/hash/{prefix}` | **k-anonymity** lookup (R08): segments for all fingerprints whose SHA-256 hex starts with a 4–16 char `{prefix}`, grouped by fingerprint — the client filters locally so the server never learns the exact title |
 | `POST /api/v1/segments` | submit a segment |
 | `POST /api/v1/segments/{id}/vote` | up/down vote (`value`: `1` or `-1`; one per submitter) |
 
