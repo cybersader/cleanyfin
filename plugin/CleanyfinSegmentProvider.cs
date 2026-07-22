@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Jellyfin.Database.Implementations.Enums;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.MediaSegments;
 using MediaBrowser.Model;
 using MediaBrowser.Model.MediaSegments;
@@ -24,11 +25,16 @@ namespace Jellyfin.Plugin.Cleanyfin;
 public class CleanyfinSegmentProvider : IMediaSegmentProvider
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILibraryManager _libraryManager;
     private readonly ILogger<CleanyfinSegmentProvider> _logger;
 
-    public CleanyfinSegmentProvider(IHttpClientFactory httpClientFactory, ILogger<CleanyfinSegmentProvider> logger)
+    public CleanyfinSegmentProvider(
+        IHttpClientFactory httpClientFactory,
+        ILibraryManager libraryManager,
+        ILogger<CleanyfinSegmentProvider> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _libraryManager = libraryManager;
         _logger = logger;
     }
 
@@ -45,9 +51,11 @@ public class CleanyfinSegmentProvider : IMediaSegmentProvider
     {
         var apiBase = (Plugin.Instance?.Configuration.ApiBaseUrl ?? "http://localhost:8080").TrimEnd('/');
 
-        // Slice-2 fingerprint scheme: "jf:" + ItemId (placeholder for real
-        // moviehash calibration, decision R04). Matches the marking PWA.
-        var fp = "jf:" + request.ItemId.ToString("N");
+        // Release fingerprint = moviehash of the file, "jf:" + ItemId fallback
+        // (decision R04). Same scheme the PWA resolves via /Cleanyfin/Fingerprint,
+        // so a mark submitted from the PWA lines up with what we query here.
+        var item = _libraryManager.GetItemById(request.ItemId);
+        var fp = Moviehash.Fingerprint(item?.Path, request.ItemId);
         var url = $"{apiBase}/api/v1/segments?fp={Uri.EscapeDataString(fp)}";
 
         try

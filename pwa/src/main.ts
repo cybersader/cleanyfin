@@ -36,10 +36,11 @@ interface JfSession {
 const state: {
   timer: number | undefined;
   item: NowPlaying | null;
+  fp: string | null;
   posMs: number;
   inMs: number | null;
   outMs: number | null;
-} = { timer: undefined, item: null, posMs: 0, inMs: null, outMs: null };
+} = { timer: undefined, item: null, fp: null, posMs: 0, inMs: null, outMs: null };
 
 function setStatus(msg: string, ok = true): void {
   statusEl.textContent = msg;
@@ -68,7 +69,20 @@ async function poll(): Promise<void> {
       runtimeMs: Math.round((npi.RunTimeTicks ?? 0) / TICKS_PER_MS),
     };
     state.posMs = Math.round((active.PlayState?.PositionTicks ?? 0) / TICKS_PER_MS);
-    nowPlayingEl.textContent = `${state.item.name}  (item ${state.item.id})`;
+
+    // Resolve the release fingerprint via the plugin — the browser cannot read
+    // the file's bytes, so the plugin computes the moviehash for us (R04). Falls
+    // back to jf:ItemId if the plugin isn't installed.
+    try {
+      const fpRes = await fetch(`${jf}/Cleanyfin/Fingerprint?itemId=${encodeURIComponent(npi.Id)}`, {
+        headers: { 'X-Emby-Token': jfTokenEl.value },
+      });
+      state.fp = fpRes.ok ? ((await fpRes.json()) as { Fingerprint: string }).Fingerprint : `jf:${npi.Id}`;
+    } catch {
+      state.fp = `jf:${npi.Id}`;
+    }
+
+    nowPlayingEl.textContent = `${state.item.name}  ·  fp: ${state.fp}`;
     positionEl.textContent = (state.posMs / 1000).toFixed(3);
     setStatus('connected');
   } catch (err) {
@@ -104,7 +118,7 @@ $<HTMLButtonElement>('submitBtn').addEventListener('click', async () => {
     return;
   }
   const body = {
-    fingerprint: `jf:${state.item.id}`,
+    fingerprint: state.fp ?? `jf:${state.item.id}`,
     durationMs: state.item.runtimeMs,
     startMs: state.inMs,
     endMs: state.outMs,
