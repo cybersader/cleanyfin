@@ -2,6 +2,8 @@ package api
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -82,6 +84,40 @@ func TestSubmitGetVoteHide(t *testing.T) {
 
 	if rr := do(t, h, "POST", "/api/v1/segments/does-not-exist/vote", `{"submitterId":"x","value":1}`); rr.Code != http.StatusNotFound {
 		t.Fatalf("vote on missing segment = %d, want 404", rr.Code)
+	}
+}
+
+// TestHashPrefixQuery verifies the k-anonymity lookup (R08): a segment is
+// returned when queried by a prefix of its fingerprint's SHA-256, and a
+// malformed prefix is rejected.
+func TestHashPrefixQuery(t *testing.T) {
+	h := newTestServer(t)
+	const fp = "osh:deadbeefcafe1234"
+
+	if rr := do(t, h, "POST", "/api/v1/segments",
+		`{"fingerprint":"`+fp+`","durationMs":1000,"startMs":10,"endMs":20,"category":"violence","severity":1,"action":"skip","submitterId":"alice"}`); rr.Code != http.StatusCreated {
+		t.Fatalf("submit = %d", rr.Code)
+	}
+
+	sum := sha256.Sum256([]byte(fp))
+	prefix := hex.EncodeToString(sum[:])[:8]
+
+	rr := do(t, h, "GET", "/api/v1/segments/hash/"+prefix, "")
+	if rr.Code != http.StatusOK {
+		t.Fatalf("hash query = %d body=%s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		ByFingerprint map[string][]store.Segment `json:"byFingerprint"`
+	}
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(resp.ByFingerprint[fp]) != 1 {
+		t.Fatalf("expected 1 segment under %q, got %d", fp, len(resp.ByFingerprint[fp]))
+	}
+
+	if rr := do(t, h, "GET", "/api/v1/segments/hash/xy", ""); rr.Code != http.StatusBadRequest {
+		t.Fatalf("bad prefix = %d, want 400", rr.Code)
 	}
 }
 
