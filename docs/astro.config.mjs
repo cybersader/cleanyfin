@@ -28,6 +28,8 @@ export default defineConfig({
       title: 'cleanyfin',
       description:
         'An open-source, self-hosted content-filtering layer for Jellyfin, backed by a federated, crowdsourced database of tagged content segments.',
+      logo: { src: './src/assets/logo.svg', alt: 'cleanyfin' },
+      favicon: '/favicon.svg',
       lastUpdated: true,
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
       social: [
