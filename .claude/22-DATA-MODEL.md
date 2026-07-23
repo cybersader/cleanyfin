@@ -115,6 +115,15 @@ CREATE INDEX idx_segment_release ON segment(release_id, status);
 CREATE INDEX idx_release_match   ON release(title_id, runtime_ms);
 ```
 
+## Implementation status (2026-07-23)
+
+The SQL above is the *target* normalized model. What ships on `main` after Phase 3 slices 1–4 is a deliberately flattened subset:
+
+- **Live — real moviehash (`osh:`).** The fingerprint is the OpenSubtitles **moviehash** the plugin computes per file (`osh:` + filesize/first+last-64 KiB; `jf:<ItemId>` fallback when the bytes can't be read), replacing the earlier `jf:ItemId` placeholder (R04). The PWA resolves the *same* fingerprint via the plugin's `GET /Cleanyfin/Fingerprint`.
+- **Live — hash-prefix k-anonymity.** A `fingerprint_hash` column (`SHA-256(fingerprint)`, indexed, backfilled on migrate) backs `GET /api/v1/segments/hash/{prefix}`, so a client can fetch by a 4–16 hex-char prefix and the server never learns the exact title (R08, the SponsorBlock privacy model).
+- **Live but flattened.** Segments live in a single `segment` table keyed **directly on the `fingerprint` string** (plus a `vote` table) — not yet split into `title`/`release`. `duration_ms` is carried inline on the segment instead of via a `release` FK.
+- **Still schematic (not yet built):** the normalized `title`/`release` split and the 3-tier **calibration** offset; the `curator` and `filter_profile` tables; and any public-**dump** producers/consumers. Read those tables above as the destination, not the current DB.
+
 ## Implementation — a segment as JSON (query/dump wire shape)
 
 ```json

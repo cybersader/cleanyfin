@@ -39,6 +39,7 @@ SQLite file from the `cleanyfin-data` volume.
 | `GET /api/v1/segments/hash/{prefix}` | **k-anonymity** lookup (R08): segments for all fingerprints whose SHA-256 hex starts with a 4–16 char `{prefix}`, grouped by fingerprint — the client filters locally so the server never learns the exact title |
 | `POST /api/v1/segments` | submit a segment |
 | `POST /api/v1/segments/{id}/vote` | up/down vote (`value`: `1` or `-1`; one per submitter) |
+| `GET /api/v1/dump` | **public data dump** (R03) for mirrors/federation: all visible segments (auto-hidden excluded) across every fingerprint as `{generatedAtUnix, count, segments[]}`, ordered by fingerprint then start_ms |
 
 ### Submit body
 
