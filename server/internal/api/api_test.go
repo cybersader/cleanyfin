@@ -121,6 +121,47 @@ func TestHashPrefixQuery(t *testing.T) {
 	}
 }
 
+// TestDump verifies the public data-dump endpoint (R03): segments submitted
+// under different fingerprints all appear in a single dump with a count.
+func TestDump(t *testing.T) {
+	h := newTestServer(t)
+
+	if rr := do(t, h, "POST", "/api/v1/segments",
+		`{"fingerprint":"fpA","durationMs":1000,"startMs":10,"endMs":20,"category":"profanity","severity":2,"action":"mute","submitterId":"alice"}`); rr.Code != http.StatusCreated {
+		t.Fatalf("submit A = %d body=%s", rr.Code, rr.Body.String())
+	}
+	if rr := do(t, h, "POST", "/api/v1/segments",
+		`{"fingerprint":"fpB","durationMs":2000,"startMs":30,"endMs":40,"category":"violence","severity":1,"action":"skip","submitterId":"bob"}`); rr.Code != http.StatusCreated {
+		t.Fatalf("submit B = %d body=%s", rr.Code, rr.Body.String())
+	}
+
+	rr := do(t, h, "GET", "/api/v1/dump", "")
+	if rr.Code != http.StatusOK {
+		t.Fatalf("dump = %d body=%s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		GeneratedAtUnix int64           `json:"generatedAtUnix"`
+		Count           int             `json:"count"`
+		Segments        []store.Segment `json:"segments"`
+	}
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.Count < 2 {
+		t.Fatalf("expected count >= 2, got %d", resp.Count)
+	}
+	if resp.Count != len(resp.Segments) {
+		t.Fatalf("count %d != len(segments) %d", resp.Count, len(resp.Segments))
+	}
+	seen := map[string]bool{}
+	for _, s := range resp.Segments {
+		seen[s.Fingerprint] = true
+	}
+	if !seen["fpA"] || !seen["fpB"] {
+		t.Fatalf("expected both fpA and fpB in dump, got %v", seen)
+	}
+}
+
 // TestCorsPreflight verifies the marking PWA can preflight cross-origin calls.
 func TestCorsPreflight(t *testing.T) {
 	h := newTestServer(t)

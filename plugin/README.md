@@ -37,6 +37,13 @@ Jellyfin calls `GetMediaSegments`, and the provider:
 The plugin also exposes `GET /Cleanyfin/Fingerprint?itemId=...` so the marking
 PWA can resolve the same fingerprint (the browser can't read file bytes).
 
+For the write path, `POST /Cleanyfin/Segments` accepts a mark
+(`{ itemId, startMs, endMs, category, severity, action, submitterId }`),
+resolves the item's fingerprint + duration server-side, and **forwards** it to
+`{ApiBaseUrl}/api/v1/segments` on the cleanyfin API (the live-insert path, R14),
+proxying that API's status and body back to the caller. This keeps writes keyed
+on the SAME fingerprint the provider later queries (R04).
+
 ## Honest limits (this slice)
 
 - **Fingerprint = moviehash** (`osh:`…) so segments line up across anyone with

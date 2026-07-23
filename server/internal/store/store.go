@@ -198,6 +198,30 @@ func (s *Store) SegmentsByHashPrefix(ctx context.Context, prefix string) ([]Segm
 	return out, rows.Err()
 }
 
+// DumpVisibleSegments returns ALL visible segments (votes > -2 AND status !=
+// 'hidden') across every fingerprint, ordered by fingerprint, start_ms. This
+// backs the public data-dump endpoint used by mirrors/federation (decision R03,
+// the SponsorBlock public-dump model).
+func (s *Store) DumpVisibleSegments(ctx context.Context) ([]Segment, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id,fingerprint,duration_ms,start_ms,end_ms,category,severity,action,submitter_id,votes,status,created_at
+		 FROM segment WHERE votes > -2 AND status != 'hidden' ORDER BY fingerprint, start_ms`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]Segment, 0)
+	for rows.Next() {
+		var g Segment
+		if err := rows.Scan(&g.ID, &g.Fingerprint, &g.DurationMs, &g.StartMs, &g.EndMs,
+			&g.Category, &g.Severity, &g.Action, &g.SubmitterID, &g.Votes, &g.Status, &g.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, g)
+	}
+	return out, rows.Err()
+}
+
 // Vote records one vote per (segment, submitter) — a later vote replaces the
 // earlier one — then recomputes and stores the segment's vote sum. Returns the
 // new sum. Returns sql.ErrNoRows if the segment does not exist.

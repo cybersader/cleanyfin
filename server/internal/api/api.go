@@ -43,6 +43,7 @@ func New(st *store.Store, log *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /api/v1/segments/hash/{prefix}", a.getSegmentsByHash) // k-anonymity (R08)
 	mux.HandleFunc("POST /api/v1/segments", a.postSegment)         // submit
 	mux.HandleFunc("POST /api/v1/segments/{id}/vote", a.postVote)  // up/down vote
+	mux.HandleFunc("GET /api/v1/dump", a.dump)                     // public data dump for mirrors (R03)
 	return a.corsMiddleware(a.logMiddleware(mux))
 }
 
@@ -157,6 +158,23 @@ func isHexPrefix(p string) bool {
 		}
 	}
 	return true
+}
+
+// dump serves the full set of visible segments as a single JSON document so
+// mirrors/federated instances can bulk-replicate the corpus (decision R03, the
+// SponsorBlock public-dump model).
+func (a *API) dump(w http.ResponseWriter, r *http.Request) {
+	segs, err := a.st.DumpVisibleSegments(r.Context())
+	if err != nil {
+		a.log.Error("dump", "err", err)
+		writeErr(w, http.StatusInternalServerError, "dump failed")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"generatedAtUnix": time.Now().Unix(),
+		"count":           len(segs),
+		"segments":        segs,
+	})
 }
 
 type submitRequest struct {
