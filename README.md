@@ -1,76 +1,106 @@
-<h1 align="center">cleanyfin</h1>
+<div align="center">
 
-<p align="center">
-  <b>An open-source, self-hosted content-filtering layer for <a href="https://jellyfin.org">Jellyfin</a>,<br>
-  backed by a federated, crowdsourced database of tagged content segments.</b>
-</p>
+<img src="assets/logo-card.svg" alt="cleanyfin logo" width="128" height="128" />
 
-<p align="center">
-  <i>The VidAngel experience. The SponsorBlock data model. DMCA-safe by design.</i>
-</p>
+# cleanyfin
+
+### Watch what you *want* to watch.
+
+An open-source, self-hosted **content-filtering layer for [Jellyfin](https://jellyfin.org)** — skip or mute the parts you don't want (profanity, violence, nudity, and more), gated **per viewer profile**, powered by a **federated, crowdsourced database of tagged segments**.
+
+**The VidAngel experience · the SponsorBlock data model · DMCA-safe by design.**
+
+[![docs](https://github.com/cybersader/cleanyfin/actions/workflows/deploy-docs.yml/badge.svg)](https://cybersader.github.io/cleanyfin/)
+[![server CI](https://github.com/cybersader/cleanyfin/actions/workflows/server-ci.yml/badge.svg)](https://github.com/cybersader/cleanyfin/actions/workflows/server-ci.yml)
+[![plugin CI](https://github.com/cybersader/cleanyfin/actions/workflows/plugin-ci.yml/badge.svg)](https://github.com/cybersader/cleanyfin/actions/workflows/plugin-ci.yml)
+[![Jellyfin 10.11+](https://img.shields.io/badge/Jellyfin-10.11%2B-00A4DC?logo=jellyfin&logoColor=white)](https://jellyfin.org)
+[![code: AGPL-3.0](https://img.shields.io/badge/code-AGPL--3.0-blue.svg)](LICENSE)
+[![data: CC0-1.0](https://img.shields.io/badge/data-CC0--1.0-lightgrey.svg)](DATA-LICENSE)
+
+[Documentation](https://cybersader.github.io/cleanyfin/) · [How it works](#how-it-works) · [Quick start](#quick-start) · [What's shipped](#whats-shipped) · [Roadmap](.claude/20-ROADMAP.md) · [Contributing](#contributing)
+
+</div>
 
 ---
 
-> **Status: Phase 0 — research & knowledge-ops initialized (2026-07-21).** No code yet, on purpose. This repo currently holds the project's *brain*: a researched, cited knowledge base that anyone can read to understand exactly what we're building and why. Code follows two feasibility spikes and one licensing decision (see [`.claude/20-ROADMAP.md`](.claude/20-ROADMAP.md)). **Contributors welcome — start with the knowledge base below.**
+> **🛠️ Building in the open.** The full pipeline — the crowdsourced **segment API**, the **Jellyfin plugin**, and the **marking app** — is scaffolded, tested, and CI-green ([what's shipped](#whats-shipped)). Not yet a one-click install; contributors and Jellyfin tinkerers welcome.
 
-## The idea
+## Why
 
-Watching mainstream movies and shows on your own Jellyfin server should not mean taking whatever's in them. cleanyfin lets a household **skip or mute** the parts it doesn't want — profanity, violence, nudity, and more — gated **per viewer profile**, with a per-title **"request a bypass"** escape hatch. The filtering data is **crowdsourced**: people tag segments (in/out timestamps + category) while they watch, vote on each other's tags, and **share** those databases. No single central authority — communities can **federate** and follow the **curators** whose standards they share (subsidiarity).
+Watching mainstream movies and shows on your own Jellyfin server shouldn't mean taking whatever's in them. cleanyfin lets a household **skip or mute** the objectionable parts, gated **per viewer profile**, with a per-title **"request a bypass"** escape hatch — the [ClearPlay](https://www.clearplay.com/)/VidAngel idea, but **free, self-hosted, and community-owned**.
 
-Think **[ClearPlay](https://www.clearplay.com/)/VidAngel for the experience**, **[SponsorBlock](https://sponsor.ajay.app/) for the data**, and **free + self-hosted** for everything.
+The filtering data is **crowdsourced**: people tag segments (in/out timestamps + category) while they watch, the community votes and moderates, and anyone can **mirror** the database. No single central authority — communities **federate** and follow the **curators** whose standards they share.
+
+Think **ClearPlay/VidAngel for the experience**, **[SponsorBlock](https://sponsor.ajay.app/) for the data**, and **your Jellyfin server for the home**.
 
 ## The one rule that makes it legal
 
-**cleanyfin distributes only timestamps + category metadata + edit-decisions — never a single frame of audio or video, and it never touches DRM.** Filters are applied in real time to the copy *you already own*, in *your own* player. This is the exact line U.S. law drew: the [Family Movie Act of 2005](https://www.copyright.gov/legislation/pl109-9.html) legalizes real-time "making imperceptible" of an authorized copy with no fixed edited copy — which is why ClearPlay is legal, and why VidAngel lost (it made copies and broke DRM). SponsorBlock has run this exact posture for years. See [`.claude/01-PROBLEM.md`](.claude/01-PROBLEM.md) and [`knowledge-base/01-working/legal-and-ip-landscape.md`](knowledge-base/01-working/legal-and-ip-landscape.md).
+cleanyfin distributes **only timestamps + category metadata + edit-decisions — never a single frame of audio or video, and it never touches DRM.** Filters are applied in real time to the copy *you already own*, in *your own* player. That's the exact line U.S. law drew in the [Family Movie Act of 2005](https://www.copyright.gov/legislation/pl109-9.html): why ClearPlay is legal, why VidAngel (which made copies and broke DRM) lost, and why SponsorBlock has run this way for years. → [Legal deep-dive](https://cybersader.github.io/cleanyfin/research/legal/)
 
-## How it will work
+## How it works
 
 ```
-   ┌─────────────────────┐   pulls community      ┌──────────────────────────┐
-   │  Jellyfin plugin     │◄──  segments  ─────────│  cleanyfin server (Go)    │
-   │  (thin C# provider)  │                        │  • crowdsourced segment DB│
-   │  emits Media Segments│                        │  • submit / vote / moderate│
-   │  → native skip UI    │                        │  • public dumps + mirrors  │
-   └─────────────────────┘                        │  • SQLite (one file)       │
-                                                    └──────────────────────────┘
-   ┌─────────────────────┐   marks in/out +              ▲  one `docker compose up`
-   │  companion PWA       │──  category, submits  ────────┘  (or a single binary)
-   │  reads Jellyfin      │
-   │  playback position   │
-   └─────────────────────┘
+   ┌──────────────────────┐   marks in/out + category      ┌────────────────────────────┐
+   │  Marking app (PWA)    │──  POST /api/v1/segments  ────>│  cleanyfin API server (Go)  │
+   │  reads live playback  │                                │  • crowdsourced segment DB  │
+   │  position + fingerprint│<─  fingerprint (moviehash) ───│  • submit / vote / moderate │
+   └──────────────────────┘                                │  • k-anon lookup · public   │
+                                                            │    dumps for mirrors        │
+   ┌──────────────────────┐   GET /api/v1/segments?fp=      │  • SQLite (one file)        │
+   │  Jellyfin plugin (C#) │──  by release fingerprint  ───>│  one `docker compose up`    │
+   │  IMediaSegmentProvider│<─  matching segments  ─────────└────────────────────────────┘
+   │  → native skip in     │
+   │  Web / Android TV / … │
+   └──────────────────────┘
 ```
 
-- **Build on Jellyfin's native [Media Segments](https://jellyfin.org/docs/general/server/metadata/media-segments/)** (10.10+) — the same mechanism the Intro Skipper plugin uses — so clients render skip buttons for free.
-- **Super-easy to self-host** is a hard requirement: the headline install is one `docker compose up`; backup is copying a file; it's built to not fall over. No hyperscalers, no Kubernetes.
-- **No forced accounts.** Contribution safety = pseudonymous IDs + voting + moderation queue, never a signup wall.
+- **Built on Jellyfin's native [Media Segments](https://jellyfin.org/docs/general/server/metadata/media-segments/)** (10.10+) — the same mechanism the Intro Skipper plugin uses — so clients render skip buttons natively.
+- **Segments key on a [moviehash](https://cybersader.github.io/cleanyfin/research/legal/) fingerprint**, so a tag someone made lines up on *your* copy of the same rip.
+- **Super-easy to self-host** is a hard requirement: the server is one `docker compose up`; backup is copying a file. No hyperscalers, no Kubernetes.
+- **No forced accounts.** Contribution safety = pseudonymous IDs + voting + moderation, with **k-anonymity** so the server never learns which title you're watching.
 
-Full architecture: [`.claude/21-ARCHITECTURE.md`](.claude/21-ARCHITECTURE.md) · data model: [`.claude/22-DATA-MODEL.md`](.claude/22-DATA-MODEL.md).
+Full design: [Architecture](https://cybersader.github.io/cleanyfin/design/architecture/) · [Data model](https://cybersader.github.io/cleanyfin/design/data-model/).
 
-## Read the knowledge base
+## Quick start
 
-This project is documented before it's built. Start here:
+The **segment API** (the hub) runs today:
 
-| Read first | Then browse |
-|---|---|
-| [`.claude/PROJECT_CONTEXT.md`](.claude/PROJECT_CONTEXT.md) — what this is | [`.claude/00-INDEX.md`](.claude/00-INDEX.md) — the full map |
-| [`.claude/FOCUS.md`](.claude/FOCUS.md) — where it's at | [`.claude/41-QUESTIONS-RESOLVED.md`](.claude/41-QUESTIONS-RESOLVED.md) — decisions + why |
-| [`.claude/20-ROADMAP.md`](.claude/20-ROADMAP.md) — what's next | [`knowledge-base/01-working/`](knowledge-base/01-working/) — 6 cited research deep-dives |
+```bash
+git clone https://github.com/cybersader/cleanyfin && cd cleanyfin
+docker compose up -d --build        # http://localhost:8080
+curl localhost:8080/healthz          # -> ok
+```
 
-## Prior art we build on (and interoperate with)
+The **Jellyfin plugin** (`plugin/`) and **marking PWA** (`pwa/`) build cleanly and talk to that API — see their READMEs. End-to-end install against a live Jellyfin server is the next milestone.
 
-[SponsorBlock](https://github.com/ajayyy/SponsorBlockServer) (the crowdsourcing model) · [Intro Skipper](https://github.com/intro-skipper/intro-skipper) & [segment-editor](https://github.com/intro-skipper/segment-editor) (Jellyfin segment provider + in-player marking) · [MovieContentFilter](https://github.com/delight-im/MovieContentFilter) (the open `.mcf` standard we interoperate with) · [Kodi EDL](https://kodi.wiki/view/Edit_decision_list) (portable edit-decisions, real mute) · [cleanvid/monkeyplug](https://github.com/mmguero/cleanvid) (subtitle/speech profanity automation). See [`.claude/04-PRIOR-ART.md`](.claude/04-PRIOR-ART.md).
+## What's shipped
+
+| Component | What it does | Status |
+|---|---|---|
+| **`server/`** — Go API | Crowdsourced segment DB (SQLite/WAL): submit · vote (auto-hide ≤ −2) · exact + **k-anonymity** lookup · public **dump** for mirrors · CORS. One static binary, one `docker compose up`. | ✅ built · tested · CI |
+| **`plugin/`** — C# Jellyfin plugin | `IMediaSegmentProvider` that fetches by **moviehash** fingerprint and emits native Media Segments; a fingerprint + write endpoint. Jellyfin 10.11 / .NET 9. | ✅ builds · CI |
+| **`pwa/`** — marking app | Vite + TS: reads live `/Sessions` position, stamps in/out + category, submits to the API. | ✅ builds · CI |
+| **`docs/`** — docs site | Astro + Starlight, published to GitHub Pages. | ✅ live |
+
+The project is documented *before* it's finished — the whole design + research lives in [`.claude/`](.claude/00-INDEX.md) (orientation) and [`knowledge-base/`](knowledge-base/) (cited deep-dives + the decision log).
+
+## Built on / interoperates with
+
+[SponsorBlock](https://github.com/ajayyy/SponsorBlockServer) (the crowdsourcing model) · [Intro Skipper](https://github.com/intro-skipper/intro-skipper) & [segment-editor](https://github.com/intro-skipper/segment-editor) (Jellyfin segment provider + in-player marking) · [MovieContentFilter](https://github.com/delight-im/MovieContentFilter) (the open `.mcf` format) · [Kodi EDL](https://kodi.wiki/view/Edit_decision_list) (portable edit-decisions) · [OpenSubtitles moviehash](https://opensubtitles.github.io/oshash/) (the fingerprint). See [prior art](https://cybersader.github.io/cleanyfin/project/prior-art/).
 
 ## Contributing
 
-The best contribution right now is **reading the knowledge base and poking holes in it** — open an issue against any decision in [`41-QUESTIONS-RESOLVED.md`](.claude/41-QUESTIONS-RESOLVED.md) or weigh in on the [open questions](.claude/40-QUESTIONS-OPEN.md). When code starts, it'll be a Go segment server, a C# Jellyfin plugin, and a PWA — thin slices, one `docker compose up`.
+Best contribution right now: **read the [knowledge base](https://cybersader.github.io/cleanyfin/) and poke holes in it** — open an issue against any [decision](.claude/41-QUESTIONS-RESOLVED.md) or [open question](.claude/40-QUESTIONS-OPEN.md). Code-wise, the stack is a Go server, a C# Jellyfin plugin, and a PWA — thin slices, each CI-gated. **Only contribute segment data you can place under CC0** (see below).
 
 ## Licensing
 
-- **Code** (server, Jellyfin plugin, companion app, tooling): **AGPL-3.0-or-later** — see [`LICENSE`](LICENSE).
-- **Dataset** (the crowdsourced content segments): **CC0-1.0** (public domain dedication) — see [`DATA-LICENSE`](DATA-LICENSE).
+- **Code** (server, plugin, app, tooling): **AGPL-3.0-or-later** — see [`LICENSE`](LICENSE).
+- **Dataset** (the crowdsourced content segments): **CC0-1.0** public-domain dedication — see [`DATA-LICENSE`](DATA-LICENSE).
 
-Rationale: timestamp/category data is factual (thin copyright), so CC0 maximizes federation, mirroring, and reuse and avoids the non-commercial ambiguity that constrains other filter datasets; copyleft give-back lives on the AGPL server code where it's enforceable. Consequence: cleanyfin does **not** ingest CC-BY-NC-SA data (SponsorBlock/MCF) — it interoperates with the `.mcf`/EDL *formats* and bootstraps via automated subtitle analysis + original contributions. Only contribute data you can place under CC0. Decision logged as R15 in [`.claude/41-QUESTIONS-RESOLVED.md`](.claude/41-QUESTIONS-RESOLVED.md).
+Timestamp/category data is factual (thin copyright), so CC0 maximizes federation and reuse; copyleft give-back lives on the AGPL server code where it's enforceable. (Rationale: R15 in the [decision log](.claude/41-QUESTIONS-RESOLVED.md).)
 
 ---
 
-<p align="center"><sub>cleanyfin is not affiliated with Jellyfin, ClearPlay, VidAngel, or SponsorBlock. It filters media you already own; it never distributes copyrighted content.</sub></p>
+<div align="center">
+<sub>cleanyfin is not affiliated with Jellyfin, ClearPlay, VidAngel, or SponsorBlock. It filters media you already own — it never hosts, transcodes, or distributes copyrighted content.</sub>
+</div>
