@@ -2,6 +2,31 @@
 
 > The agent-side decision log. Each entry: the decision, the rationale, and the source. When a decision locks in a session, add it here (and propagate to `PROJECT_CONTEXT`/`FOCUS`). "Resolved" means *provisionally locked pending new evidence* — most of these are research-backed leans, not battle-tested facts. The two things gating real code (enforcement spike, data-license) are deliberately still in `40-QUESTIONS-OPEN`.
 
+## Dated factual correction and supersession — 2026-10-08
+
+Keep R01–R15 below as historical records; numbering and recorded R15 license selection are unchanged. No architecture choice was approved by workflow approval. The [reviewed proposal](../knowledge-base/01-working/long-term-architecture-2026-10-07/04-architecture-proposal.md) and [independent review](../knowledge-base/01-working/long-term-architecture-2026-10-07/06-independent-review.md) are proposed analysis, not a new decision log.
+
+- **R01/R02:** metadata-only distribution is not legal, patent, trademark or import clearance. Native provider integration does not inherit filtering support: current output is Unknown with action/category discarded, and Web v10.11.11 defaults Unknown to None.
+- **R03/R04:** dump exists; importer, replication, private overlays and calibration do not. Lookup is fingerprint-only, not title/hash/duration verification. Duration/hash cannot prove equivalent cuts.
+- **R05/R06:** taxonomy is stored; private profile resolution and authorized unsupported-action substitution are proposed, not native DTO capabilities.
+- **R07/R11:** historical fleet findings do not prove Cleanyfin behavior. Pinned Web has skip/prompt guards; session Seek/Mute/Unmute exists without an automatic scheduler. Kodi/mpv EDL formats are not equivalent; adapters need separate tests.
+- **R08/R09/R10:** pending rows are public above the vote threshold; claimed identities are unauthenticated, prefix queries guarantee no anonymity set, and quarantine/curators/private policy are not implemented. Votes cannot establish parental authority or consent. Revision-bound curation and legacy publication remain owner-controlled.
+- **R13:** proxy-as-enforcement is REJECTED. Per-user metadata selection does not force actions or prevent original-media bypasses. Provider generation is user-blind, but authenticated item lookup can be user-aware. The owner has settled sequencing: cooperative supported-client filtering first, server-side enforcement/bypass resistance retained longer term. Its threat model and implementation remain open.
+- **R14:** current controller forwards to the Go API; no immediate native insertion is established. Ordinary refresh can clear provider materialization under the reviewed execution/cancellation preconditions; force-overwrite pre-deletes rows. No live reproduction or preservation fix is claimed.
+- **R12/R15:** historical scaffolding/builds and recorded license choice remain history, not prospective build validation, contributor-rights evidence or clearance.
+
+Evidence baseline: `2426cef1ab345a5a829b2ce7a6fe8fab8661011e`; pinned Jellyfin/Web v10.11.11, sources accessed 2026-10-08. Runtime compatibility, authorization exploitability, recovery, capacity and legal clearance remain UNVERIFIED.
+
+## Owner decision — product sequencing, 2026-10-08
+
+**Decision:** dependable filtering on explicitly supported cooperative clients is the owner-approved first-release target. Server-side enforcement/deliberate-bypass resistance is a retained LONGER-TERM product objective, not abandoned and not a first-release prerequisite. *Source:* owner response, “Yep but keep server-side enforcement on the longer-term roadmap”.
+
+This settles sequencing only. Actual playback correctness remains UNVERIFIED and gated on experiments. The broader architecture, enforcement technique, first client/actions, failure policy, exposure tolerance, timing/SLO targets, public launch, trust/privacy, recovery/maintenance budgets and legal clearance are not approved by this decision.
+
+The retained [roadmap track](./20-ROADMAP.md) requires a defined threat model, feasibility spike, original-media/alternate-client/download/file-share access and authorization analysis, client/format compatibility and operating cost, reliable failure/recovery behavior, applicable legal review and evidence before claiming enforcement. Metadata filtering or remote commands alone are not unbypassable playback enforcement. No claim of enforceability against a server administrator or someone controlling the media is made; later design must define scope. R01–R15 and Q identifiers remain unchanged.
+
+## Historical entries — superseded only where corrected above
+
 Locked 2026-07-21 (initialization research fan-out; see `knowledge-base/01-working/`):
 
 **R01 — Metadata only, never media (the legal keystone).**
