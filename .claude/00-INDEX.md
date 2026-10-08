@@ -1,6 +1,6 @@
 # cleanyfin Knowledge Base — Index
 
-> **How this KB works (layers):** the current **canonical depth** is `knowledge-base/01-working/` — six cited research deep-dives from the 2026-07-21 fan-out. This `.claude/` layer is the **orientation + pointer layer** for humans and agents: read `PROJECT_CONTEXT.md` then `FOCUS.md` for direction, then follow the numbered stubs into the deep-dives. A future `docs/` (Astro + Starlight) site will become the public canonical KB (see `20-ROADMAP`). **Locked a decision? Update this layer + `FOCUS.md` + `41-QUESTIONS-RESOLVED.md` in the same session.**
+> **How this KB works (layers):** the current **canonical depth** is `knowledge-base/01-working/` — six cited research deep-dives from the 2026-07-21 fan-out. This `.claude/` layer is the **orientation + pointer layer** for humans and agents: read `PROJECT_CONTEXT.md` then `FOCUS.md` for direction, then follow the numbered stubs into the deep-dives. The `docs/` (Astro + Starlight) source exists; this continuation did not validate its build or deployment (see `20-ROADMAP`). **Locked a decision? Update this layer + `FOCUS.md` + `41-QUESTIONS-RESOLVED.md` in the same session.**
 
 ## Meta (read first, in order)
 
@@ -37,4 +37,4 @@
 
 **Feasibility spikes** (2026-07-21, in `knowledge-base/01-working/`): `spike-a-enforcement.md` (→ R13), `spike-b-segment-write-api.md` (→ R14), `spike-c-client-support.md` (→ R07). Docs site is live under `docs/` (Astro + Starlight).
 
-Current state (2026-07-21): Phase 1 nearly closed — research + spikes done, docs site stood up; the sole gate before code is the **data-license** decision (Q2). See `FOCUS.md`.
+Current correction (2026-10-08): API/plugin/PWA components exist, but live filtering, complete installation and recovery remain UNVERIFIED. R15 records the license choice, not legal/import clearance. See [FOCUS](./FOCUS.md) and the [research workstream](../knowledge-base/01-working/long-term-architecture-2026-10-07/README.md). Recovered studies remain unreviewed evidence; the reviewed architecture and E1–E12 roadmap remain PROPOSED, not owner-approved. Workflow approval is not a product decision.

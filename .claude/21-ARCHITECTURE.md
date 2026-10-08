@@ -1,12 +1,18 @@
 # cleanyfin — Architecture
 
-> 📎 Pointer stub. How the three components fit and why. Backed by `../knowledge-base/01-working/jellyfin-integration-mechanics.md`, `../knowledge-base/01-working/tech-stack-and-devops.md`, and `../knowledge-base/01-working/federation-architecture.md`. Locked shape = (R02). The per-profile enforcement gap is still gated on Spike A — see [20-ROADMAP](./20-ROADMAP.md).
+> 📎 Pointer stub. How the three components fit and why. Backed by `../knowledge-base/01-working/jellyfin-integration-mechanics.md`, `../knowledge-base/01-working/tech-stack-and-devops.md`, and `../knowledge-base/01-working/federation-architecture.md`. Locked shape = (R02). Owner sequencing (2026-10-08): supported-client cooperative filtering first; server-side enforcement retained longer term, with scope/design still open — see [20-ROADMAP](./20-ROADMAP.md).
+
+## Dated source correction — 2026-10-08
+
+This page separates source implementation from the historical target diagram below. The [reviewed proposal](../knowledge-base/01-working/long-term-architecture-2026-10-07/04-architecture-proposal.md) is PROPOSED, not owner-approved. Pinned upstream evidence is Jellyfin/Web v10.11.11, accessed 2026-10-08. Production playback, complete installation and recovery remain UNVERIFIED.
 
 ## Overview — three thin pieces around one server
 
-**The server + its open dataset are the product; the plugin and PWA are thin clients.** A thin C# `IMediaSegmentProvider` plugin pulls community-tagged segments from a small self-hostable Go API server and emits them as native Jellyfin Media Segments, so unmodified clients render skip buttons. A companion PWA reads live playback position and submits new segments back. Everything crossing the wire is timestamps + categories + edit-decisions — never A/V (R01, the legal keystone).
+**The server + its open dataset are the product; the plugin and PWA are thin clients.** A thin C# `IMediaSegmentProvider` plugin pulls community-tagged segments from a small self-hostable Go API server and emits them as native Jellyfin Media Segments, as experimental Unknown intervals, without establishing native skip-button or default filtering behavior. A companion PWA reads live playback position and submits new segments back. Everything crossing the wire is timestamps + categories + edit-decisions — never A/V (R01, the legal keystone).
 
-## Component diagram
+## Historical target diagram — not a shipped-component inventory
+
+The diagram's native-skip, EDL, mirror, Litestream and binary/systemd arrows are unverified/proposed targets. Current provider requests exact fingerprints, not the prefix route. UI embedding, exports, import/replication and complete one-command installation are not established. Metadata-only distribution is a scope boundary, not legal clearance.
 
 ```
                        SUBMIT: POST /api/v1/segments (fingerprint, start, end, category)
@@ -37,11 +43,11 @@
      one `docker compose up`  |  or binary + systemd
 ```
 
-_Response-filtering reverse-proxy for real per-profile enforcement (R13) is **deferred** — segments are still global per item; the plugin's own write controller (R14) and cross-rip calibration are later slices._
+_Correction: a response proxy could select per-user metadata, not enforce playback. Segments remain global per item. The current custom write controller forwards submissions to the API; live insertion, policy and calibration are not established._
 
 ## How it works — the two loops
 
-**Read (filter) loop.** The plugin's `GetMediaSegments(item)` resolves the local file to a release **fingerprint** — the real OpenSubtitles **moviehash** (`osh:` + filesize/first+last-64 KiB, `jf:<ItemId>` fallback, R04) — then fetches matching community segments over `GET /api/v1/segments?fp=<fingerprint>` (or the privacy-preserving hash-prefix query, below) and emits native Jellyfin Media Segments. Because no content-filter segment *type* exists, each is emitted as `MediaSegmentType.Unknown` and the real category/action stays in cleanyfin's own DB (R14). Clients (Web full; Android TV 0.18+) render Skip / Ask-to-skip natively — the plugin does not touch client UI, exactly like Intro Skipper (`jellyfin-integration-mechanics.md` F3–F4). Category → action is a default on the segment, resolved to the real action by the viewer's profile at playback (R06).
+**Read (filter) loop.** The plugin's `GetMediaSegments(item)` resolves the local file to a release **fingerprint** — the real OpenSubtitles **moviehash** (`osh:` + filesize/first+last-64 KiB, `jf:<ItemId>` fallback, R04) — then fetches matching community segments over `GET /api/v1/segments?fp=<fingerprint>` (or the privacy-preserving hash-prefix query, below) and emits native Jellyfin Media Segments. Because no content-filter segment *type* exists, each is emitted as `MediaSegmentType.Unknown` and the real category/action stays in cleanyfin's own DB (R14). Web v10.11.11 defaults Unknown to None and requests enabled types only. Its nonzero-start short-span and seek-back guards require testing; configured Unknown is not proven impossible. Category/action are discarded by the provider, and no household-profile resolver is implemented. A native convenience-segment analogy does not establish filtering compatibility.
 
 **Write (mark) loop.** The PWA authenticates to Jellyfin, polls `/Sessions` for the active `PlayState.PositionTicks` (`tech-stack-and-devops.md` F6), resolves the file's fingerprint by calling the plugin's `GET /Cleanyfin/Fingerprint?itemId=…` (the browser can't read file bytes, so the plugin computes the same moviehash the provider queries), lets the viewer stamp in/out + a category, and POSTs the segment to `POST /api/v1/segments`. It is a *side-car*, not a client plugin — there is no official Jellyfin client UI-extension API, so marking runs alongside the player (`jellyfin-integration-mechanics.md` F9, R4).
 
@@ -49,10 +55,12 @@ _Response-filtering reverse-proxy for real per-profile enforcement (R13) is **de
 
 What ships on `main` after Phase 3 slices 1–4 (the rest of this file describes the target design):
 
-- **Go API** — `GET /healthz`, `GET /readyz`, `GET /api/v1/stats`; `GET /api/v1/segments?fp=<fingerprint>` (exact match, R04); `GET /api/v1/segments/hash/{prefix}` (4–16 hex chars of `SHA-256(fingerprint)`, k-anonymity — returns every fingerprint sharing the prefix grouped by fingerprint, client filters locally, so the server never learns the title, R08); `POST /api/v1/segments` (submit, fixed-taxonomy validated, R05/R06); `POST /api/v1/segments/{id}/vote` (auto-hide at score ≤ −2, R08). A CORS middleware (`CLEANYFIN_CORS_ORIGIN`, default `*`) lets the separate-origin PWA call it.
+- **Go API** — `GET /healthz`, `GET /readyz`, `GET /api/v1/stats`; `GET /api/v1/segments?fp=<fingerprint>` (exact match, R04); `GET /api/v1/segments/hash/{prefix}` (4–16 hex chars of `SHA-256(fingerprint)`, returns matching fingerprints grouped by fingerprint; local filtering reduces query specificity but guarantees no anonymity set, R08); `POST /api/v1/segments` (submit, fixed-taxonomy validated, R05/R06); `POST /api/v1/segments/{id}/vote` (auto-hide at score ≤ −2, R08). A CORS middleware (`CLEANYFIN_CORS_ORIGIN`, default `*`) lets the separate-origin PWA call it.
 - **Plugin** — `CleanyfinSegmentProvider : IMediaSegmentProvider` (Jellyfin.Controller 10.11.11 / net9.0) fetches by fingerprint and emits `MediaSegmentType.Unknown`; a `FingerprintController` exposes `GET /Cleanyfin/Fingerprint?itemId=…` that computes the file's moviehash so the PWA submits under the *same* fingerprint.
 - **PWA** — Vite + TypeScript static app; polls `/Sessions`, resolves the fingerprint via the plugin, POSTs marks.
-- **Deferred:** the response-filtering reverse-proxy for real per-profile enforcement (R13) is **not** built — segments stay global per item; the plugin's own thin write controller (R14) and cross-rip calibration offset are later slices.
+- **Implemented since slice 5:** visible-only dump and authenticated plugin forwarding controller. Pending rows are public; API submitter strings are unauthenticated.
+- **Proposed/unverified:** private policy, curated views, import/replication, calibration, embedded UI, release installation and recovery.
+- **Refresh caveat (source inference, not reproduction):** if an enabled supporting provider runs with existing rows, catches a fetch failure into empty output and deletion remains executable with a usable parent cancellation token, ordinary Jellyfin refresh can delete that provider's materialization. Force-overwrite deletes all item rows before providers run; later insertion failure can leave incomplete replacement. Canonical API annotations are separate. E2 must test cancellation, disabled/no-refresh controls and mid-insertion failure; no preservation fix is implemented.
 
 ## Component boundaries
 
@@ -62,9 +70,17 @@ What ships on `main` after Phase 3 slices 1–4 (the rest of this file describes
 | API server | Go, single static binary, `modernc.org/sqlite`, `embed.FS` | The crowdsourced DB, submit/vote/moderation, serves the PWA | CGo-free single artifact = strongest "super-easy setup" story (Hard Constraint #2) |
 | Marking PWA | Vite + TypeScript, static build | Reads live position, resolves the fingerprint via the plugin, submits segments | Static export embeds into the Go binary → one process, one port |
 
-Distribution: plugin via a static `manifest.json` repo (GitHub Releases/Pages, auto-built in Actions); server via GHCR image / raw binary+systemd / `docker compose up`. See [20-ROADMAP](./20-ROADMAP.md) Phase 3 and [22-DATA-MODEL](./22-DATA-MODEL.md) for the segment schema.
+Distribution correction: current compiled target is net9.0/Jellyfin.Controller 10.11.11; other ABI tuples are unverified. The table's embedded UI and one-process distribution are proposed. Compose covers the API; manifest checksum/release completeness and binary/systemd installation require E6. See [20-ROADMAP](./20-ROADMAP.md) Phase 3 and [22-DATA-MODEL](./22-DATA-MODEL.md) for the segment schema.
 
-## Limitations / honest gaps
+## Current limits — supersede the historical limitation bullets below
+
+- Metadata selection or remote commands alone are not unbypassable playback enforcement. Owner-approved sequencing (2026-10-08) targets dependable filtering on explicitly supported cooperative clients first; playback correctness remains experiment-gated. Server-side enforcement/bypass resistance is retained longer term, not a first-release prerequisite. Threat model and design remain open; no claim covers a server administrator or someone controlling the media.
+- Provider output is Unknown plus tick span, not nearest-category translation or rich mute/skip/mark. Pinned Web has skip/prompt behavior; remote Seek/Mute/Unmute commands do not supply a scheduler. Generic Kodi/mpv EDL equivalence is rejected; sidecars need not require a writable media mount.
+- Current one-connection Store serializes reads as well as writes; dumps accumulate the visible corpus in memory. Capacity remains unmeasured.
+- modernc.org/sqlite v1.34.1 documents engine 3.46.0. The WAL-reset advisory requires multiple same-file connections and narrowly timed write/checkpoint/reset overlap; the sole current connection or a separate backup destination does not establish it. Proposed fixed-engine gate: verify runtime engine and all same-file actors, then test a fixed driver before increasing concurrency. No current corruption/reproduction is claimed.
+- Use completed consistent SQLite backup or verified quiescence, preserve WAL and verify fresh application restore. A public dump is not recovery state.
+
+## Historical limitation bullets (superseded above, retained for traceability)
 
 - **Per-profile enforcement gap.** Segments are **global per item**, not per-user; segment *actions* are chosen per-client, not enforced as a server-side per-profile ACL (`jellyfin-integration-mechanics.md` F10, R5). So "per-profile category settings" and "per-title bypass" are **not** natively enforced. **v1 stance:** accept client-cooperative opt-in and be honest about the trust boundary; a real per-user enforcement layer is a fast-follow pending **Spike A** (does a 10.11 plugin enforce server-side, or only cooperate?). See [20-ROADMAP](./20-ROADMAP.md).
 - **No native mute.** Jellyfin has no client mute action as of 10.11 — only skip-style. VidAngel-style word-mute is not possible on native clients yet (R07). **v1 = SKIP-only** on Web + Android TV; skip drops both audio and video for the span.

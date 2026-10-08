@@ -2,17 +2,17 @@
 
 > 🌳 Substantive content (not a thin pointer). This is cleanyfin's differentiator — the "translation layer" that makes a crowdsourced timestamp portable across everyone's different rips. Distilled from [`../knowledge-base/01-working/tagging-taxonomy-and-data-model.md`](../knowledge-base/01-working/tagging-taxonomy-and-data-model.md) and [`../knowledge-base/01-working/federation-architecture.md`](../knowledge-base/01-working/federation-architecture.md). Primitives are defined in [`./03-CONCEPTS.md`](./03-CONCEPTS.md); this file gives the concrete schema. Decisions: R04–R06, R08, R09.
 
-> **Correction (2026-07-21, Spike B → R14):** the *shipped* Jellyfin `MediaSegmentDto` carries only `Id, ItemId, Type, StartTicks, EndTicks` — **no `Action`, `StreamIndex`, or `Comment`** (those were in the design proposal, not the release). So cleanyfin's rich fields (**severity, action, category, votes, provenance**) live **entirely in cleanyfin's own DB** (below); when emitting to Jellyfin we set only `Type` + tick span, and the *action* is resolved by the client's per-type setting, by cleanyfin's [response-filtering proxy (R13)](./41-QUESTIONS-RESOLVED.md), or via EDL export. Read any "→ Jellyfin `Action.Mute`" mapping below in that light.
+> **Correction (2026-07-21, Spike B → R14):** the *shipped* Jellyfin `MediaSegmentDto` carries only `Id, ItemId, Type, StartTicks, EndTicks` — **no `Action`, `StreamIndex`, or `Comment`** (those were in the design proposal, not the release). So cleanyfin's rich fields (**severity, action, category, votes, provenance**) live **entirely in cleanyfin's own DB** (below); when emitting to Jellyfin we set only `Type` + tick span, and the current provider emits Unknown while discarding submitted action/category. A metadata proxy cannot execute actions; pinned Web v10.11.11 defaults Unknown to None. Native Action.Mute/Skip fields and generic Kodi/mpv EDL equivalence are rejected. Dated reconciliation: 2026-10-08; see the [reviewed proposal](../knowledge-base/01-working/long-term-architecture-2026-10-07/04-architecture-proposal.md), which remains PROPOSED.
 
 ## Overview — what this covers
 
-The whole point of the project is that **one person tags a scene once and it works on everyone's copy of the film.** That only holds if segment timing is decoupled from any physical file. The model does this in three layers:
+**PROPOSED portability goal:** reuse annotations only after an explicitly verified asset-to-timeline binding. It is not established for arbitrary copies/cuts. The following three-layer model and offset diagram are historical design sketches, not implemented calibration:
 
 1. **`title`** — the abstract work (TMDB/IMDb id, name, year). Metadata only.
 2. **`release`** — one specific encode/cut of that title, identified by a content **fingerprint**. Segments are keyed here.
 3. **local file** — the household's actual copy, resolved to a `release` plus a per-file **calibration offset**. This layer lives on the client, not in the shared DB.
 
-Times are stored **once, canonically, as integer milliseconds** and translated to Jellyfin ticks or EDL seconds only at the export boundary — so float drift and rounding bugs never enter the DB.
+Times are stored **once, canonically, as integer milliseconds** and translated to Jellyfin ticks or EDL seconds only at the export boundary — with proposed checked numeric bounds and conversion; integer storage alone does not prove arithmetic or mapping correctness.
 
 ## How It Works — release keying + 3-tier calibration (R04)
 
@@ -29,17 +29,21 @@ Times are stored **once, canonically, as integer milliseconds** and translated t
                           Jellyfin ticks = ms × 10000  |  EDL = ms / 1000.0 (float sec)
 ```
 
-**Calibration is solved in three escalating tiers — cheapest first (R04):**
+**Historical calibration hypotheses (R04), not solved matching — correction 2026-10-08:**
+
+Runtime buckets, duration and sampled ends only locate candidates; they cannot prove equivalent cuts. Offsets require distributed matching anchors, drift a tested rate mapping, and edits bounded piecewise mappings. Do not extrapolate or over-filter guessed boundaries. Wrong/unknown bindings require refusal or explicitly authorized unfiltered playback. All tiers below are PROPOSED/UNVERIFIED.
 
 | Tier | Method | Cost | When it runs |
 |---|---|---|---|
-| 1 | **Identity match** — title id + runtime bucket (±2s) → the right `release` | ~free | always; the common popular-encode case just works |
+| 1 | **Candidate lookup only** — title/runtime/hash cannot verify the right timeline | unmeasured | explicit binding validation required |
 | 2 | **User offset** — one adjustable `calibration_offset_ms` slider per file | trivial | when tier-1 is close but shifted a few seconds |
 | 3 | **Chromaprint audio anchor** (opt-in v2) — fingerprint a short region near a known segment, locate it locally, derive the offset automatically | adds fpcalc/FFmpeg dep | opt-in accelerator only |
 
 **Fail-safe on low confidence (R04):** if fingerprint + duration don't confidently resolve to a release, cleanyfin surfaces *"no verified data for this exact file"* and prefers over-filtering or a confirmation prompt over silently applying possibly-wrong timings. A missed mute in a family-safety tool is a trust-breaker. Note tiers 1–2 only correct a **fixed** offset; progressive drift (23.976 vs 25 fps PAL) needs ffsubsync-style alignment, out of scope for v1.
 
-## Implementation — SQL sketch
+## Historical normalized SQL sketch — PROPOSED, not current schema or an approved migration
+
+The sketch's published default, global vote precedence and claimed submitter IDs are not accepted safety contracts. A UUID is not a content digest. Proposed publication requires explicit authority acceptance; curation binds origin/annotation ID, reviewed content revision/digest and timeline-binding revision. Mutation preserves historical decisions but re-evaluates applicability; local-copy behavior after deletion/reappearance is owner-controlled.
 
 ```sql
 -- The abstract work. Metadata only, never media.
@@ -120,11 +124,15 @@ CREATE INDEX idx_release_match   ON release(title_id, runtime_ms);
 The SQL above is the *target* normalized model. What ships on `main` after Phase 3 slices 1–4 is a deliberately flattened subset:
 
 - **Live — real moviehash (`osh:`).** The fingerprint is the OpenSubtitles **moviehash** the plugin computes per file (`osh:` + filesize/first+last-64 KiB; `jf:<ItemId>` fallback when the bytes can't be read), replacing the earlier `jf:ItemId` placeholder (R04). The PWA resolves the *same* fingerprint via the plugin's `GET /Cleanyfin/Fingerprint`.
-- **Live — hash-prefix k-anonymity.** A `fingerprint_hash` column (`SHA-256(fingerprint)`, indexed, backfilled on migrate) backs `GET /api/v1/segments/hash/{prefix}`, so a client can fetch by a 4–16 hex-char prefix and the server never learns the exact title (R08, the SponsorBlock privacy model).
+- **IMPLEMENTED prefix lookup:** 4–16 hex chars of SHA-256(fingerprint), returning full matching fingerprints; no minimum anonymity set or exact-title secrecy is guaranteed. The plugin uses exact lookup.
 - **Live but flattened.** Segments live in a single `segment` table keyed **directly on the `fingerprint` string** (plus a `vote` table) — not yet split into `title`/`release`. `duration_ms` is carried inline on the segment instead of via a `release` FK.
-- **Still schematic (not yet built):** the normalized `title`/`release` split and the 3-tier **calibration** offset; the `curator` and `filter_profile` tables; and any public-**dump** producers/consumers. Read those tables above as the destination, not the current DB.
+- **IMPLEMENTED dump:** visible-only records, not raw votes/hidden state or a private backup. No importer, replication, private overlays or curator/profile resolver is implemented.
+- **Publication:** new rows are pending but exact/prefix/dump reads include non-hidden rows with votes > -2; pending is not quarantine. Submitter strings are unauthenticated claims.
+- **PROPOSED:** normalized work/asset/timeline binding, revision-bound curation, private policy and checked `0 <= start < end <= verified duration`; unknown duration is unresolved. Current lookup checks fingerprint only, not duration.
 
-## Implementation — a segment as JSON (query/dump wire shape)
+## Historical normalized JSON example — PROPOSED, not query/dump wire reality
+
+Current segment fields are `id`, `fingerprint`, `durationMs`, `startMs`, `endMs`, `category`, `severity`, `action`, `submitterId`, `votes`, `status`, `createdAt`. Spans/duration are milliseconds; `createdAt` is Unix seconds (`store.go:26–38,139–144`). Exact reads wrap `fingerprint` and `segments`; dump wraps `generatedAtUnix`, `count`, `segments`. The normalized example below is not an API payload or authorship/consent record.
 
 ```json
 {
@@ -155,16 +163,16 @@ The SQL above is the *target* normalized model. What ships on `main` after Phase
 
 | Target | start | action mapping |
 |---|---|---|
-| Jellyfin `MediaSegment` | `StartTicks = start_ms × 10000` | `mute → Action.Mute`, `skip → Action.Skip`, `mark → Action.None` (Type = Annotation) |
-| Kodi/mpv `.edl` | `start_ms / 1000.0` (float sec) | `mute → 1`, `skip → 3` (or `0`), `mark → 2` |
+| Current Jellyfin provider | milliseconds × 10000; bounds not yet established | Unknown plus tick span; submitted actions discarded |
+| Proposed player-specific exports | adapter-defined units/timeline | Kodi and mpv need distinct formats and action tests; no generic equivalence |
 
-If a client ignores `Action` and only skips, the export layer degrades **predictably** — a muted-dialogue segment falls back to `skip` only with explicit user consent, since skipping muted dialogue removes plot (R06 caveat).
+PROPOSED: unsupported actions require explicit authorized substitution or refusal; no silent mute-to-skip conversion. The current provider does not enforce this contract.
 
 ## Limitations / Trade-offs (honest)
 
-- **moviehash is a speed hash** — collides on same-size/same-ends files and breaks on re-mux, so exact-file coverage can be sparse. Runtime-bucket identity (tier 1) widens it; Chromaprint (tier 3, v2) generalizes across rips.
+- **moviehash is a speed hash** — collides on same-size/same-ends files and breaks on re-mux, so exact-file coverage can be sparse. Runtime buckets only widen candidate lookup; neither they nor an audio fingerprint prove cross-cut timeline equivalence.
 - **Distinct cuts genuinely need distinct `release` rows and distinct segments.** Auto-matching the wrong cut silently mis-times filters — hence the fail-safe prompt.
 - **A single global offset can't fix progressive drift** (framerate mismatch), only a fixed shift.
-- **`auto_suggested` segments are never trusted** until a human confirms (R10) — the data model enforces the quality gate, it doesn't replace it.
+- **PROPOSED suggestion-only gate:** explicit human acceptance must govern curated views. Current non-hidden/vote-threshold queries do not enforce published-only reads (R10).
 
 See open modeling debates (blur/crop, severity-vs-sub-flags, fingerprint choice) in [`./40-QUESTIONS-OPEN.md`](./40-QUESTIONS-OPEN.md); how these tables are populated and moderated in [`./23-CONTRIBUTION-WORKFLOWS.md`](./23-CONTRIBUTION-WORKFLOWS.md).

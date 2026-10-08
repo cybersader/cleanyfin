@@ -5,8 +5,10 @@ sidebar:
   order: 5
 ---
 
-:::note[Update 2026-07-21]
-The two Spike questions are now **resolved** — enforcement ([Spike A](/cleanyfin/research/spike-a-enforcement/) → R13) and the segment write API ([Spike B](/cleanyfin/research/spike-b-segment-write-api/) → R14). The **only remaining hard gate before code is the data license.**
+:::caution[Owner sequencing decision — 2026-10-08]
+The first-release target is dependable cooperative filtering on explicitly supported clients. Genuine server-side enforcement/bypass resistance remains a **longer-term roadmap objective**, not a first-release prerequisite or an abandoned goal. Its threat model, media-access controls, implementation and feasibility remain open; metadata filtering alone does not enforce playback.
+
+The July snapshot below is historical where it conflicts with the [current roadmap](/cleanyfin/project/roadmap/). Its earlier claims that enforcement was resolved and the data license was the only gate are superseded: R15 records the license selection, while playback and recovery still require validation.
 :::
 
 > 🌳 **Live here** — this is real content, not a pointer stub. These are the genuinely-unresolved calls gating real code, synthesized from every deep-dive's "Open Questions" plus the two feasibility spikes in [Roadmap](/cleanyfin/project/roadmap/). Settled decisions live in [Decisions (resolved)](/cleanyfin/project/decisions/) (R01–R12); when one of these locks, move it there and update FOCUS.md + PROJECT_CONTEXT.md in the same session.
@@ -22,7 +24,7 @@ The single most time-sensitive call. It is effectively **irreversible** for a cr
 
 ### Q3 — Enforcement spike: does the plugin enforce per-profile server-side? (**Spike A**)
 Media Segments are global per library item; there may be no server-side hook that forces a kid's client to honor the filter. This determines whether the plugin is the **enforcement point** or just a settings/EDL/segment *provider*.
-- **Lean:** Run a small spike against Jellyfin 10.11 before committing architecture. If server-side per-profile enforcement is limited, fall back to a client-cooperative EDL/segment-delivery model (SponsorBlock-style) and be honest about the trust boundary — see [Trade-offs](/cleanyfin/project/tradeoffs/) #6. A true per-user layer becomes a fast-follow, not an MVP blocker.
+- **Sequencing settled; enforcement design open:** cooperative filtering on supported clients is the first-release target, not merely a fallback. Retain server-side enforcement as a separately gated longer-term track. Before claiming it, define the threat/authorization boundary and test original-media routes, alternate clients, downloads/file shares, compatibility, operating cost and failure/recovery behavior, with applicable legal review. Neither a metadata proxy nor remote commands alone makes playback unbypassable; no protection against a server administrator or someone controlling the media is implied.
 - *Sources:* [tech-stack-and-devops](/cleanyfin/research/tech-stack/), [jellyfin-integration-mechanics](/cleanyfin/research/jellyfin/) Open Qs.
 
 ### Q4 — Exact 10.11+ segment write API (**Spike B**)

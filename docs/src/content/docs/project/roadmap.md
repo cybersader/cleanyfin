@@ -5,8 +5,8 @@ sidebar:
   order: 1
 ---
 
-:::note[Update 2026-07-21 — spikes resolved]
-The two Phase-1 feasibility spikes are **done** (verified vs Jellyfin 10.11 source): **enforcement** ([Spike A](/cleanyfin/research/spike-a-enforcement/) → R13) and **segment write path** ([Spike B](/cleanyfin/research/spike-b-segment-write-api/) → R14), plus a wider client-support picture ([Spike C](/cleanyfin/research/spike-c-client-support/) → R07 updated). The **docs site is live** (this site). The sole remaining gate before code is the **data-license** decision.
+:::caution[Correction 2026-10-08 — source progress is not runtime validation]
+Components exist; R15 records CC0 data/AGPL code. July spikes/builds are historical evidence, not current playback, installation, recovery or legal validation. Production protection promises remain gated. **Owner-approved sequencing (2026-10-08):** dependable filtering on explicitly supported cooperative clients is the first-release target; server-side enforcement/deliberate-bypass resistance is retained LONGER TERM, not a first-release prerequisite. The rest of the research roadmap (repository file: `knowledge-base/01-working/long-term-architecture-2026-10-07/05-roadmap-and-experiments.md`) remains PROPOSED; E1–E12 and builds were not run here. No client/actions, technique, failure policy, exposure tolerance, timing/SLO targets, trust/privacy or recovery/maintenance budgets, public launch or legal clearance are approved by this sequencing decision. The research file is not a published docs-site route.
 :::
 
 > 🌳 **Live here** — an operating view, not a pointer stub. Phases with explicit exit criteria and a hard line on what is DEFERRED. Backed by the 2026-07-21 research fan-out (the six deep-dives under `knowledge-base/01-working/`). When a phase completes or direction shifts, update this file + FOCUS.md in the same session.
@@ -25,24 +25,24 @@ Six-dimension research fan-out complete (legal, prior-art, Jellyfin integration,
 
 ---
 
-## Phase 1 — De-risk BEFORE committing architecture (NEXT)
+## Phase 1 — Historical spikes; runtime/product gates reopened 2026-10-08
 
-Three gating investigations. No golden-path code until these close.
+Source investigations below are historical questions, not live-test results or a reopened license selection. R15 remains recorded; cooperative first-release scope is owner-approved, with enforcement retained longer term. Exact tuple/actions, exposure tolerance and failure behavior remain open.
 
 **Spike A — Enforcement model.** Can a Jellyfin 10.11 plugin actually enforce per-profile skip/mute on the server-side playback path, or is enforcement only client-cooperative (client reads segments, client decides the action)? Segments are global per media item and actions are chosen per-client, so "per-profile filtering" may not be natively enforceable ([jellyfin-integration-mechanics](/cleanyfin/research/jellyfin/) F10, R5). This determines whether the plugin is the *enforcement point* or just a *segment/EDL provider*. Relates to (R02) and the open per-profile question.
-- *Exit:* a written verdict — server-side-enforceable, or client-cooperative-only — plus the chosen v1 stance and its honest trust boundary.
+- *Correction:* provider generation is user-blind. Metadata selection is not enforcement; original-media access bypasses it. Owner chose cooperative filtering first and retained server-side enforcement/bypass resistance longer term; actual scope/design and evidence gates precede enforcement claims.
 
-**Spike B — Segment write path.** Confirm the exact Jellyfin 10.11+ HTTP route + payload to CREATE and DELETE Media Segments, now that `jellyfin-plugin-ms-api` was absorbed into Intro Skipper ([jellyfin-integration-mechanics](/cleanyfin/research/jellyfin/) F8). Needed for the marking PWA's submit path. Assume a POST taking ItemId, Type, StartTicks, EndTicks (+ StreamIndex) behind an admin/API token; verify against the Intro Skipper 10.11 source + api.jellyfin.org OpenAPI.
+**Spike B — Segment write path.** Confirm the exact Jellyfin 10.11+ HTTP route + payload to CREATE and DELETE Media Segments, now that `jellyfin-plugin-ms-api` was absorbed into Intro Skipper ([jellyfin-integration-mechanics](/cleanyfin/research/jellyfin/) F8). Needed for the marking PWA's submit path. Inspected core exposes reads, not this shipped write contract. MediaSegmentDto has Id, ItemId, Type, StartTicks, EndTicks, not StreamIndex/Action/Comment. Current custom controller forwards to the API without establishing immediate materialization.
 - *Exit:* a confirmed request/response contract (route, payload, auth) captured against a running 10.11 server.
 
-**Data-license decision (BEFORE seeding).** Choose the dataset license *before* importing any seed data. CC0/CC-BY (frictionless) vs the CC-BY-NC-SA of MCF and SponsorBlock seed data — these **conflict**, so importing seed data constrains our own license (R11, Q40). Code license lean: AGPL-3.0.
+**Recorded license decision (R15, 2026-07-21).** CC0-1.0 data/AGPL-3.0-or-later code were selected. Verify rights/consent per import; historical alternatives below do not reopen that choice. CC0/CC-BY (frictionless) vs the CC-BY-NC-SA of MCF and SponsorBlock seed data — these **conflict**, so importing seed data constrains our own license (R11, Q40). Code license lean: AGPL-3.0.
 - *Exit:* a written code-license + data-license pair, with a note on which seed sources are compatible.
 
-**Phase 1 exit criteria:** both spike verdicts written + the license pair chosen. Only then does Phase 3 code begin.
+**Historical exit:** source spikes/license selection enabled initial code. **Reopened gates:** live Unknown/actions, timing tolerance, refresh preservation and authorization; documentation changes clear none of them.
 
 ---
 
-## Phase 2 — Public home for the project (can run parallel to Phase 1)
+## Phase 2 — Docs source exists; earlier build/smoke progress not rerun
 
 Stand up the docs site: **Astro + Starlight** at `docs/` (the sibling-project convention, R12), portagenty `docs`/`share-docs`/`tests` sessions already wired. Publish the research so contributors have a canonical public home.
 
@@ -52,19 +52,21 @@ Stand up the docs site: **Astro + Starlight** at `docs/` (the sibling-project co
 
 ## Phase 3 — Thin vertical slice (first code)
 
+**Owner-approved first-release target:** dependable filtering on explicitly supported cooperative clients; actual playback correctness remains UNVERIFIED and gated below. No first client or action set is selected by the sequencing decision.
+
 A demoable end-to-end skip, boring and minimal:
-- **Segment API (Go):** single static binary, `modernc.org/sqlite`, `embed.FS` serving the PWA, SQLite-WAL default. GET (with hash-prefix variant), POST submit, POST vote. (R05, [tech-stack-and-devops](/cleanyfin/research/tech-stack/))
-- **Golden path:** one `docker compose up` (SQLite file on a named volume, `restart: unless-stopped`, `/healthz`) + a no-Docker binary + systemd alternative.
-- **Plugin:** clone `jellyfin-plugin-template`; thin C# `IMediaSegmentProvider` whose `GetMediaSegments` fetches from the Go API and emits native segments (R02). Ship a `manifest.json` repo.
+- **IMPLEMENTED API:** Go/SQLite exact/prefix reads, submit/vote and visible dump. Pending is public; submitter labels unauthenticated; prefix lookup guarantees no anonymity. Embedded UI/curated views remain PROPOSED.
+- **Golden path:** historical Compose smoke covered API only. Full API/UI/plugin/player release installation, binary/systemd and verified restore remain UNVERIFIED.
+- **IMPLEMENTED plugin:** net9.0/Jellyfin.Controller 10.11.11 emits Unknown and discards action/category; Web v10.11.11 defaults Unknown to None. No broad native-client or complete-release guarantee follows.
 - **Marking PWA:** minimal, reads live `/Sessions` `PlayState.PositionTicks` (ticks/10,000,000 = seconds), stamps in/out + category, POSTs a segment via the Spike-B contract.
 
-**Exit criteria:** on a real 10.11 server, a segment marked in the PWA is skipped by a native Web/Android TV client via the plugin — one `docker compose up`, no manual DB steps.
+**Exit criteria (unmet in inspected evidence):** exact tuple/action contract passes E1/E2/E4/E5; E6 proves complete installation. Include ordinary/forced refresh failure and source/profile transitions. API smoke/historical CI are insufficient.
 
 ---
 
 ## Phase 4 — Crowdsourcing + interop + seed
 
-Turn the slice into a community DB: submit / vote / moderate pipeline (account-free pseudonymous IDs, auto-hide at vote ≤ −2, shadowban, curator-lock — R08). MCF (.mcf/WebVTT) + Kodi EDL **import and export** (R11); EDL export gives real mute on Kodi/mpv (R07). Seed the DB from license-compatible open sources; automation writes `status='auto_suggested'` only, human-gated to `published` (R10).
+**PROPOSED:** explicit curated publication, authenticated pseudonymous continuity and bounded review; legacy-publication transition is owner-controlled. Distinct Kodi/mpv adapters need tests. R15 is not rights clearance for imported or automated data.
 
 **Exit criteria:** a non-owner can submit + vote without an account; moderation thresholds enforce; a non-empty seed DB imported under the chosen license; MCF + EDL round-trip verified.
 
@@ -72,19 +74,29 @@ Turn the slice into a community DB: submit / vote / moderate pipeline (account-f
 
 ## Phase 5 — Federation + curators
 
-Publish the full dataset as periodic public dumps; make read-only **mirrors** a first-class, documented feature (sb-mirror pattern, R03). Ship subscribable **curator profiles** inside the one open dataset (subsidiarity without ActivityPub, R09). Design the dump format as signable, curator-scoped bundles now so the signed-Git-bundle upgrade path stays open.
+**IMPLEMENTED:** visible dump. **PROPOSED:** complete origin-scoped snapshots, key-to-scope authorization, atomic dataset-plus-acceptance-history activation and revision-bound private curation; optional mirrors/deltas when measured. Dump download is neither backup nor replication.
 
 **Exit criteria:** a full public dump downloadable; a 5-minute "stand up a read-only mirror" guide works end-to-end; a household can subscribe to a curator profile and see its locked segments win precedence.
 
 ---
 
-## Deliberately DEFERRED (not in the current plan)
+## Longer-term track — Server-side enforcement / deliberate-bypass resistance
 
-- **Native mute** on Web/Android TV — upstream-gated; Jellyfin has no client mute action as of 10.11 ([jellyfin-integration-mechanics](/cleanyfin/research/jellyfin/) F5, R07). Ship skip + EDL-mute; add native mute when jellyfin-meta #30 lands.
-- **Blur / crop / visual masking** for nudity — no Jellyfin primitive exists (F6); schema-reserved, rendered as skip in v1 (R05).
-- **True S2S federation** — ActivityPub / nostr / matrix / shared-DB CRDT sync. Mirrors + public dumps *are* v1 federation (R03, R06). CRDT only as an offline outbox inside the marking client.
-- **Chromaprint audio-anchor auto-align** — cross-rip offset transfer is v2 opt-in; v1 is exact-file match via moviehash + duration, fail-safe on low confidence (R04).
-- **Push-notification bypass approval** — v1 = admin dashboard toggle with expiry.
-- **Postgres** — SQLite until SponsorBlock scale (millions of segments + sustained concurrent writers); keep the schema portable (R05).
+**RETAINED product objective by owner decision, 2026-10-08.** Not abandoned and not a prerequisite for the cooperative first release; no implementation approach or delivery date is approved.
+
+**Entry criteria:** define an explicit threat model and authorization boundary; scope a feasibility spike accounting for original-media access, alternate clients, downloads and file shares, client/format compatibility and operating cost. Scope must be defined in later design; no enforceability against a server administrator or someone controlling the media is claimed.
+
+**Exit criteria before enforcement claims:** evidence from that spike and scoped tests establishes the declared access/authorization boundary, client/format compatibility and affordable operation, reliable failure/recovery behavior and applicable legal review. Metadata filtering or remote commands alone are not unbypassable playback enforcement. This track grants neither DRM/circumvention scope nor legal clearance; actual technique and budgets remain open.
+
+---
+
+## Deliberately DEFERRED (outside current release scope)
+
+- **Playback expansion:** actions, exports, casting/downloads require exact adapter tests; remote commands are not automatic filtering.
+- **Blur/crop/transforms:** deferred; no silent substitution or legal clearance.
+- **Multi-writer/CRDTs:** deferred; durable outbox needs no CRDT.
+- **Alignment:** verified asset/timeline binding first; current lookup omits duration and cut verification.
+- **Exceptions:** authorization, scope, expiry, revocation and audit remain proposed.
+- **Escalation:** bandwidth may motivate deltas; contention may independently motivate database changes. No row-count threshold or mandatory deltas-first ladder proves feasibility.
 
 See [Open Questions](/cleanyfin/project/open-questions/) for the decisions a maintainer still owns, and [Trade-offs](/cleanyfin/project/tradeoffs/) for the honest tensions behind these cuts.
