@@ -90,6 +90,8 @@ The project is documented *before* it's finished — the whole design + research
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for prerequisites and the local CI checks.
+
 Best contribution right now: **read the [knowledge base](https://cybersader.github.io/cleanyfin/) and poke holes in it** — open an issue against any [decision](.claude/41-QUESTIONS-RESOLVED.md) or [open question](.claude/40-QUESTIONS-OPEN.md). Code-wise, the stack is a Go server, a C# Jellyfin plugin, and a PWA — thin slices, each CI-gated. **Only contribute segment data you can place under CC0** (see below).
 
 ## Licensing
