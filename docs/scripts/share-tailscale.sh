@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 # Share the cleanyfin docs dev server over the tailnet for phone/remote viewing.
-#
-# Convention (see the sibling projects): the permanent `tailscale serve` on
-# :8080 owns the HTTPS root `/` for another project, so cleanyfin does NOT
-# take the root. Starlight's base:/cleanyfin also fights `--set-path`, so the
-# clean route for docs is the raw Level-0 port over the tunnel.
 set -euo pipefail
 
-HOST="desktop-vkab06c-1.tail910574.ts.net"
+HOST="${TAILSCALE_HOST:-}"
+if [[ -z "$HOST" ]]; then
+  if ! command -v tailscale >/dev/null || ! command -v jq >/dev/null; then
+    echo 'Install tailscale and jq, or set TAILSCALE_HOST to your tailnet hostname.' >&2
+    exit 1
+  fi
+  if ! HOST=$(tailscale status --json | jq -er '.Self.DNSName | strings | rtrimstr(".") | select(length > 0)'); then
+    echo 'Could not find a tailnet hostname. Connect Tailscale or set TAILSCALE_HOST.' >&2
+    exit 1
+  fi
+fi
+HOST="${HOST%.}"
 PORT="${PORT:-4321}"
 
 cat <<EOF
