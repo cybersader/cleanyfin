@@ -47,6 +47,20 @@ Google TV emulator (`cleanyfin-test`, Android 16, arm64, headless), disposable J
 
 Reading (INFERRED): the blocker is not mpv or the EDL but the item's missing stream metadata, which makes the client choose transcoding. Untested ways around it that keep Cleanyfin out of the client business: (1) the Cleanyfin server plugin supplies a media source for the item with the original's stream metadata and the EDL as its path, so the client chooses direct play; (2) a trusted local mpv script in the client's config directory rewrites the open URL to the kept-range EDL; (3) the Wholphin maintainer's remote-`.strm` work (#1527) changes how such items are probed. None of these has been tried.
 
+## Follow-up test, 2026-11-21: same item, but with the original's stream metadata
+
+Same emulator, lab and unmodified Wholphin 1.1.2 (mpv backend; `mpv.conf` set to `hwdec=no`, `vo=gpu`, `gpu-context=android`, `opengl-es=yes` so the headless emulator draws). To imitate what a server plugin could supply, the lab file server answered one URL two ways: the Jellyfin server's probe (`Lavf/61.7.103`) received the original MP4, the client (`libmpv`) received the EDL text, whose two entries point at a second URL that always returns the original. No edited video existed anywhere.
+
+**Result: with stream metadata present, Wholphin played the cut list directly and the cut was applied.**
+
+- PlaybackInfo advertised a 20 s MP4 with H.264/AAC. Wholphin logged `Playback decision ...: DirectPlay` (it had logged `Transcode` when the item had zero streams). libmpv fetched the EDL text, then the original (`bytes=0-`, HTTP 206). No server transcode, no mpv safety refusal, no unfiltered fallback.
+- Picture: control showed 65 marked barcodes in the screen recording and red in 8 of 44 screencaps. The cut item showed zero marked barcodes (recording at 15 fps) and zero red in 48 screencaps (2 Hz). Readable frames spanned 14.93 s, consistent with the 14.96 s filtered timeline.
+- Seeking: D-pad forward landed on source frame 301 (7.00 s on the filtered clock), back landed on frame 50; no marked frame in either. The player bar followed about 15 s, not the advertised 20 s. Jellyfin's live session showed the filtered-clock position.
+
+Limits: the 15 fps recording missed nine kept frames near the join in the cut run and nine in the control as well, so loss of kept material at the join is not measured here; sound was not measured; mpv downloaded the whole original including the marked bytes (it presents only the kept ranges; whether it decoded the rest internally is unknown); no resume bookmark was stored (the lab's 300 s minimum applied), so resume mapping is untested; mpv's own demuxer log could not be captured. Confirming the workaround does not prove missing streams were the only cause of the earlier transcode decision. Emulator only.
+
+What this implies for design (INFERRED): a Cleanyfin server component that (1) exposes a filtered item whose media source carries the original's stream metadata and (2) serves a per-item text cut list to the player would let an unmodified, third-party-maintained mpv client play a cut timeline with no edited media stored or streamed. Open points: how a real plugin supplies that metadata (media source provider, or a `.strm` plus stored media info), authentication for the two URLs, the 20 s vs 15 s runtime mismatch, resume and watched-state mapping, sound at the join on Android, and other mpv-based clients (Streamyfin, JellyPlay).
+
 ## Not verified
 
 Whether Jellyfin will advertise an EDL descriptor as direct play; script provisioning on a production TV; accuracy on the physical onn. 4K Pro; source-time resume mapping; audio at the joins on Android; any maintainer's willingness to support filtering.
