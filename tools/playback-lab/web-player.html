@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Cleanyfin · timestamp playback lab</title>
+<style>body{font:16px system-ui;max-width:48rem;margin:2rem auto;padding:0 1rem;background:#17191d;color:#f4f6ff}video{width:100%;background:black}button{padding:.6em 1em;margin:.5em .4em .5em 0}output{display:block;margin:1em 0}pre{white-space:pre-wrap}</style>
+<h1>Timestamp playback lab</h1>
+<p>Blue → marked red → green. Both players read the same synthetic file. The filtered timeline omits the middle fragment; it does not wait to see it before issuing a skip.</p>
+<button id="original">Original control</button><button id="filtered">Filtered timeline</button>
+<button id="seek" disabled>Seek to marked source time (4 s)</button><button id="test">Run playback checks</button>
+<output id="status" aria-live="polite">Ready</output><video controls playsinline></video><pre id="results"></pre>
+<script type="module" src="./web-check.js"></script></html>
