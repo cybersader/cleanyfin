@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../delivery/Cleanyfin.Delivery/Cleanyfin.Delivery.csproj" />
     <!-- Provided by the Jellyfin server at runtime; referenced here to compile. -->
     <PackageReference Include="Jellyfin.Controller" Version="10.11.11" />
   </ItemGroup>

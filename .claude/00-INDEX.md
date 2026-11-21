@@ -23,6 +23,7 @@
 | [05-EXISTING-WORK](./05-EXISTING-WORK.md) | The direct competitor(s) and cleanyfin's opening | `prior-art-and-oss-competitors.md` |
 | [10-VISION-SHORT](./10-VISION-SHORT.md) / [11-VISION-LONG](./11-VISION-LONG.md) | Where this goes, short + long | all |
 | [12-PRINCIPLES](./12-PRINCIPLES.md) | The rules every design decision is checked against | all |
+| [13-DELIVERY-PATTERN](./13-DELIVERY-PATTERN.md) | PROPOSED: source-bound plan, measured adapter, no silent fallback | `delivery-design-2026-11-21/01-plan-and-mpv-adapter-design.md` |
 | [20-ROADMAP](./20-ROADMAP.md) | Phases, the two feasibility spikes, exit criteria | all |
 | [21-ARCHITECTURE](./21-ARCHITECTURE.md) | Plugin + server + PWA; how the pieces fit | `jellyfin-*`, `tech-stack-*`, `federation-*` |
 | [22-DATA-MODEL](./22-DATA-MODEL.md) | The keystone: segment/release schema + version calibration | `tagging-taxonomy-*`, `federation-*` |

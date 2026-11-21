@@ -1,0 +1,24 @@
+{
+  "version": 0,
+  "source": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "frames": 500,
+    "fps": 25,
+    "sampleRate": 48000
+  },
+  "cuts": [
+    {
+      "startFrame": 137,
+      "endFrame": 263,
+      "startMs": 5480,
+      "endMs": 10520,
+      "muxedVideo": {
+        "timeBase": "1/12800",
+        "firstMarkedPts": 70144,
+        "firstMarkedPtsTime": "5.480000",
+        "lastMarkedPts": 134144,
+        "lastMarkedPtsTime": "10.480000"
+      }
+    }
+  ]
+}

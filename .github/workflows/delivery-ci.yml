@@ -1,0 +1,36 @@
+name: delivery-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'delivery/**'
+      - 'tests/Delivery.Contract.Tests/**'
+      - '.github/workflows/delivery-ci.yml'
+  pull_request:
+    paths:
+      - 'delivery/**'
+      - 'tests/Delivery.Contract.Tests/**'
+      - '.github/workflows/delivery-ci.yml'
+
+concurrency:
+  group: delivery-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Plan contract and timeline
+        run: dotnet test tests/Delivery.Contract.Tests --filter Category=Plan
+
+      - name: mpv translation
+        run: dotnet test tests/Delivery.Contract.Tests --filter Category=Mpv

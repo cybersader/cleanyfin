@@ -10,6 +10,7 @@ Tailscale account, or private configuration.
 | Web app (`pwa/`) | Bun | `bun install --frozen-lockfile` → `bun run build` (TypeScript and Vite) |
 | Server (`server/`) | [Go](https://go.dev/dl/) 1.23, as specified in [`server/go.mod`](server/go.mod) | `go vet ./...` → `CGO_ENABLED=0 go build ./...` → `go test ./...` |
 | Jellyfin plugin (`plugin/`) | [.NET SDK](https://dotnet.microsoft.com/download) 9.0.x | `dotnet restore` → `dotnet build -c Release --no-restore` |
+| Delivery contract (`tests/Delivery.Contract.Tests/`) | [.NET SDK](https://dotnet.microsoft.com/download) 9.0.x | `dotnet test --filter Category=Plan` → `dotnet test --filter Category=Mpv` |
 
 On Ubuntu with all four toolchains installed, run every CI check from the root:
 
