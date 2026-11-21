@@ -17,6 +17,7 @@
     <None Include="../../delivery/schema/*.schema.json" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../../plugin/AuthRange/ShelfRow.cs" Link="ShelfRow.cs" />
     <Compile Include="../../plugin/AuthRange/GrantTable.cs" Link="GrantTable.cs" />
   </ItemGroup>
 </Project>

@@ -18,6 +18,7 @@ internal sealed class GrantTable<T>(TimeProvider clock, int capacity = 64) where
     private readonly Dictionary<string, Row> _rows = new(StringComparer.Ordinal);
     private readonly byte[] _key = RandomNumberGenerator.GetBytes(32);
     private DateTimeOffset _watermark;
+    internal long Issued { get; private set; }
 
     internal static string Hash(string s) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(s)));
     internal static bool IsHandle(string? s) => s is { Length: 32 } && s.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
@@ -37,6 +38,7 @@ internal sealed class GrantTable<T>(TimeProvider clock, int capacity = 64) where
             var source = SourceFor(list);
             if (source == 0 || slot == new string('0', 32) || list == source.ToString("x32") || _rows.ContainsKey(slot)) return RefusalCode.InvalidIdentifier;
             _rows.Add(slot, new Row(binding, Hash(list), Hash(source.ToString("x32")), expires));
+            Issued++;
             return null;
         }
     }

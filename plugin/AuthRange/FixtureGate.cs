@@ -25,13 +25,13 @@ namespace Jellyfin.Plugin.Cleanyfin.AuthRange;
 
 internal sealed class Refused(RefusalCode reason) : Exception { internal RefusalCode Reason => reason; }
 internal sealed record Binding(string Session, Guid User, string Device, string TokenHash, PluginConfiguration Config,
-    Guid? Pointer, string Client, string Version, string Item, string Source, string Digest, string Revision, string PlanHash, DateTimeOffset Expires);
+    Guid? Pointer, string Client, string Version, string Item, string Source, string Digest, string Revision, string PlanHash, DateTimeOffset Expires, ShelfRow? Shelf=null, PlaybackPlan? Plan=null, string FilePath=FixtureGate.FixturePath,string? InputVersion=null);
 
 // Not a resolver. These facts are ONLY for the reviewed synthetic kit. The runner hashes the
 // generated original before exposing it as one immutable, read-only file mount at FixturePath.
 // A writable/racing host asset is not supported. No plugin code opens media for delivery.
 internal sealed class FixtureGate(ILibraryManager library, IDeviceManager devices, ISessionManager sessions,
-    IAuthorizationContext auth, GrantService grants, IUserManager users, IServerApplicationHost host)
+    IAuthorizationContext auth, GrantService grants, IUserManager users, IServerApplicationHost host, ShelfStore shelves, PinnedAsset assets)
 {
     internal const string FixturePath = "/fixture-library/source.mp4";
     private const string PlanPath = "/cleanyfin-fixture/plan.json";
@@ -42,6 +42,7 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
     internal async Task<(Binding Binding, long Ticks)> Prepare(HttpContext ctx, Guid? pointer = null)
     {
         var c = Config;
+        Require(pointer.HasValue != c.EnableLegacyRangeFixture,RefusalCode.AbsentPlan);
         Require((ctx.Request.PathBase.Value ?? string.Empty) == Origin(c).AbsolutePath.TrimEnd('/'), RefusalCode.InvalidOrigin);
         var a = await auth.GetAuthorizationInfo(ctx);
         Require(a.IsAuthenticated && !a.IsApiKey && a.User != null && !string.IsNullOrEmpty(a.Token), RefusalCode.AuthorityMismatch);
@@ -54,6 +55,12 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
             session.ApplicationVersion == a.Version, RefusalCode.AuthorityMismatch);
         var binding = new Binding(session!.Id, a.UserId, a.DeviceId!, GrantTable<Binding>.Hash(a.Token!), c,
             pointer, a.Client!, a.Version!, c.LabItemId, c.LabItemId, c.LabSourceSha256, Revision, c.LabPlanSha256, DateTimeOffset.MaxValue);
+        if(pointer is Guid pid){
+            var v=library.GetItemById(pid) as Video ?? throw new Refused(RefusalCode.BindingMismatch);
+            var (row,input)=shelves.Current(v,a.UserId,a.DeviceId!); var resolved=input.Resolution.Plan;
+            binding=binding with {Item=row.Item,Source=row.Source,Digest=resolved.Source.Sha256,Revision=resolved.Revision,
+                PlanHash=row.Generation,Shelf=row,Plan=resolved,FilePath=input.Source.Path,InputVersion=input.Version};
+        }
         var (plan, _) = Validate(binding, ctx);
         var origin = Origin(c);
         Require(MpvEdlRenderer.Render(plan, origin, new(1,1), MpvClockMapping.VerifiedSourceIdentity).Accepted, RefusalCode.InvalidOrigin);
@@ -73,10 +80,11 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
     internal (PlaybackPlan Plan, string Token) Validate(Binding b, HttpContext ctx)
     {
         var c = Config;
+        Require(b.Pointer.HasValue != c.EnableLegacyRangeFixture,RefusalCode.AbsentPlan);
         var ip = ctx.Connection.RemoteIpAddress;
         Require(ip != null && IPAddress.IsLoopback(ip.IsIPv4MappedToIPv6 ? ip.MapToIPv4() : ip) &&
             host.ApplicationVersion.ToString(3) == "10.11.11", RefusalCode.UnverifiedBinding);
-        Require(ReferenceEquals(c, b.Config) && c.LabItemId == b.Item && c.LabSourceSha256 == b.Digest && c.LabPlanSha256 == b.PlanHash, RefusalCode.BindingMismatch);
+        Require(ReferenceEquals(c,b.Config) && (b.Shelf!=null || (c.LabItemId==b.Item && c.LabSourceSha256==b.Digest && c.LabPlanSha256==b.PlanHash)), RefusalCode.BindingMismatch);
         Require(b.Expires > DateTimeOffset.UtcNow && sessions.Sessions.Any(s => s.Id == b.Session && s.UserId == b.User && s.DeviceId == b.Device && s.Client == b.Client && s.ApplicationVersion == b.Version), RefusalCode.AuthorityMismatch);
         var device = devices.GetDevices(new DeviceQuery { UserId = b.User, DeviceId = b.Device }).Items.SingleOrDefault(d => GrantTable<Binding>.Hash(d.AccessToken) == b.TokenHash);
         Require(device != null, RefusalCode.AuthorityMismatch);
@@ -87,28 +95,21 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
         var item = library.GetItemById<Video>(id, user!);
         Require(item != null && item.IsVisibleStandalone(user!) && item.GetPlayAccess(user!) == PlayAccess.Full &&
             library.GetCollectionFolders(item).Any(f => library.GetUserRootFolder().GetChildren(user!, true).Any(v => v.Id == f.Id)), RefusalCode.AuthorityMismatch);
-        Require(c.LabViewerId == b.User.ToString("N") && c.LabDeviceId == b.Device, RefusalCode.AuthorityMismatch);
         if (b.Pointer is Guid pid)
         {
-            var pointer = library.GetItemById<Video>(pid, user!);
-            Require(!c.LabWithholdProjection && pid.ToString("N") == c.LabPointerId && pointer != null &&
-                PointerFixture.Owned(pointer, c) && pointer.RunTimeTicks == PointerFixture.Ticks &&
-                pointer.IsVisibleStandalone(user!) && pointer.GetPlayAccess(user!) == PlayAccess.Full &&
+            var pointer=library.GetItemById<Video>(pid,user!);
+            Require(!c.LabWithholdProjection && pointer!=null && pointer.IsVisibleStandalone(user!) && pointer.GetPlayAccess(user!)==PlayAccess.Full &&
                 !user!.HasPermission(PermissionKind.ForceRemoteSourceTranscoding) &&
-                library.GetCollectionFolders(pointer).Any(f => library.GetUserRootFolder().GetChildren(user, true).Any(v => v.Id == f.Id)), RefusalCode.AuthorityMismatch);
+                library.GetCollectionFolders(pointer).Any(f => library.GetUserRootFolder().GetChildren(user,true).Any(v=>v.Id==f.Id)),RefusalCode.AuthorityMismatch);
+            var (row,input)=shelves.Current(pointer!,b.User,b.Device);
+            Require(row==b.Shelf && b.Plan!=null && input.Version==b.InputVersion && input.Source.Path==b.FilePath && pointer!.RunTimeTicks==row.Ticks &&
+                input.Resolution.Plan.Source.Sha256==b.Digest && b.Plan.ExpiresAt>DateTimeOffset.UtcNow,RefusalCode.RevisionMismatch);
+            return(b.Plan!,device!.AccessToken);
         }
-        Require(item!.Path == FixturePath && !item.IsShortcut && !item.HasLocalAlternateVersions && item.LinkedAlternateVersions.Length == 0, RefusalCode.UnverifiedBinding);
-        // A file mount pins the inode across host pathname replacement. This lab additionally
-        // owns the host writer and never changes that inode in place. Do not generalize to folders.
-        Require(OperatingSystem.IsLinux() && File.ReadLines("/proc/self/mountinfo").Any(line =>
-            line.Split(' ') is [_, _, _, _, FixturePath, var options, ..] && options.Split(',').Contains("ro")), RefusalCode.UnverifiedBinding);
-        var sources = item.GetMediaSources(false);
-        var src = sources.Count == 1 ? sources[0] : null;
-        Require(src != null && src.Id == b.Source && src.Path == FixturePath && src.Protocol == MediaProtocol.File &&
-            src.VideoType == VideoType.VideoFile && !src.IsInfiniteStream && !src.RequiresOpening && src.SupportsDirectPlay && src.Size > 0 &&
-            src.RunTimeTicks == 200_000_000 && src.MediaStreams.Count == 2 &&
-            src.MediaStreams.Any(s => s.Index == 0 && s.Type == MediaStreamType.Video && s.Codec == "h264") &&
-            src.MediaStreams.Any(s => s.Index == 1 && s.Type == MediaStreamType.Audio && s.Codec == "aac"), RefusalCode.BindingMismatch);
+        Require(c.LabViewerId == b.User.ToString("N") && c.LabDeviceId == b.Device, RefusalCode.AuthorityMismatch);
+        // The earlier range-only falsifier remains a separate opt-in, but verifies actual bytes too.
+        var (src,actual,_) = assets.Verify(item!);
+        Require(item!.Path==FixturePath && actual.MediaSourceId==b.Source && actual.Sha256==b.Digest && actual.DurationMs==20_000,RefusalCode.BindingMismatch);
         var context = new VerifiedPlanContext(b.Revision, new("auth-range", b.Item, b.Source, b.Digest, src!.Size!.Value,
             "review:fixture:1", "binding:3", 20_000, PlanValidator.SourceOrigin, [new(0,"video",1,12800,0,0), new(1,"audio",1,48000,0,0)]),
             new(c.LabViewerId,"local:p2","policy:7","trust:2"), "home:review:9", PlanValidator.ReviewedCoverage,

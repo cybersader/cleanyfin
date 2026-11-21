@@ -16,10 +16,14 @@ public class ServiceRegistrator : IPluginServiceRegistrator
     {
         serviceCollection.AddSingleton<GrantService>(s => new(s.GetRequiredService<MediaBrowser.Controller.Session.ISessionManager>(),
             s.GetRequiredService<MediaBrowser.Controller.Library.IUserManager>()));
+        serviceCollection.AddSingleton(_ => new PinnedAsset());
+        serviceCollection.AddSingleton<ShelfStore>();
+        serviceCollection.AddHostedService<ShelfWorker>();
         serviceCollection.AddScoped<FixtureGate>();
         serviceCollection.AddSingleton<IStartupFilter, GrantPipeline>();
         serviceCollection.Configure<MvcOptions>(o => o.Filters.Add(new GrantActionFilter()));
         serviceCollection.Configure<MvcOptions>(o => o.Filters.Add(new PointerPlaybackFilter()));
+        serviceCollection.Configure<MvcOptions>(o => o.Filters.Add(new ShelfAncillaryFilter()));
         serviceCollection.AddSingleton<MediaBrowser.Controller.Providers.IMetadataProvider, PointerMetadata>();
         serviceCollection.AddSingleton<IMediaSegmentProvider, CleanyfinSegmentProvider>();
     }

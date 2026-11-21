@@ -107,7 +107,7 @@ internal sealed class GrantPipeline : IStartupFilter
             byte[]? list = null;
             if (leg == Leg.List)
             {
-                var d = MpvEdlRenderer.Render(plan, FixtureGate.Origin(c), new(UInt128.Parse(route[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture), svc.Table.SourceFor(ticket)), MpvClockMapping.VerifiedSourceIdentity);
+                var d = MpvEdlRenderer.Render(plan, FixtureGate.Origin(c), new(UInt128.Parse(route[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture), svc.Table.SourceFor(ticket)), MpvClockMapping.VerifiedSourceIdentity, noChapters:b.Shelf!=null);
                 list = d.Value ?? throw new Refused(d.Reason!.Value);
                 var accept = ctx.Request.GetTypedHeaders().Accept;
                 if (accept is { Count: > 0 } && !accept.Any(m => (m.Quality ?? 1) > 0 && (m.MediaType.Value?.ToLowerInvariant() is "*/*" or "text/*" or "text/plain")))
@@ -158,7 +158,7 @@ internal sealed class GrantActionFilter : IAsyncActionFilter
         if (!isTarget || ctx.User.Identity?.IsAuthenticated != true || !identity.IsAuthenticated || identity.IsApiKey || identity.UserId != a.Binding.User || identity.DeviceId != a.Binding.Device || GrantTable<Binding>.Hash(identity.Token ?? "") != a.Binding.TokenHash)
         { GrantPipeline.Deny(ctx, RefusalCode.AuthorityMismatch); action.Result = new EmptyResult(); return; }
         var result = await next();
-        if (a.Leg == Leg.Source && result.Result is not PhysicalFileResult { FileName: FixtureGate.FixturePath, EnableRangeProcessing: true })
+        if (a.Leg == Leg.Source && (result.Result is not PhysicalFileResult { EnableRangeProcessing: true } file || file.FileName != a.Binding.FilePath))
         { GrantPipeline.Deny(ctx, RefusalCode.BindingMismatch); result.Result = new EmptyResult(); }
     }
 }
