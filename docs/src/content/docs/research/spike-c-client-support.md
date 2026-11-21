@@ -7,7 +7,11 @@ sidebar:
 
 *Feasibility spike from the 2026-07-21 research fan-out — source-verified against Jellyfin 10.11. Confidence tags and sources preserved.*
 
-## TL;DR
+:::caution[November 2026 update: skip buttons are not a filtering guarantee]
+The July matrix below is historical, not a list of supported Cleanyfin clients. Stock Jellyfin Web 10.11.11 played marked frames before issuing a native skip and on seek-back. Swiftfin's [request is now closed](https://github.com/jellyfin/Swiftfin/issues/1525): [1.7.1](https://github.com/jellyfin/Swiftfin/blob/1.7.1/Shared/Objects/MediaPlayerManager/MediaSegment.swift) offers skip targets for intros/outros but excludes `Unknown`, the type emitted by Cleanyfin. Neither an upstream feature nor a source-code check certifies playback on a device. Kodi and mpv also use different edit-list formats.
+:::
+
+## July findings
 
 Two things changed since the "skip-only on Web + Android TV" baseline in `jellyfin-integration-mechanics.md`, and one thing did not.
 
