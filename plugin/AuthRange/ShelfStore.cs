@@ -54,7 +54,7 @@ internal sealed class ShelfStore(ILibraryManager library, IUserManager users, IS
         var b = new byte[s.Length]; s.ReadExactly(b); Require(s.ReadByte() == -1); return b;
     }
     // The tree is private to the operator/plugin. Reject even a mistaken symlink to media.
-    private static void NoLinks(string path)
+    internal static void NoLinks(string path)
     {
         for (string? p = Path.GetFullPath(path); p != null; p = Path.GetDirectoryName(p)) Require(new FileInfo(p).LinkTarget == null);
     }
@@ -145,7 +145,7 @@ internal sealed class ShelfStore(ILibraryManager library, IUserManager users, IS
         await _writer.WaitAsync(ct);
         try
         {
-            if (!cleanup && Plugin.Instance?.Configuration is not { EnableAuthRangeLab: true, EnableLegacyRangeFixture: false }) return 0;
+            if (!cleanup && !FixtureGate.PointerEnabled(Plugin.Instance?.Configuration)) return 0;
             if (!Directory.Exists(Root) && cleanup) return 0;
             GuardLocations(); var rows = Rows(); var current = new HashSet<string>(); var touched = new HashSet<string>();
             if (!cleanup)
@@ -208,7 +208,7 @@ internal sealed class ShelfWorker(IServiceProvider services, ILogger<ShelfWorker
         while (!ct.IsCancellationRequested)
         {
             await Task.Delay(TimeSpan.FromSeconds(4), ct);
-            if (Plugin.Instance?.Configuration is not { EnableAuthRangeLab: true, EnableLegacyRangeFixture: false }) continue;
+            if (!FixtureGate.PointerEnabled(Plugin.Instance?.Configuration)) continue;
             try { await services.GetRequiredService<ShelfStore>().Reconcile(false, ct); } catch (Exception) when (!ct.IsCancellationRequested) { log.LogWarning("Playback shelf reconcile refused"); }
         }
     }

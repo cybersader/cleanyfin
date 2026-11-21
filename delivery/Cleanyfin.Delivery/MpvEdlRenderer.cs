@@ -10,6 +10,9 @@ public readonly record struct MpvSourceIdentifiers(UInt128 SessionId, UInt128 So
 
 public static class MpvEdlRenderer
 {
+    public const string AdapterId = "mpv-edl";
+    public const string AdapterRevision = "1";
+
     public static Decision<byte[]> Render(PlaybackPlan plan, Uri trustedBaseOrigin, MpvSourceIdentifiers ids,
         MpvClockMapping mapping, bool noChapters = false)
     {

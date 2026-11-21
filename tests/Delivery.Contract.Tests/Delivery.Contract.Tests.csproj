@@ -15,6 +15,7 @@
     <Using Include="Xunit" />
     <None Update="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../delivery/schema/*.schema.json" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../delivery/evidence/register-v1.json" Link="evidence-register-v1.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../../plugin/AuthRange/ShelfRow.cs" Link="ShelfRow.cs" />

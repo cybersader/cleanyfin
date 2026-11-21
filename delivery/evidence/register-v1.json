@@ -1,0 +1,249 @@
+{
+  "registerVersion": 1,
+  "rows": [
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "1",
+        "appId": "Wholphin",
+        "appVersion": "1.1.2-0-gc530f5c5",
+        "appBuild": "5c1cec6cae94614fb7e561017bfb73adc8c621390ea31492893bb6307cff7144",
+        "backend": "mpv",
+        "deviceMode": "Google TV emulator, Android 16, arm64, headless, no audio, software video vo-gpu Android GLES",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "6222440e0ee3f0f3be5e57108da07834f46b909f05508ca7ab5f487c43646f95",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back",
+        "restart"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "pass",
+          "limit": "Positive original: 65 marked presentations. Straight cut: zero marked and 193 distinct kept frames at 15.4 fps; 35 colour samples at 1.85 Hz contained no red. This does not exclude leakage between samples."
+        },
+        "markedSound": {
+          "outcome": "not-measured",
+          "limit": "Headless emulator had no audio capture."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "not-measured",
+          "limit": "15.4 fps recording of 25 fps source cannot verify join neighbours or all kept frames."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "not-measured",
+          "limit": "No rendered PCM; neither kept samples nor splice latency measured."
+        }
+      },
+      "evidenceRef": "tools/playback-lab/README.md",
+      "date": "2026-11-21",
+      "status": "experimental",
+      "observation": "Wholphin release 1.1.2. Authenticated real-plugin handoff: POST 200, EDL GET 200, original range 206. Forward/back seek controls saw frames 71, 301, 0. Handoff worked after server restart, but its recapture was unreadable; persisted resume not measured. Earlier no-stream probe failed before playback; stream-populated stand-in succeeded, but was a different path."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "lab-hard-fixture-v0",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": null,
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, image output and PCM capture",
+        "jellyfinVersion": null,
+        "pluginBuild": null,
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "pass",
+          "limit": "Zero of 126 marked frames in image output; frame-complete for this straight run."
+        },
+        "markedSound": {
+          "outcome": "pass",
+          "limit": "No 880 Hz leak detected with 5 ms detector windows and threshold 0.10 full scale. Not proof below detector limit."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "pass",
+          "limit": "All 374 kept source frames present in order, including the join."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "448 kept PCM frames altered after the splice, about 9 ms at 48 kHz. A separate startup artifact also exists in the uncut control."
+        }
+      },
+      "evidenceRef": "knowledge-base/01-working/playback-paths-2026-11-21/README.md",
+      "date": "2026-11-21",
+      "status": "experimental",
+      "observation": "Desktop diagnostic lab player, not a household client. Local file EDL; no Jellyfin or plugin involved, no physical output or persisted resume measurement."
+    },
+    {
+      "tuple": {
+        "adapterId": "native-segments",
+        "adapterRevision": "jellyfin-androidtv-0.20.0",
+        "appId": "Jellyfin Android TV",
+        "appVersion": "0.20.0",
+        "appBuild": "dfcc665195bed4ea087dca63df6f77497acc1185c4b15776b336d80eeaeb7fa6",
+        "backend": "legacy-exoplayer",
+        "deviceMode": "Google TV emulator, Android 16, arm64, headless, no audio",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": null,
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [],
+      "results": {
+        "markedPicture": {
+          "outcome": "not-measured",
+          "limit": "No native segment-skip presentation capture. Pinned legacy client excludes Unknown and posts an asynchronous seek for enabled known types."
+        },
+        "markedSound": {
+          "outcome": "not-measured",
+          "limit": "No rendered audio capture."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "not-measured",
+          "limit": "No native segment-skip join capture."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "not-measured",
+          "limit": "No rendered PCM or splice latency measurement."
+        }
+      },
+      "evidenceRef": "knowledge-base/01-working/playback-paths-2026-11-21/B-android-tv-player.md",
+      "date": "2026-11-21",
+      "status": "refused",
+      "observation": "Refused: source verifies Unknown marks are not requested, and seeking is not a pre-presentation cut. Separate measured package test stalled on muxed HLS but played a pre-cut MP4; neither result measures native segment skipping."
+    },
+    {
+      "tuple": {
+        "adapterId": "native-segments",
+        "adapterRevision": "jellyfin-web-10.11.11",
+        "appId": "Jellyfin Web",
+        "appVersion": "10.11.11",
+        "appBuild": null,
+        "backend": "html-video",
+        "deviceMode": "Desktop Chromium, browser video and audio taps, physical output not measured",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "228a18dca3d3d8f4564dacee0d1998abfef3698e9c3e4cb2da93d4660935cbc3",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "320x180 at 25 fps, AAC 48 kHz, track clocks and layout not recorded",
+          "durationMs": 15000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back",
+        "resume"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Browser frame callback and pixel sample: Unknown showed all 100 red frames; forced Commercial skip showed four red frames before jumping, 49 after seeking into the mark."
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Separate seek into the Commercial mark: browser analyser peak 0.30035. No speaker-output claim."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "not-measured",
+          "limit": "Native skip did not measure complete kept join fidelity."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "not-measured",
+          "limit": "No sample-exact kept PCM or splice latency measurement."
+        }
+      },
+      "evidenceRef": "knowledge-base/01-working/long-term-architecture-2026-10-07/08-jellyfin-web-skip-lab.md",
+      "date": "2026-11-19",
+      "status": "refused",
+      "observation": "Refused: Unknown is not handled; even an enabled Commercial seek leaked. Resume here was pause/seek/continue in the same session, not persisted restart."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "1",
+        "appId": "Wholphin",
+        "appVersion": "1.1.2-0-gc530f5c5",
+        "appBuild": "5c1cec6cae94614fb7e561017bfb73adc8c621390ea31492893bb6307cff7144",
+        "backend": "ExoPlayer",
+        "deviceMode": "Google TV emulator, Android 16, arm64, headless, no audio",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "6222440e0ee3f0f3be5e57108da07834f46b909f05508ca7ab5f487c43646f95",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [],
+      "results": {
+        "markedPicture": {
+          "outcome": "not-measured",
+          "limit": "Real Exo run timed out loading the shelf; the lab PlaybackInfo negative control refused the Exo profile."
+        },
+        "markedSound": {
+          "outcome": "not-measured",
+          "limit": "No Exo playback."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "not-measured",
+          "limit": "No Exo playback."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "not-measured",
+          "limit": "No Exo playback."
+        }
+      },
+      "evidenceRef": "tools/playback-lab/README.md",
+      "date": "2026-11-21",
+      "status": "refused",
+      "observation": "Refused by lab profile gate; this is not a measured Exo presentation failure."
+    }
+  ]
+}

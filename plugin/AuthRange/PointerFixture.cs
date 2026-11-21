@@ -59,7 +59,7 @@ public sealed class FixturePointerController : ControllerBase
     public async Task<IActionResult> Cleanup() => await Run(true);
     private async Task<IActionResult> Run(bool cleanup)
     {
-        if (cleanup == (Plugin.Instance?.Configuration.EnableAuthRangeLab == true)) return Conflict();
+        if (cleanup == FixtureGate.PointerEnabled(Plugin.Instance?.Configuration)) return Conflict();
         return Ok(new { Count = await HttpContext.RequestServices.GetRequiredService<ShelfStore>().Reconcile(cleanup, HttpContext.RequestAborted) });
     }
 }
@@ -70,7 +70,7 @@ public sealed class PointerMetadata(IServiceProvider services, IMediaStreamRepos
     public int Order => int.MaxValue;
     public Task<ItemUpdateType> FetchAsync(Video item, MetadataRefreshOptions options, CancellationToken ct)
     {
-        if (Plugin.Instance?.Configuration is not { EnableAuthRangeLab: true }) return Task.FromResult(ItemUpdateType.None);
+        if (!FixtureGate.PointerEnabled(Plugin.Instance?.Configuration)) return Task.FromResult(ItemUpdateType.None);
         var store = services.GetRequiredService<ShelfStore>();
         if (!store.PointerPath(item.Path)) return Task.FromResult(ItemUpdateType.None);
         try

@@ -63,7 +63,7 @@ internal sealed class GrantPipeline : IStartupFilter
     {
         var c = Plugin.Instance?.Configuration;
         var path = ctx.Request.Path.Value ?? "";
-        if (c?.EnableAuthRangeLab != true || !Uri.TryCreate(c.LabOrigin, UriKind.Absolute, out var origin)) { await next(ctx); return; }
+        if (!FixtureGate.DeliveryEnabled(c) || !Uri.TryCreate(c!.LabOrigin, UriKind.Absolute, out var origin)) { await next(ctx); return; }
         var prefix = origin.AbsolutePath.TrimEnd('/');
         var stem = prefix + "/Cleanyfin/play/";
         if (!path.StartsWith(stem, StringComparison.Ordinal)) { await next(ctx); return; }

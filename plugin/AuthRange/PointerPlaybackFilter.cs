@@ -37,21 +37,24 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
         ActionExecutedContext? executed = null;
         try
         {
-            if (c?.EnableAuthRangeLab!=true || c.LabWithholdProjection || ctx.User.Identity?.IsAuthenticated != true || ctx.Request.Query.Count != 0 ||
+            if (!FixtureGate.PointerEnabled(c)) throw new Refused(RefusalCode.EvidenceDisabled);
+            if (c!.LabWithholdProjection || ctx.User.Identity?.IsAuthenticated != true || ctx.Request.Query.Count != 0 ||
                 cad.MethodInfo.Name != "GetPostedPlaybackInfo" || !action.ActionArguments.TryGetValue("playbackInfoDto", out var dto) ||
                 dto?.GetType().FullName != "Jellyfin.Api.Models.MediaInfoDtos.PlaybackInfoDto") { action.Result = denied; return; }
             // The bound DTO resides in Jellyfin.Api (not its plugin SDK). Missing pinned members refuse.
             object? Field(string name) => (dto.GetType().GetProperty(name) ?? throw new MissingMemberException(name)).GetValue(dto);
-            if (Field("DeviceProfile") is not DeviceProfile { Name:"mpv" } profile ||
-                Field("MediaSourceId") is string selected && (!Guid.TryParse(selected,out var selectedId) || selectedId != id) ||
+            if (Field("DeviceProfile") is not DeviceProfile { Name: { Length: > 0 and <= 256 } backend } profile)
+                throw new Refused(RefusalCode.EvidenceIdentityUnavailable);
+            if (Field("MediaSourceId") is string selected && (!Guid.TryParse(selected,out var selectedId) || selectedId != id) ||
                 Field("LiveStreamId") != null || Field("UserId") != null || Field("EnableDirectPlay") is false ||
-                Field("AudioStreamIndex") is not (null or 1) || Field("SubtitleStreamIndex") is not (null or -1) ||
-                profile.ContainerProfiles.Length != 0 || profile.CodecProfiles.Length != 0 ||
+                Field("AudioStreamIndex") is not (null or 1) || Field("SubtitleStreamIndex") is not (null or -1))
+            { action.Result = denied; return; }
+            var gate = ctx.RequestServices.GetRequiredService<FixtureGate>();
+            var (binding,ticks) = await gate.Prepare(ctx,id,backend); // both ACLs, immutable original, exact evidence tuple
+            if (profile.ContainerProfiles.Length != 0 || profile.CodecProfiles.Length != 0 ||
                 !profile.DirectPlayProfiles.Any(p => p.Type == DlnaProfileType.Video && p.Container.Split(',').Contains("mp4") &&
                     p.VideoCodec?.Split(',').Contains("h264") == true && p.AudioCodec?.Split(',').Contains("aac") == true))
             { action.Result = denied; return; }
-            var gate = ctx.RequestServices.GetRequiredService<FixtureGate>();
-            var (binding,ticks) = await gate.Prepare(ctx,id); // both ACLs and exactly one immutable local original
             // Run the real POST for the original, with this principal/profile/bitrate/track choice.
             // Its result never leaves MVC: replace it BEFORE inspecting or issuing a capability.
             action.ActionArguments["itemId"] = Guid.ParseExact(binding.Item,"N");
@@ -65,10 +68,13 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
                 Field("MaxStreamingBitrate") is int max && !(src.Bitrate <= max) ||
                 Field("MaxAudioChannels") is int channels && !(src.MediaStreams.Single(x=>x.Index==1).Channels <= channels)) return;
             gate.Validate(binding,ctx);
+            var evidence = binding.Evidence!.Status;
             var projected = new MediaSourceInfo { Id=id.ToString("N"), Protocol=MediaProtocol.Http, IsRemote=true,
+                Name=evidence == EvidenceStatus.Experimental ? "Cleanyfin sample (experimental)" : "Cleanyfin filtered",
                 SupportsDirectPlay=true, SupportsDirectStream=false, SupportsTranscoding=false, Container="mp4", RunTimeTicks=ticks,
                 Bitrate=src.Bitrate, DefaultAudioStreamIndex=1, MediaStreams=PointerFixture.Streams(src), Path=gate.Issue(binding) };
             ctx.Response.Headers.Remove("X-Cleanyfin-Reason");
+            ctx.Response.Headers["X-Cleanyfin-Evidence"] = evidence == EvidenceStatus.Experimental ? "experimental" : "eligible";
             executed.Result = new OkObjectResult(new PlaybackInfoResponse { MediaSources=[projected], PlaySessionId=info.PlaySessionId });
         }
         catch (Exception ex) // only a bounded reason, never exception text or URL

@@ -34,3 +34,6 @@ jobs:
 
       - name: mpv translation
         run: dotnet test tests/Delivery.Contract.Tests --filter Category=Mpv
+
+      - name: Evidence register and admission
+        run: dotnet test tests/Delivery.Contract.Tests --filter Category=Eligibility

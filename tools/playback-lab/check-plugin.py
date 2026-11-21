@@ -25,6 +25,7 @@ SDK = 'mcr.microsoft.com/dotnet/sdk:9.0'
 MPV = 'cleanyfin-edl-lab:mpv'
 PLUGIN = 'b1f7c2e0-4a3d-4c9a-9f2b-1e6d5a8c0f11'
 BASE = '/labbase'
+REGISTER = ROOT/'delivery/evidence/register-v1.json'
 USER = f'{os.getuid()}:{os.getgid()}'
 
 
@@ -59,7 +60,7 @@ class Lab:
         w = self.work
         for name in ('config/config', 'cache', 'plans', 'other', 'capture'):
             (w/name).mkdir(parents=True)
-        for folder in ('plugin', 'delivery/Cleanyfin.Delivery'):
+        for folder in ('plugin', 'delivery/Cleanyfin.Delivery', 'delivery/evidence'):
             shutil.copytree(ROOT/folder, w/'src'/folder, ignore=shutil.ignore_patterns('bin','obj'))
         docker('run', '--rm', '--pull=never', '--user', USER, '-e', 'HOME=/out/home',
                        '-v', f'{w}:/out:z', '-w', '/out/src', SDK,
@@ -72,7 +73,8 @@ class Lab:
         self.build_disk = sum(p.stat().st_blocks*512 for p in w.rglob('*') if p.is_file())
         for folder in ('home','artifacts','src'):
             shutil.rmtree(w/folder)
-        print('Plugin SHA-256', sha((install/'Jellyfin.Plugin.Cleanyfin.dll').read_bytes()), flush=True)
+        self.plugin_build = sha((install/'Jellyfin.Plugin.Cleanyfin.dll').read_bytes())
+        print('Plugin SHA-256', self.plugin_build, flush=True)
         subprocess.run([sys.executable, LAB/'hard-fixture.py', w/'fixture'], check=True, stdout=subprocess.DEVNULL)
         (w/'config/config/network.xml').write_text(f'''<NetworkConfiguration><BaseUrl>{BASE}</BaseUrl>
 <InternalHttpPort>{self.port}</InternalHttpPort><PublicHttpPort>{self.port}</PublicHttpPort>
@@ -107,7 +109,7 @@ class Lab:
         # No host publication, proxy, redirect-following, cookie jar or token-bearing argv.
         args = ['url = '+json.dumps(self.origin+path), 'head' if method=='HEAD' else 'request = '+method]
         h = dict(headers or {})
-        if user:
+        if user and not any(k.lower() == 'authorization' for k in h):
             device, token = user
             h['Authorization'] = f'MediaBrowser Client="{self.client}", Device="fixture", DeviceId="{device}", Version="{self.version}"' + (f', Token="{token}"' if token else '')
         if data is not None:
@@ -157,6 +159,7 @@ class Lab:
         self.item = match[0]['Id'].replace('-', '')
         folders = {f['Name']:f['ItemId'] for f in api('/Library/VirtualFolders', user=self.admin)}
         self.one, self.viewer = login('one', p1)
+        if isinstance(self, EligibilityLab): self.relogin = lambda device: login('one', p1, device)[0]
         self.two, viewer2 = login('two', p2)
         self.viewer2 = viewer2
         self.other_device, _ = login('one', p1, 'unenrolled')
@@ -327,7 +330,9 @@ class PointerLab(Lab):
 
     def __init__(self, work):
         super().__init__(work)
-        self.client,self.version='Wholphin','1.1.2-0-gc530f5c5'
+        self.seed = json.loads(REGISTER.read_bytes())
+        self.wholphin, = [r for r in self.seed['rows'] if r['tuple']['appId']=='Wholphin' and r['tuple']['backend']=='mpv']
+        self.client,self.version = (self.wholphin['tuple'][k] for k in ('appId', 'appVersion'))
         self.name='cleanyfin-pointer-'+secrets.token_hex(6)
 
     def shelf_access(self, original):
@@ -341,9 +346,26 @@ class PointerLab(Lab):
 
     def policy(self, uid, device, categories):
         root=self.data/'profiles'/uid; self.put(root/'device.txt',device.encode())
+        self.enroll_evidence(uid)
         doc={'policyVersion':1,'profileRef':uid,'policyRev':'policy:7','trustRev':'trust:2',
              'rules':[{'category':cat,'minimumSeverity':1,'filter':True} for cat in categories]}
         self.put(root/'policy.json',json.dumps(doc).encode())
+
+    def enroll_evidence(self, uid):
+        row = self.wholphin['tuple']
+        self.put(self.data/'profiles'/uid/'evidence-device.txt', f"{row['appBuild']}\n{row['deviceMode']}\n".encode())
+
+    def stub_register(self):
+        # This new build did not make the historical capture. Use an explicitly unmeasured,
+        # disposable row to exercise the gate, never rewrite the historical evidence.
+        row = json.loads(json.dumps(self.wholphin))
+        row['tuple']['pluginBuild'] = self.plugin_build
+        row['observation'] = 'Synthetic integration-test setup only; no claims about playback fidelity on this build.'
+        row['evidenceRef'] = 'tools/playback-lab/check-plugin.py'
+        row['controls'] = []
+        for result in row['results'].values():
+            result.update(outcome='not-measured',limit='Only the offer gate is exercised; no presentation measurement.')
+        return dict(registerVersion=1, rows=[row])
 
     def inventory(self):
         return json.loads((self.data/'inventory.json').read_text())
@@ -357,11 +379,14 @@ class PointerLab(Lab):
             time.sleep(.25)
         raise RuntimeError('owned pointer not indexed with filtered runtime')
 
-    def setup_pointer(self):
+    def setup_pointer(self, *, stub_evidence=True):
         self.users_library();self.original=(self.work/'fixture/source.mp4').read_bytes()
         self.configurl='/Plugins/'+PLUGIN+'/Configuration';self.cfg=self.api(self.configurl,user=self.admin)
         self.data=self.work/'config/plugins/configurations/cleanyfin-shelves-v1'
         self.snapshot=self.data/'snapshots'/(self.item+'.json')
+        self.register_path = self.data/'evidence-register-v1.json'
+        if stub_evidence:
+            self.put(self.register_path, json.dumps(self.stub_register()).encode())
         doc=json.loads((ROOT/'tests/Delivery.Contract.Tests/Fixtures/hard-fixture.snapshot.v1.json').read_bytes())
         now=datetime.now(timezone.utc)
         for k,t in [('acceptedAt',now-timedelta(minutes=1)),('expiresAt',now+timedelta(hours=2))]:doc[k]=t.strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -371,7 +396,7 @@ class PointerLab(Lab):
             doc['annotations']=[self.mark('one','violence','skip',5480,8000),self.mark('two','gore','skip',8000,10520),self.mark('three','profanity','mute',1000,2000)]
             self.policy(self.viewer2,self.two[0],['violence'])
         self.policy(self.viewer,self.one[0],['violence','gore']);self.put(self.snapshot,json.dumps(doc).encode())
-        self.cfg.update(EnableAuthRangeLab=True,LabOrigin=getattr(self,'public_origin',self.origin),LabPointerKey=secrets.token_hex(16),LabLifetimeSeconds=300);self.update()
+        self.cfg.update(EnableAuthRangeLab=True,LabOrigin=getattr(self,'public_origin',self.origin),LabPointerKey=secrets.token_hex(16),LabLifetimeSeconds=300,LabSourceSha256=sha(self.original));self.update()
         self.api('/Cleanyfin/lab/reconcile','POST',user=self.admin)
         self.pointer,row=self.find_pointer(self.viewer);self.locator='/Cleanyfin/pointer/'+row['Key']
         self.folders={f['Name']:f['ItemId'] for f in self.api('/Library/VirtualFolders',user=self.admin)}
@@ -467,6 +492,93 @@ class PointerLab(Lab):
             if self.refresh_count()>before and self.browse():return
             time.sleep(.5)
         raise RuntimeError('pointer projection lost on refresh')
+
+
+def missing_eligible_evidence(register):
+    # Review tripwire only, not attestation: an existing path does not prove its contents.
+    missing = []
+    for row in register['rows']:
+        if row['status'] == 'eligible':
+            path = (ROOT/row['evidenceRef']).resolve()
+            if not path.is_relative_to(ROOT) or not path.is_file():
+                missing.append(row['evidenceRef'])
+    return missing
+
+
+class EligibilityLab(PointerLab):
+    def play(self, body=None, headers=None):
+        return self.request('/Items/'+self.pointer+'/PlaybackInfo', 'POST', self.body if body is None else body,
+                            user=self.one, headers=headers)
+
+    def refusal(self, reason, **kw):
+        before = self.logs().count(f'Fixture projection refused: {reason}'.encode())
+        status, headers, body = self.play(**kw)
+        payload = json.loads(body)
+        return (status == 200 and payload.get('MediaSources') == [] and payload.get('ErrorCode') == 'NoCompatibleStream'
+                and headers.get('x-cleanyfin-reason') == reason and 'x-cleanyfin-evidence' not in headers
+                and self.logs().count(f'Fixture projection refused: {reason}'.encode()) > before)
+
+    def logs(self):
+        return docker('logs', self.cid, stderr=subprocess.STDOUT)
+
+    def identity_refusal(self, client, version):
+        original = self.client, self.version
+        device = self.one[0]
+        try:
+            self.client, self.version = client, version
+            self.extra_tokens.append(self.one[1])
+            self.one = self.relogin(device)
+            return self.refusal('EvidenceTupleUnknown')
+        finally:
+            self.client, self.version = original
+            self.extra_tokens.append(self.one[1])
+            self.one = self.relogin(device)
+
+    def exercise(self):
+        self.setup_pointer(stub_evidence=False)
+        check('historical plugin build differs: no offer', self.refusal('EvidenceTupleUnknown'))
+        stub = self.stub_register()
+        self.put(self.register_path, json.dumps(stub).encode())
+        status, headers, raw = self.play()
+        sources = json.loads(raw).get('MediaSources', [])
+        check('lab flag: exact synthetic Wholphin offer marked experimental', status == 200 and len(sources) == 1
+              and headers.get('x-cleanyfin-evidence') == 'experimental' and sources[0].get('Name') == 'Cleanyfin sample (experimental)')
+        self.verify_offer(sources[0]['Path'])
+        self.extra_tokens = []
+        check('changed Wholphin version: EvidenceTupleUnknown', self.identity_refusal(self.client, '1.1.3'))
+        check('stock Android TV: EvidenceTupleUnknown', self.identity_refusal('Jellyfin Android TV', '0.20.0'))
+        check('unknown client: EvidenceTupleUnknown', self.identity_refusal('Unknown Player', '1'))
+        check('changed backend: EvidenceTupleUnknown', self.refusal('EvidenceTupleUnknown',
+              body=dict(self.body, DeviceProfile=dict(self.profile, Name='ExoPlayer'))))
+        check('token without current app claims: EvidenceIdentityUnavailable', self.refusal('EvidenceIdentityUnavailable',
+              headers={'Authorization':f'MediaBrowser Token="{self.one[1]}"'}))
+        enrollment = self.data/'profiles'/self.viewer/'evidence-device.txt'
+        enrollment.unlink()
+        check('missing output enrollment: EvidenceIdentityUnavailable', self.refusal('EvidenceIdentityUnavailable'))
+        self.enroll_evidence(self.viewer)
+        urls = self.projection()
+        self.put(self.register_path, b'{"registerVersion":1,"rows":[],"unknown":1}')
+        check('invalid register: EvidenceRegisterInvalid with UnknownField log', self.refusal('EvidenceRegisterInvalid')
+              and b'Evidence register rejected: UnknownField' in self.logs())
+        check('invalid register revokes both previously issued links', all(self.denied(url) for url in urls))
+        self.put(self.register_path, json.dumps(stub).encode())
+        self.cfg['EnableProductionEligibility'] = True
+        self.update()
+        check('production wins over lab: EvidenceExperimentalOnly', self.refusal('EvidenceExperimentalOnly'))
+        self.cfg['EnableAuthRangeLab'] = False
+        self.update()
+        check('production only: EvidenceExperimentalOnly and zero eligible rows', self.refusal('EvidenceExperimentalOnly')
+              and not any(row['status']=='eligible' for row in self.seed['rows']))
+        fake = json.loads(json.dumps(stub))
+        row = fake['rows'][0]
+        row['tuple']['appVersion'] = 'unmeasured'
+        row['evidenceRef'] = 'delivery/evidence/no-such-presentation-receipt.md'
+        row['status'] = 'eligible'
+        row['controls'] = ['straight-play', 'seek-forward', 'seek-back', 'resume', 'restart']
+        for result in row['results'].values():
+            result.update(outcome='pass', limit='Fabricated for the missing-evidence test; never load this document into the plugin.')
+        check('evidence reference tripwire catches fabricated eligible row',
+              missing_eligible_evidence(self.seed) == [] and missing_eligible_evidence(fake) == [row['evidenceRef']])
 
 
 class ShelfLab(PointerLab):
@@ -594,9 +706,9 @@ class ShelfLab(PointerLab):
 def main():
     if not __debug__:
         raise SystemExit('Run without Python optimization: fixture assertions are required.')
-    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation'],required=True);case=p.parse_args().case
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation','eligibility'],required=True);case=p.parse_args().case
     scratch=ROOT/'plugin/obj';scratch.mkdir(exist_ok=True)
-    w=Path(tempfile.mkdtemp(prefix=case+'-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab}[case](w);ok=False
+    w=Path(tempfile.mkdtemp(prefix=case+'-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab,'eligibility':EligibilityLab}[case](w);ok=False
     try:
         lab.setup();lab.exercise();docker('stop',lab.cid);lab.inspect();ok=True
     except Exception as e:

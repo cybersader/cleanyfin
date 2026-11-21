@@ -46,7 +46,17 @@ public enum RefusalCode
     EmptySnapshot = 38,
     UnknownCategory = 39,
     RequiredMute = 40,
-    ConflictingInput = 41
+    ConflictingInput = 41,
+    DuplicateEvidenceTuple = 42,
+    IncompleteEvidence = 43,
+    EvidenceTupleUnknown = 44,
+    EvidenceRefused = 45,
+    EvidenceFeatureUncovered = 46,
+    EvidenceExperimentalOnly = 47,
+    EvidenceRegisterInvalid = 48,
+    EvidenceIdentityUnavailable = 49,
+    EvidenceModeUnverified = 50,
+    EvidenceDisabled = 51
 }
 
 public sealed class Decision<T> where T : class

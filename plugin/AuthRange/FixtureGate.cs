@@ -25,7 +25,7 @@ namespace Jellyfin.Plugin.Cleanyfin.AuthRange;
 
 internal sealed class Refused(RefusalCode reason) : Exception { internal RefusalCode Reason => reason; }
 internal sealed record Binding(string Session, Guid User, string Device, string TokenHash, PluginConfiguration Config,
-    Guid? Pointer, string Client, string Version, string Item, string Source, string Digest, string Revision, string PlanHash, DateTimeOffset Expires, ShelfRow? Shelf=null, PlaybackPlan? Plan=null, string FilePath=FixtureGate.FixturePath,string? InputVersion=null);
+    Guid? Pointer, string Client, string Version, string Item, string Source, string Digest, string Revision, string PlanHash, DateTimeOffset Expires, ShelfRow? Shelf=null, PlaybackPlan? Plan=null, string FilePath=FixtureGate.FixturePath,string? InputVersion=null, EvidencePermit? Evidence=null);
 
 // Not a resolver. These facts are ONLY for the reviewed synthetic kit. The runner hashes the
 // generated original before exposing it as one immutable, read-only file mount at FixturePath.
@@ -36,18 +36,23 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
     internal const string FixturePath = "/fixture-library/source.mp4";
     private const string PlanPath = "/cleanyfin-fixture/plan.json";
     private const string Revision = "local:plan:42";
-    internal static PluginConfiguration Config => Plugin.Instance?.Configuration is { EnableAuthRangeLab: true } c
-        && c.LabLifetimeSeconds is > 0 and <= 1800 ? c : throw new Refused(RefusalCode.AbsentPlan);
+    internal static bool PointerEnabled(PluginConfiguration? c) =>
+        c is { EnableLegacyRangeFixture: false } && (c.EnableAuthRangeLab || c.EnableProductionEligibility);
+    private static bool LegacyEnabled(PluginConfiguration? c) =>
+        c is { EnableLegacyRangeFixture: true, EnableAuthRangeLab: true, EnableProductionEligibility: false };
+    internal static bool DeliveryEnabled(PluginConfiguration? c) => PointerEnabled(c) || LegacyEnabled(c);
+    internal static PluginConfiguration Config => Plugin.Instance?.Configuration is { LabLifetimeSeconds: > 0 and <= 1800 } c
+        && DeliveryEnabled(c) ? c : throw new Refused(RefusalCode.EvidenceDisabled);
 
-    internal async Task<(Binding Binding, long Ticks)> Prepare(HttpContext ctx, Guid? pointer = null)
+    internal async Task<(Binding Binding, long Ticks)> Prepare(HttpContext ctx, Guid? pointer = null, string? backend = null)
     {
         var c = Config;
-        Require(pointer.HasValue != c.EnableLegacyRangeFixture,RefusalCode.AbsentPlan);
+        Require(pointer.HasValue ? PointerEnabled(c) : LegacyEnabled(c), RefusalCode.EvidenceDisabled);
         Require((ctx.Request.PathBase.Value ?? string.Empty) == Origin(c).AbsolutePath.TrimEnd('/'), RefusalCode.InvalidOrigin);
         var a = await auth.GetAuthorizationInfo(ctx);
         Require(a.IsAuthenticated && !a.IsApiKey && a.User != null && !string.IsNullOrEmpty(a.Token), RefusalCode.AuthorityMismatch);
-        Require(pointer.HasValue ? a.Client == "Wholphin" && a.Version == "1.1.2-0-gc530f5c5"
-            : a.Client == "auth-range" && a.Version == "1", RefusalCode.AuthorityMismatch);
+        if (pointer.HasValue) Require(PointerEvidence.HasCurrentClaims(ctx, a), RefusalCode.EvidenceIdentityUnavailable);
+        else Require(a.Client == "auth-range" && a.Version == "1", RefusalCode.AuthorityMismatch);
         // After a restart a valid native login can outlive the in-memory session list. Resolve this
         // request's own authenticated token through the host (never manufacture a principal).
         var session = await sessions.GetSessionByAuthenticationToken(a.Token!, a.DeviceId!, ctx.Connection.RemoteIpAddress?.ToString() ?? "");
@@ -60,8 +65,11 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
             var (row,input)=shelves.Current(v,a.UserId,a.DeviceId!); var resolved=input.Resolution.Plan;
             binding=binding with {Item=row.Item,Source=row.Source,Digest=resolved.Source.Sha256,Revision=resolved.Revision,
                 PlanHash=row.Generation,Shelf=row,Plan=resolved,FilePath=input.Source.Path,InputVersion=input.Version};
+            Require(!string.IsNullOrEmpty(backend), RefusalCode.EvidenceIdentityUnavailable);
+            _ = Validate(binding, ctx);
+            binding = binding with { Evidence=PointerEvidence.Select(ctx, binding, resolved, input.Source, backend!, host.ApplicationVersionString) };
         }
-        var (plan, _) = Validate(binding, ctx);
+        var plan = binding.Plan ?? Validate(binding, ctx).Plan;
         var origin = Origin(c);
         Require(MpvEdlRenderer.Render(plan, origin, new(1,1), MpvClockMapping.VerifiedSourceIdentity).Accepted, RefusalCode.InvalidOrigin);
         var expires = DateTimeOffset.UtcNow.AddSeconds(c.LabLifetimeSeconds);
@@ -71,6 +79,7 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
 
     internal string Issue(Binding binding)
     {
+        Require(!binding.Pointer.HasValue || binding.Evidence != null, RefusalCode.EvidenceIdentityUnavailable);
         var origin = Origin(binding.Config);
         var reason = grants.Table.Issue(binding, binding.Expires, out var slot, out var list);
         if (reason.HasValue) throw new Refused(reason.Value);
@@ -80,7 +89,7 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
     internal (PlaybackPlan Plan, string Token) Validate(Binding b, HttpContext ctx)
     {
         var c = Config;
-        Require(b.Pointer.HasValue != c.EnableLegacyRangeFixture,RefusalCode.AbsentPlan);
+        Require(b.Pointer.HasValue ? PointerEnabled(c) : LegacyEnabled(c), RefusalCode.EvidenceDisabled);
         var ip = ctx.Connection.RemoteIpAddress;
         Require(ip != null && IPAddress.IsLoopback(ip.IsIPv4MappedToIPv6 ? ip.MapToIPv4() : ip) &&
             host.ApplicationVersion.ToString(3) == "10.11.11", RefusalCode.UnverifiedBinding);
@@ -104,6 +113,7 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
             var (row,input)=shelves.Current(pointer!,b.User,b.Device);
             Require(row==b.Shelf && b.Plan!=null && input.Version==b.InputVersion && input.Source.Path==b.FilePath && pointer!.RunTimeTicks==row.Ticks &&
                 input.Resolution.Plan.Source.Sha256==b.Digest && b.Plan.ExpiresAt>DateTimeOffset.UtcNow,RefusalCode.RevisionMismatch);
+            if (b.Evidence is { } evidence) PointerEvidence.Recheck(ctx, b, b.Plan!, evidence);
             return(b.Plan!,device!.AccessToken);
         }
         Require(c.LabViewerId == b.User.ToString("N") && c.LabDeviceId == b.Device, RefusalCode.AuthorityMismatch);

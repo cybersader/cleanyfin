@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Configuration/configPage.html" />
+    <EmbeddedResource Include="../delivery/evidence/register-v1.json" LogicalName="Cleanyfin.Evidence.Register.v1" />
   </ItemGroup>
 
 </Project>
