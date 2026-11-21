@@ -14,7 +14,7 @@
     <ProjectReference Include="../../delivery/Cleanyfin.Delivery/Cleanyfin.Delivery.csproj" />
     <Using Include="Xunit" />
     <None Update="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../delivery/schema/playback-plan-v1.schema.json" Link="playback-plan-v1.schema.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../delivery/schema/*.schema.json" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../../plugin/AuthRange/GrantTable.cs" Link="GrantTable.cs" />

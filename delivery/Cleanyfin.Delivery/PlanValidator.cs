@@ -33,9 +33,7 @@ public static class PlanValidator
 
         try
         {
-            // Bound the input before any traversal, and reject broken UTF-8 even in ignored metadata.
-            _ = StrictUtf8.GetCharCount(utf8.Span);
-            using var doc = JsonDocument.Parse(utf8, new JsonDocumentOptions { MaxDepth = 8 });
+            using var doc = ReadDocument(utf8);
             var root = ReadObject(doc.RootElement, "planVersion", "requires", "revision", "issuedAt", "expiresAt",
                 "source", "authority", "inputs", "operations", "?extensions");
             Check(Integer(root["planVersion"]) == 1, RefusalCode.UnsupportedVersion);
@@ -87,36 +85,53 @@ public static class PlanValidator
         return features.MoveToImmutable();
     }
 
-    private static SourceBinding ReadSource(JsonElement value)
+    internal static SourceBinding ReadSource(JsonElement value)
     {
         var fields = ReadObject(value, "serverRef", "itemId", "mediaSourceId", "sha256", "sizeBytes",
             "timelineRef", "bindingRev", "durationMs", "origin", "tracks");
         var duration = Integer(fields["durationMs"], 1);
-        _ = CutTimeline.MillisecondsToTicks(duration);
-        Check(Text(fields["origin"]) == SourceOrigin, RefusalCode.InvalidValue);
         var tracks = fields["tracks"];
-        var count = ArrayCount(tracks, MaxTracks, min: 1);
-        var clocks = ImmutableArray.CreateBuilder<TrackClock>(count);
-        var indices = new HashSet<long>();
+        var clocks = ImmutableArray.CreateBuilder<TrackClock>(ArrayCount(tracks, MaxTracks, min: 1));
         foreach (var entry in tracks.EnumerateArray())
         {
             var track = ReadObject(entry, "index", "kind", "timeBase", "anchorPts", "anchorSourceMs");
-            var index = Integer(track["index"], 0);
-            Check(indices.Add(index), RefusalCode.DuplicateTrackIndex);
-            var kind = Text(track["kind"]);
-            Check(kind is "video" or "audio" or "subtitle", RefusalCode.InvalidValue);
             var timeBase = track["timeBase"];
             Check(timeBase.ValueKind == JsonValueKind.Array && timeBase.GetArrayLength() == 2,
                 RefusalCode.InvalidValue);
-            var anchorMs = Integer(track["anchorSourceMs"], 0);
-            Check(anchorMs < duration, RefusalCode.InvalidValue);
-            clocks.Add(new TrackClock(index, kind, Integer(timeBase[0], 1), Integer(timeBase[1], 1),
-                Integer(track["anchorPts"]), anchorMs));
+            clocks.Add(new TrackClock(Integer(track["index"], 0), Text(track["kind"]),
+                Integer(timeBase[0], 1), Integer(timeBase[1], 1), Integer(track["anchorPts"]),
+                Integer(track["anchorSourceMs"], 0)));
         }
-        return new SourceBinding(Reference(fields["serverRef"]), Reference(fields["itemId"]),
+        var source = new SourceBinding(Reference(fields["serverRef"]), Reference(fields["itemId"]),
             Reference(fields["mediaSourceId"]), Digest(fields["sha256"]), Integer(fields["sizeBytes"], 1),
-            Reference(fields["timelineRef"]), Reference(fields["bindingRev"]), duration, SourceOrigin,
+            Reference(fields["timelineRef"]), Reference(fields["bindingRev"]), duration, Text(fields["origin"]),
             clocks.MoveToImmutable());
+        CheckSource(source);
+        return source;
+    }
+
+    internal static void CheckSource(SourceBinding source)
+    {
+        Check(IsReference(source.ServerRef) && IsReference(source.ItemId) && IsReference(source.MediaSourceId) &&
+            IsReference(source.TimelineRef) && IsReference(source.BindingRev), RefusalCode.InvalidValue);
+        Check(IsDigest(source.Sha256), RefusalCode.InvalidDigest);
+        Check(source.SizeBytes <= MaxJsonInteger && source.DurationMs <= MaxJsonInteger, RefusalCode.IntegerOverflow);
+        Check(source.SizeBytes > 0 && source.DurationMs > 0 && source.Origin == SourceOrigin, RefusalCode.InvalidValue);
+        _ = CutTimeline.MillisecondsToTicks(source.DurationMs);
+        Check(!source.Tracks.IsDefaultOrEmpty, RefusalCode.InvalidValue);
+        Check(source.Tracks.Length <= MaxTracks, RefusalCode.LimitExceeded);
+        var indices = new HashSet<long>();
+        foreach (var track in source.Tracks)
+        {
+            Check(track is not null, RefusalCode.InvalidValue);
+            Check(track!.Index <= MaxJsonInteger && track.TimeBaseNumerator <= MaxJsonInteger &&
+                track.TimeBaseDenominator <= MaxJsonInteger && track.AnchorPts is >= -MaxJsonInteger and <= MaxJsonInteger &&
+                track.AnchorSourceMs <= MaxJsonInteger, RefusalCode.IntegerOverflow);
+            Check(track.Index >= 0 && track.Kind is "video" or "audio" or "subtitle" &&
+                track.TimeBaseNumerator > 0 && track.TimeBaseDenominator > 0 &&
+                track.AnchorSourceMs >= 0 && track.AnchorSourceMs < source.DurationMs, RefusalCode.InvalidValue);
+            Check(indices.Add(track.Index), RefusalCode.DuplicateTrackIndex);
+        }
     }
 
     private static PlanAuthority ReadAuthority(JsonElement value)
@@ -211,7 +226,14 @@ public static class PlanValidator
         }
     }
 
-    private static Dictionary<string, JsonElement> ReadObject(JsonElement element, params string[] names)
+    internal static JsonDocument ReadDocument(ReadOnlyMemory<byte> utf8)
+    {
+        // Callers bound input length first. Reject broken UTF-8 even in ignored metadata.
+        _ = StrictUtf8.GetCharCount(utf8.Span);
+        return JsonDocument.Parse(utf8, new JsonDocumentOptions { MaxDepth = 8 });
+    }
+
+    internal static Dictionary<string, JsonElement> ReadObject(JsonElement element, params string[] names)
     {
         Check(element.ValueKind == JsonValueKind.Object, RefusalCode.InvalidValue);
         var fields = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
@@ -229,7 +251,7 @@ public static class PlanValidator
         return fields;
     }
 
-    private static int ArrayCount(JsonElement value, int max, int min = 0)
+    internal static int ArrayCount(JsonElement value, int max, int min = 0)
     {
         Check(value.ValueKind == JsonValueKind.Array, RefusalCode.InvalidValue);
         var count = value.GetArrayLength();
@@ -238,7 +260,7 @@ public static class PlanValidator
         return count;
     }
 
-    private static long Integer(JsonElement value, long min = -MaxJsonInteger)
+    internal static long Integer(JsonElement value, long min = -MaxJsonInteger)
     {
         Check(value.ValueKind == JsonValueKind.Number, RefusalCode.InvalidValue);
         if (!value.TryGetInt64(out var number))
@@ -249,7 +271,7 @@ public static class PlanValidator
         return number;
     }
 
-    private static string Text(JsonElement value, int max = MaxReferenceLength,
+    internal static string Text(JsonElement value, int max = MaxReferenceLength,
         RefusalCode reason = RefusalCode.InvalidValue)
     {
         Check(value.ValueKind == JsonValueKind.String, reason);
@@ -261,23 +283,27 @@ public static class PlanValidator
         return text;
     }
 
-    private static string Reference(JsonElement value)
+    internal static string Reference(JsonElement value)
     {
         var text = Text(value);
-        Check(char.IsAsciiLetterOrDigit(text[0]) && text.All(c => char.IsAsciiLetterOrDigit(c) ||
-            c is ':' or '-' or '_' or '.'), RefusalCode.InvalidValue);
+        Check(IsReference(text), RefusalCode.InvalidValue);
         return text;
     }
 
-    private static string Digest(JsonElement value)
+    internal static bool IsReference(string? text) => text is { Length: > 0 and <= MaxReferenceLength } &&
+        char.IsAsciiLetterOrDigit(text[0]) && text.All(c => char.IsAsciiLetterOrDigit(c) || c is ':' or '-' or '_' or '.');
+
+    internal static string Digest(JsonElement value)
     {
         var text = Text(value, reason: RefusalCode.InvalidDigest);
-        Check(text.Length == 64 && text.All(c => char.IsAsciiDigit(c) || c is >= 'a' and <= 'f'),
-            RefusalCode.InvalidDigest);
+        Check(IsDigest(text), RefusalCode.InvalidDigest);
         return text;
     }
 
-    private static DateTimeOffset Timestamp(JsonElement value)
+    internal static bool IsDigest(string? text) => text is { Length: 64 } &&
+        text.All(c => char.IsAsciiDigit(c) || c is >= 'a' and <= 'f');
+
+    internal static DateTimeOffset Timestamp(JsonElement value)
     {
         var text = Text(value, reason: RefusalCode.InvalidTimestamp);
         if ((text.Length == 20 || text.Length is >= 22 and <= 28 && text[19] == '.') &&
@@ -287,13 +313,13 @@ public static class PlanValidator
         throw new Rejected(RefusalCode.InvalidTimestamp);
     }
 
-    private static void Check(bool ok, RefusalCode reason)
+    internal static void Check(bool ok, RefusalCode reason)
     {
         if (!ok)
             throw new Rejected(reason);
     }
 
-    private sealed class Rejected(RefusalCode reason) : Exception
+    internal sealed class Rejected(RefusalCode reason) : Exception
     {
         public RefusalCode Reason { get; } = reason;
     }
