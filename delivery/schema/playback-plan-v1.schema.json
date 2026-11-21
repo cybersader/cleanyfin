@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cybersader.github.io/cleanyfin/schema/v1/playback-plan.schema.json",
+  "title": "Cleanyfin playback plan v1 (cut-only reader)",
+  "$comment": "Also apply the runtime validator: the schema cannot enforce byte/depth limits, duplicate JSON keys, decimal integer token spelling, time validity, track/reference identities, interval relationships, checked ticks or verification against current local facts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["planVersion", "requires", "revision", "issuedAt", "expiresAt", "source", "authority", "inputs", "operations"],
+  "properties": {
+    "planVersion": { "const": 1 },
+    "requires": { "type": "array", "maxItems": 1, "uniqueItems": true, "items": { "const": "cut" } },
+    "revision": { "$ref": "#/$defs/ref" },
+    "issuedAt": { "$ref": "#/$defs/utc" },
+    "expiresAt": { "$ref": "#/$defs/utc" },
+    "source": { "$ref": "#/$defs/source" },
+    "authority": { "$ref": "#/$defs/authority" },
+    "inputs": { "$ref": "#/$defs/inputs" },
+    "operations": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/operation" } },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string", "minLength": 1, "maxLength": 512,
+          "pattern": "^(?=.*[A-Za-z0-9])[A-Za-z0-9 .,!?'_()-]+(?![\\s\\S])"
+        }
+      }
+    }
+  },
+  "if": { "properties": { "operations": { "minItems": 1 } } },
+  "then": { "properties": { "requires": { "contains": { "const": "cut" } } } },
+  "$defs": {
+    "ref": {
+      "type": "string", "minLength": 1, "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*(?![\\s\\S])"
+    },
+    "sha256": { "type": "string", "minLength": 64, "maxLength": 64, "pattern": "^[0-9a-f]{64}$" },
+    "utc": {
+      "type": "string", "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-5][0-9](\\.[0-9]{1,7})?Z(?![\\s\\S])"
+    },
+    "signed": { "type": "integer", "minimum": -9007199254740991, "maximum": 9007199254740991 },
+    "nonnegative": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "positive": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "track": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "kind", "timeBase", "anchorPts", "anchorSourceMs"],
+      "properties": {
+        "index": { "$ref": "#/$defs/nonnegative" },
+        "kind": { "enum": ["video", "audio", "subtitle"] },
+        "timeBase": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "$ref": "#/$defs/positive" } },
+        "anchorPts": { "$ref": "#/$defs/signed" },
+        "anchorSourceMs": { "$ref": "#/$defs/nonnegative" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["serverRef", "itemId", "mediaSourceId", "sha256", "sizeBytes", "timelineRef", "bindingRev", "durationMs", "origin", "tracks"],
+      "properties": {
+        "serverRef": { "$ref": "#/$defs/ref" },
+        "itemId": { "$ref": "#/$defs/ref" },
+        "mediaSourceId": { "$ref": "#/$defs/ref" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "sizeBytes": { "$ref": "#/$defs/positive" },
+        "timelineRef": { "$ref": "#/$defs/ref" },
+        "bindingRev": { "$ref": "#/$defs/ref" },
+        "durationMs": { "$ref": "#/$defs/positive" },
+        "origin": { "const": "source-presentation-zero" },
+        "tracks": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/track" } }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["viewerRef", "profileRef", "policyRev", "trustRev"],
+      "properties": {
+        "viewerRef": { "$ref": "#/$defs/ref" },
+        "profileRef": { "$ref": "#/$defs/ref" },
+        "policyRev": { "$ref": "#/$defs/ref" },
+        "trustRev": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshotRev", "coverage", "annotations"],
+      "properties": {
+        "snapshotRev": { "$ref": "#/$defs/ref" },
+        "coverage": { "const": "reviewed-marks-only" },
+        "annotations": {
+          "type": "array", "maxItems": 8192, "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["ref", "contentSha256"],
+            "properties": {
+              "ref": { "$ref": "#/$defs/ref" },
+              "contentSha256": { "$ref": "#/$defs/sha256" }
+            }
+          }
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "startMs", "endMs", "from"],
+      "properties": {
+        "action": { "const": "cut" },
+        "startMs": { "$ref": "#/$defs/nonnegative" },
+        "endMs": { "$ref": "#/$defs/positive" },
+        "from": { "type": "array", "minItems": 1, "maxItems": 8192, "uniqueItems": true, "items": { "$ref": "#/$defs/ref" } }
+      }
+    }
+  }
+}

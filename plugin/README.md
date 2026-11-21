@@ -9,14 +9,17 @@ Targets Jellyfin **10.11.x** (`net9.0`, `Jellyfin.Controller` 10.11.11).
 
 ## Build
 
-No local .NET needed if you have Docker:
+From the **repository root**, mount both the plugin and its delivery-library reference:
 
 ```bash
-docker run --rm -v "$PWD:/src" -w /src mcr.microsoft.com/dotnet/sdk:9.0 dotnet build -c Release
-# -> bin/Release/net9.0/Jellyfin.Plugin.Cleanyfin.dll
+docker run --rm -v "$PWD:/src" -w /src mcr.microsoft.com/dotnet/sdk:9.0 dotnet build plugin -c Release
 ```
 
-Or with a local SDK: `dotnet build -c Release`.
+Or with a local SDK: `dotnet build plugin -c Release`. Package both `Jellyfin.Plugin.Cleanyfin.dll` and `Cleanyfin.Delivery.dll` from `plugin/bin/Release/net9.0/`. The [disposable authenticated-handoff spike](../tools/playback-lab/README.md#authenticated-cut-list-handoff-disposable-101111-only) is disabled by default; it does not change ordinary playback.
+
+### One generated playback sample (lab only)
+
+On **10.11.11** the fixture can add one inert `.strm` to a separate shelf. A scoped MVC action filter checks the signed-in viewer's access to **both** items, evaluates Jellyfin's ordinary POST against the one immutable original, discards that response, and issues one direct-play list URL for the enrolled Wholphin/mpv tuple. A metadata provider supplies the shelf's 14.96 s duration and H.264/AAC facts. The file contains only a dead locator; it never contains the original path, a login, or a ticket. Turning off `EnableAuthRangeLab` refuses playback. This is a cooperative presentation experiment, not source access control, a household feature or a compatibility claim.
 
 ## Install (once released)
 

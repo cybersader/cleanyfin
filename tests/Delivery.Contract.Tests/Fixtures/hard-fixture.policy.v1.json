@@ -1,0 +1,13 @@
+{
+  "policyVersion": 1,
+  "profileRef": "local:p2",
+  "policyRev": "policy:7",
+  "trustRev": "trust:2",
+  "rules": [
+    {
+      "category": "violence",
+      "minimumSeverity": 2,
+      "filter": true
+    }
+  ]
+}

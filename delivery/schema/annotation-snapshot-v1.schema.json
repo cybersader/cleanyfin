@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cybersader.github.io/cleanyfin/schema/v1/annotation-snapshot.schema.json",
+  "title": "Cleanyfin accepted annotation snapshot v1",
+  "$comment": "Also apply strict runtime parsing and independent review/currentness checks. Schema does not check duplicate keys, lexical integer spelling, byte/depth limits, unique refs or track indices, checked ticks, intervals against duration, or digest correspondence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["snapshotVersion", "snapshotRev", "coverage", "acceptedAt", "expiresAt", "binding", "annotations"],
+  "properties": {
+    "snapshotVersion": {"const": 1},
+    "snapshotRev": {"$ref": "#/$defs/ref"},
+    "coverage": {"const": "reviewed-marks-only"},
+    "acceptedAt": {"$ref": "#/$defs/utc"},
+    "expiresAt": {"$ref": "#/$defs/utc"},
+    "binding": {"$ref": "#/$defs/source"},
+    "annotations": {"type": "array", "maxItems": 8192, "uniqueItems": true, "items": {"$ref": "#/$defs/annotation"}}
+  },
+  "$defs": {
+    "ref": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*(?![\\s\\S])"},
+    "sha256": {"type": "string", "minLength": 64, "maxLength": 64, "pattern": "^[0-9a-f]{64}$"},
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-5][0-9](\\.[0-9]{1,7})?Z(?![\\s\\S])"
+    },
+    "signed": {"type": "integer", "minimum": -9007199254740991, "maximum": 9007199254740991},
+    "nonnegative": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+    "positive": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+    "track": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "kind", "timeBase", "anchorPts", "anchorSourceMs"],
+      "properties": {
+        "index": {"$ref": "#/$defs/nonnegative"},
+        "kind": {"enum": ["video", "audio", "subtitle"]},
+        "timeBase": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/positive"}},
+        "anchorPts": {"$ref": "#/$defs/signed"},
+        "anchorSourceMs": {"$ref": "#/$defs/nonnegative"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["serverRef", "itemId", "mediaSourceId", "sha256", "sizeBytes", "timelineRef", "bindingRev", "durationMs", "origin", "tracks"],
+      "properties": {
+        "serverRef": {"$ref": "#/$defs/ref"},
+        "itemId": {"$ref": "#/$defs/ref"},
+        "mediaSourceId": {"$ref": "#/$defs/ref"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "sizeBytes": {"$ref": "#/$defs/positive"},
+        "timelineRef": {"$ref": "#/$defs/ref"},
+        "bindingRev": {"$ref": "#/$defs/ref"},
+        "durationMs": {"$ref": "#/$defs/positive"},
+        "origin": {"const": "source-presentation-zero"},
+        "tracks": {"type": "array", "minItems": 1, "maxItems": 256, "items": {"$ref": "#/$defs/track"}}
+      }
+    },
+    "category": {
+      "enum": ["profanity", "sexual_dialogue", "sex_scene", "nudity", "violence", "gore", "disturbing", "substance_use", "crude"]
+    },
+    "severity": {"type": "integer", "minimum": 0, "maximum": 3},
+    "annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "contentSha256", "category", "severity", "action", "startMs", "endMs"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/ref"},
+        "contentSha256": {"$ref": "#/$defs/sha256"},
+        "category": {"$ref": "#/$defs/category"},
+        "severity": {"$ref": "#/$defs/severity"},
+        "action": {"enum": ["skip", "cut", "mute", "mark"]},
+        "startMs": {"$ref": "#/$defs/nonnegative"},
+        "endMs": {"$ref": "#/$defs/positive"}
+      }
+    }
+  }
+}

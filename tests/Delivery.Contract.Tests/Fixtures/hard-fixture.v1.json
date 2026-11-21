@@ -1,0 +1,31 @@
+{
+  "planVersion": 1,
+  "requires": ["cut"],
+  "revision": "local:plan:42",
+  "issuedAt": "2026-11-21T18:00:00Z",
+  "expiresAt": "2026-11-21T18:30:00Z",
+  "source": {
+    "serverRef": "home-A",
+    "itemId": "11111111111111111111111111111111",
+    "mediaSourceId": "11111111111111111111111111111111",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sizeBytes": 1240000,
+    "timelineRef": "review:fixture:1",
+    "bindingRev": "binding:3",
+    "durationMs": 20000,
+    "origin": "source-presentation-zero",
+    "tracks": [
+      {"index": 0, "kind": "video", "timeBase": [1, 12800], "anchorPts": 0, "anchorSourceMs": 0},
+      {"index": 1, "kind": "audio", "timeBase": [1, 48000], "anchorPts": 0, "anchorSourceMs": 0}
+    ]
+  },
+  "authority": {"viewerRef": "local:v1", "profileRef": "local:p2", "policyRev": "policy:7", "trustRev": "trust:2"},
+  "inputs": {
+    "snapshotRev": "home:review:9",
+    "coverage": "reviewed-marks-only",
+    "annotations": [
+      {"ref": "home:fixture:mark1", "contentSha256": "06abcdc0c8b60fb497da40742ad1c354015cb99c06126a5353dbff6e5cdcb792"}
+    ]
+  },
+  "operations": [{"action": "cut", "startMs": 5480, "endMs": 10520, "from": ["home:fixture:mark1"]}]
+}
