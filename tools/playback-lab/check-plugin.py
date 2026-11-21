@@ -430,12 +430,45 @@ class PointerLab(Lab):
         raise RuntimeError('pointer projection lost on refresh')
 
 
+class ShelfLab(PointerLab):
+    """Gate on native catalogue isolation before issuing any per-profile media grants."""
+
+    def exercise(self):
+        self.setup_pointer()
+        shelf = self.folders['Shelf'].replace('-', '')
+
+        def catalog(user, uid):
+            views = self.api('/UserViews?userId='+uid, user=user)['Items']
+            videos = self.api('/Items?Recursive=true&IncludeItemTypes=Video', user=user)['Items']
+            return ({i['Id'].replace('-', '') for i in views}, {i['Id'].replace('-', '') for i in videos})
+
+        mine, my_items = catalog(self.one, self.viewer)
+        check('owner browses native shelf and pointer', shelf in mine and self.pointer in my_items)
+        other_uid = self.api('/Users/Me', user=self.two)['Id']
+        views, videos = catalog(self.two, other_uid)
+        check('explicit folder allowlist hides shelf and pointer', shelf not in views and self.pointer not in videos)
+
+        # No prior account to change or audit at reconcile time. An enrollment requirement
+        # must hold for a viewer created after publication, before the next reconcile.
+        pw = secrets.token_urlsafe(24)
+        new = self.api('/Users/New', 'POST', {'Name':'not-enrolled', 'Password':pw}, user=self.admin)
+        login = self.api('/Users/AuthenticateByName', 'POST', {'Username':'not-enrolled','Pw':pw}, user=('new-viewer',''))
+        viewer = ('new-viewer', login['AccessToken'])
+        views, videos = catalog(viewer, new['Id'])
+        policy = self.api('/Users/Me', user=viewer)['Policy']
+        print('New native viewer: administrator=%s allFolders=%s shelfVisible=%s pointerVisible=%s' %
+              (policy['IsAdministrator'],policy['EnableAllFolders'],shelf in views,self.pointer in videos), flush=True)
+        check('new unenrolled viewer cannot browse shelf or pointer', shelf not in views and self.pointer not in videos)
+        # A later host passing this prerequisite is not evidence for the remaining lifecycle.
+        raise RuntimeError('native ACL prerequisite passed; two-profile lifecycle has not been tested')
+
+
 def main():
     if not __debug__:
         raise SystemExit('Run without Python optimization: fixture assertions are required.')
-    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh'],required=True);case=p.parse_args().case
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation'],required=True);case=p.parse_args().case
     scratch=ROOT/'plugin/obj';scratch.mkdir(exist_ok=True)
-    w=Path(tempfile.mkdtemp(prefix=case+'-',dir=scratch));lab=(Lab if case=='auth-range' else PointerLab)(w);ok=False
+    w=Path(tempfile.mkdtemp(prefix=case+'-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab}[case](w);ok=False
     try:
         lab.setup();lab.exercise();docker('stop',lab.cid);lab.inspect();ok=True
     except Exception as e:

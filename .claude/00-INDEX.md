@@ -23,12 +23,13 @@
 | [05-EXISTING-WORK](./05-EXISTING-WORK.md) | The direct competitor(s) and cleanyfin's opening | `prior-art-and-oss-competitors.md` |
 | [10-VISION-SHORT](./10-VISION-SHORT.md) / [11-VISION-LONG](./11-VISION-LONG.md) | Where this goes, short + long | all |
 | [12-PRINCIPLES](./12-PRINCIPLES.md) | The rules every design decision is checked against | all |
-| [13-DELIVERY-PATTERN](./13-DELIVERY-PATTERN.md) | PROPOSED: source-bound plan, measured adapter, no silent fallback | `delivery-design-2026-11-21/01-plan-and-mpv-adapter-design.md` |
+| [13-DELIVERY-PATTERN](./13-DELIVERY-PATTERN.md) | ADOPTED: source-bound plan, measured adapter, no silent fallback | `delivery-design-2026-11-21/01-plan-and-mpv-adapter-design.md` |
 | [20-ROADMAP](./20-ROADMAP.md) | Phases, the two feasibility spikes, exit criteria | all |
 | [21-ARCHITECTURE](./21-ARCHITECTURE.md) | Plugin + server + PWA; how the pieces fit | `jellyfin-*`, `tech-stack-*`, `federation-*` |
 | [22-DATA-MODEL](./22-DATA-MODEL.md) | The keystone: segment/release schema + version calibration | `tagging-taxonomy-*`, `federation-*` |
 | [23-CONTRIBUTION-WORKFLOWS](./23-CONTRIBUTION-WORKFLOWS.md) | Marking, voting, moderation, curators, automation gate | `federation-*`, `tagging-taxonomy-*` |
 | [31-TRADEOFFS](./31-TRADEOFFS.md) | Honest tensions (skip-vs-mute, granularity, federation cost, matching) | all |
+| [32-UPKEEP-LEDGER](./32-UPKEEP-LEDGER.md) | What Cleanyfin rides on, what breaks when it moves, and the ongoing work that creates | `13-DELIVERY-PATTERN`, `delivery-design-2026-11-21/` |
 | [40-QUESTIONS-OPEN](./40-QUESTIONS-OPEN.md) | Unresolved decisions a maintainer must make | all |
 | [41-QUESTIONS-RESOLVED](./41-QUESTIONS-RESOLVED.md) | **Live here** — the decision log (R01…) with rationale | — |
 
