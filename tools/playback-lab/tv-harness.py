@@ -20,6 +20,9 @@ import zipfile
 
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
+# Permit isolated Python while keeping imports limited to this trusted lab.
+if str(HERE) not in sys.path:
+    sys.path.insert(0,str(HERE))
 APK = 'Wholphin-x86_64.apk'
 DIGEST = '60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d'
 REPO = 'damontecres/Wholphin'
@@ -28,6 +31,76 @@ MPV_OPTIONS = 'hwdec=no\nvo=gpu\ngpu-context=android\nopengl-es=yes\nmsg-level=a
 PICTURE_SPEED = .25
 DISPLAY_CAPTURE_SIZE = '320x180'
 MEDIA_MARGIN_SECONDS = 14
+DISPLAY_PREROLL_SECONDS = 2
+
+
+CGROUP_ROOT = Path('/sys/fs/cgroup')
+CGROUP = next((CGROUP_ROOT/line[3:].lstrip('/') for line in Path('/proc/self/cgroup').read_text().splitlines()
+                if line.startswith('0::')),None)
+
+
+def cpu_capacity():
+    count=len(os.sched_getaffinity(0))
+    if CGROUP is not None:
+        for group in (CGROUP,*CGROUP.parents):
+            if group!=CGROUP_ROOT and CGROUP_ROOT not in group.parents:break
+            try:quota,period=(group/'cpu.max').read_text().split()
+            except FileNotFoundError:continue
+            if quota!='max':count=min(count,int(quota)/int(period))
+    return count
+
+
+CPU_CAPACITY = cpu_capacity()
+
+
+def pressure_full(path):
+    try:row=next(line for line in path.read_text().splitlines() if line.startswith('full '))
+    except (FileNotFoundError,StopIteration):return None
+    return float(row.split()[1].split('=')[1])
+
+
+def host_health():
+    # MemAvailable includes reclaimable cache; load alone does not distinguish
+    # CPU contention from tasks stuck in storage I/O. Record both.
+    load=round(os.getloadavg()[0],2); cpus=CPU_CAPACITY
+    mem=int(next(line.split()[1] for line in Path('/proc/meminfo').read_text().splitlines() if line.startswith('MemAvailable:')))/1048576
+    full=pressure_full(Path('/proc/pressure/io'))
+    scope_mem=pressure_full(CGROUP/'memory.pressure') if CGROUP is not None else None
+    scope_io=pressure_full(CGROUP/'io.pressure') if CGROUP is not None else None
+    return dict(load1=load,cpus=cpus,availableGiB=round(mem,2),ioFull10sPct=full,
+                scopeMemoryFull10sPct=scope_mem,scopeIOFull10sPct=scope_io,
+                busy=load>cpus or mem<3 or any((p or 0)>=5 for p in (full,scope_mem,scope_io)))
+
+
+def host_label(h):
+    result=f"1m load {h['load1']:g}/{h['cpus']:g} CPUs, {h['availableGiB']:g} GiB available, I/O full PSI {h['ioFull10sPct']}%"
+    if h.get('scopeMemoryFull10sPct') is not None:
+        result+=f", run scope memory/I/O PSI {h['scopeMemoryFull10sPct']}%/{h['scopeIOFull10sPct']}%"
+    return result
+
+
+def wait_for_host(limit=180):
+    end=time.monotonic()+limit; stable=0; announced=False
+    while True:
+        h=host_health(); stable=0 if h['busy'] else stable+1
+        if stable>=3:
+            print('Host ready:',host_label(h),file=sys.stderr,flush=True)
+            return h
+        if time.monotonic()>=end:
+            raise RuntimeError('Host too busy to start TV harness: '+host_label(h))
+        if h['busy'] and not announced:
+            print('Waiting for host load and memory to settle:',host_label(h),file=sys.stderr,flush=True)
+            announced=True
+        time.sleep(5)
+
+
+def timeout_label(stage,history):
+    recent=list(history);current=host_health()
+    busy=sum(s['busy'] for s in recent)>=2 or current['busy']
+    detail=host_label(current)
+    previous=next((s for s in reversed(recent) if s['busy']),None)
+    if busy and not current['busy'] and previous:detail+='; recently '+host_label(previous)
+    return f"{'Host too busy; ' if busy else ''}timed out at {stage} ({detail})"
 
 
 def run(*args, timeout=30, **kwargs):
@@ -88,8 +161,9 @@ def eventually(fn, limit, reason):
 
 
 class TV:
-    def __init__(self, work, sdk, stack, gpu='swangle'):
+    def __init__(self, work, sdk, stack, gpu='swangle', ram_mib=2048, llvmpipe_threads=None):
         self.work, self.sdk, self.stack, self.gpu = work, sdk, stack, gpu
+        self.ram_mib,self.llvmpipe_threads=ram_mib,llvmpipe_threads
         self.home = work/'home'; self.runtime = work/'runtime'
         for d in (self.home, self.runtime, work/'tmp'):
             d.mkdir(mode=0o700)
@@ -160,9 +234,13 @@ class TV:
                         ANDROID_EMU_CRASH_REPORTING_DATABASE=str(self.work/'emulator-crash'),
                         QT_QPA_PLATFORM_PLUGIN_PATH=str(libs/'qt/plugins/platforms'),
                         LD_LIBRARY_PATH=':'.join(map(str,[libs/'vulkan',libs/'gles_angle',libs,libs/'qt/lib'])))
+        if self.llvmpipe_threads is not None:
+            # Bound only the owned emulator's software raster workers, not
+            # other host processes or the app's own output modes.
+            self.env['LP_NUM_THREADS']=str(self.llvmpipe_threads)
         self.emu = self.spawn(self.prefix+[em/'qemu/linux-x86_64/qemu-system-x86_64','-avd','lab','-accel','on','-no-window',
                               '-no-snapshot','-no-boot-anim','-port','5580','-no-metrics','-gpu',self.gpu,'-feature','-Vulkan',
-                              '-audio','pa','-crash-report-mode','disabled','-show-kernel','-memory','2048','-cores','4'], 'emulator')
+                              '-audio','pa','-crash-report-mode','disabled','-show-kernel','-memory',str(self.ram_mib),'-cores','4'], 'emulator')
         def ready():
             if self.emu.poll() is not None:
                 raise RuntimeError('Emulator exited before Android boot completed')
@@ -171,6 +249,8 @@ class TV:
         log=(self.work/'emulator.log').read_text(errors='replace')
         self.graphicsAdapter=next((m[1].strip() for m in re.finditer(r'Graphics Adapter (?!Vendor\b)([^\r\n]{1,120})',log)),None)
         self.graphicsClass='llvmpipe' if self.graphicsAdapter and 'llvmpipe' in self.graphicsAdapter.lower() else self.gpu
+        if self.llvmpipe_threads is not None:
+            self.graphicsClass+=f' with {self.llvmpipe_threads} requested llvmpipe workers'
 
 
 # Keep Jellyfin's own network namespace closed: even the remote peer seen by its
@@ -201,7 +281,7 @@ def setup_lab(work,tv,stack):
             run('docker','rm','-f',lab.cid,timeout=30)
     stack.callback(cleanup)
     lab.setup()
-    lab.wholphin['tuple'].update(appBuild=DIGEST,deviceMode=f'Google TV API 36 x86_64 emulator 1280x720, {tv.graphicsClass}, software video vo-gpu Android GLES, stereo PCM')
+    lab.wholphin['tuple'].update(appBuild=DIGEST,deviceMode=f'Google TV API 36 x86_64 emulator 1280x720, {tv.ram_mib} MiB, {tv.graphicsClass}, software video vo-gpu Android GLES, stereo PCM')
     lab.wholphin['status']='experimental'
     lab.public_origin='http://10.0.2.2:18096'+kit.BASE
     lab.setup_pointer()
@@ -254,11 +334,18 @@ class Screen:
         matches=[n for n in nodes if n.get('package')==APP and any(s.casefold() in {n.get(k,'').casefold() for k in ('text','content-desc')} for s in labels)]
         return min(matches,key=lambda n:(not n.get('content-desc'),n.get('clickable')!='true'),default=None)
 
-    def action(self,op,value):
+    def input_result(self,op,value='0'):
         import base64
-        val=base64.b64encode(value.encode()).decode()
+        val=base64.b64encode(str(value).encode()).decode()
         response=self.tv.adb('shell','am','instrument','-w','-e','op',op,'-e','value',val,INPUT+'/.TvInput',timeout=12)
-        return b'result=applied' in response
+        match=re.search(rb'^INSTRUMENTATION_RESULT: result=([a-z0-9:-]{1,40})\r?$',response,re.M)
+        return match[1].decode() if match else 'no-result'
+
+    def action(self,op,value='0'):
+        return self.input_result(op,value)=='applied'
+
+    def paused(self):
+        return self.input_result('state').startswith('2:')  # Android PlaybackState.STATE_PAUSED.
 
     def activate(self,*labels):
         def step():
@@ -315,15 +402,46 @@ class Screen:
         self.wait_label('Edit mpv.conf');self.key('BACK');self.dpad('Advanced Settings')
         self.save_mpv(MPV_OPTIONS)
 
-    def enter_advanced(self):
+    def enter_settings(self):
         self.wait_label('Home')
         def sidebar():
             nodes=self.tree();f=next((n for n in nodes if n.get('package')==APP and n.get('focused')=='true'),None)
             if f is not None and any((n.get('text') or n.get('content-desc')) in ('Home','Search','Favorites','Settings','Original') for n in f.iter()) and any(n.get('text')=='Settings' for n in nodes):return True
             self.key('DPAD_LEFT');return False
         eventually(sidebar,40,'D-pad did not enter the navigation drawer');self.dpad('Settings',cap=14)
-        self.wait_label('Remember selected tabs');self.dpad('Advanced Settings')
-        self.wait_label('Show Clock')
+        self.wait_label('Remember selected tabs')
+
+    def enter_advanced(self):
+        self.enter_settings();self.dpad('Advanced Settings');self.wait_label('Show Clock')
+
+    def skip_forward_five_seconds(self):
+        # The release's native settings slider starts at 30 seconds. Its
+        # focused canvas is below the text label, not its ancestor.
+        self.enter_settings()
+        def bounds(n):return tuple(map(int,re.findall(r'\d+',n.get('bounds',''))))
+        def focus():
+            label=self.get('Skip forward')
+            focused=next((n for n in self.nodes if n.get('package')==APP and n.get('focused')=='true'),None)
+            if label is not None and focused is not None:
+                l,t,r,b=bounds(label);x,y,w,h=bounds(focused)
+                if r>l and x>=l-20 and w>r and b<=y<h<=b+50:return (l,t,r,b)
+            self.key('DPAD_DOWN');return None
+        try:
+            l,t,r,b=eventually(focus,24,'No focused native Skip forward slider')
+            def read_value():
+                for n in self.tree():
+                    if n.get('package')!=APP or not re.fullmatch(r'\d+ seconds?',n.get('text','')):continue
+                    x,y,w,h=bounds(n)
+                    if x>l and b<=y<=b+50:return int(n.get('text').split()[0])
+                return None
+            start=eventually(read_value,5,'Native Skip forward slider value unavailable')
+            if start not in (5,30):raise RuntimeError('Unexpected native Skip forward starting value')
+            for _ in range((start-5)//5):
+                self.key('DPAD_LEFT');time.sleep(.2)
+            eventually(lambda:read_value()==5,6,'Native Skip forward slider did not read back 5 seconds')
+        finally:
+            self.tv.adb('shell','am','force-stop',APP)
+        return 5000
 
     def slow_playback(self):
         self.key('DPAD_DOWN')  # show stock playback controls while paused
@@ -337,8 +455,21 @@ class Screen:
                 if 0<=l<160 and 520<t<b<=720 and 0<r-l<180 and not (node.get('text') or node.get('content-desc')):
                     buttons.append((l,t,r,b))
             return max(buttons,key=lambda bounds:(bounds[1],-bounds[0]),default=None)
-        l,t,r,b=eventually(gear,8,'Playback controls did not expose the stock settings button')
-        self.tv.adb('shell','input','tap',(l+r)//2,(t+b)//2)
+        def focus_gear():
+            target=gear()
+            if target is None:
+                self.key('DPAD_DOWN');return False
+            f=next((n for n in self.nodes if n.get('package')==APP and n.get('focused')=='true'),None)
+            if f is None:
+                self.key('DPAD_DOWN');return False
+            l,t,r,b=target
+            x,y,w,h=map(int,re.findall(r'\d+',f.get('bounds','')))
+            fx,fy=(x+w)//2,(y+h)//2
+            if l<=fx<=r and t<=fy<=b and w-x<180:
+                self.key('DPAD_CENTER');return True
+            direction=('DOWN' if fy<t else 'UP' if fy>b else 'LEFT' if fx>r else 'RIGHT')
+            self.key('DPAD_'+direction);return False
+        eventually(focus_gear,14,'Playback controls did not expose a focused stock settings button')
         self.wait_label('Playback Speed')
         self.dpad('Playback Speed',cap=4)
         self.wait_label('1.0')
@@ -346,7 +477,7 @@ class Screen:
         self.wait_label('Playback Speed')
         self.wait_label('0.25')
         self.key('BACK')  # Return from stock settings; controls auto-hide.
-        time.sleep(4)
+        time.sleep(5.5)  # Stock controller timeout is five seconds in this clone.
         return {'backend':'MPV','playbackSpeed':.25,'verification':'stock playback settings read back 0.25 while paused'}
 
     def save_mpv(self, opts):
@@ -473,21 +604,28 @@ def player_surface(tv):
     return any(APP in line and 'SurfaceView' in line for line in layers.splitlines())
 
 
-def record(tv,lab,item,label,speed,info,begin=None):
-    audio=tv.work/(label+'.pcm')
+def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
+    audio=tv.work/(label+'.pcm') if sound else None
+    video=None
     duration=20 if item==lab.item else 14.96
     limit=duration/speed+MEDIA_MARGIN_SECONDS
     info.update(speed=speed,fixtureDurationS=duration,wallCeilingS=limit,endSignal='fixture duration plus startup margin (no end signal)')
     with ExitStack() as s:
-        mon=s.enter_context(audio.open('wb')); err=s.enter_context((tv.work/(label+'-audio.log')).open('wb'))
-        proc=sp.Popen(tv.prefix+['parec','--device=fixture.monitor','--format=s16le','--rate=48000','--channels=2','--raw','--latency-msec=20'],env=tv.env,stdout=mon,stderr=err)
-        def stop():
-            proc.terminate()
-            try: proc.wait(timeout=5)
-            except sp.TimeoutExpired:proc.kill();proc.wait(timeout=5)
-        s.callback(stop)
-        eventually(lambda:audio.stat().st_size>=38400,12,'Private monitor did not yield 200 ms of PCM')
-        video=capture_display(tv,s,label,limit,info)
+        if sound:
+            mon=s.enter_context(audio.open('wb')); err=s.enter_context((tv.work/(label+'-audio.log')).open('wb'))
+            proc=sp.Popen(tv.prefix+['parec','--device=fixture.monitor','--format=s16le','--rate=48000','--channels=2','--raw','--latency-msec=20'],env=tv.env,stdout=mon,stderr=err)
+            def stop():
+                proc.terminate()
+                try: proc.wait(timeout=5)
+                except sp.TimeoutExpired:proc.kill();proc.wait(timeout=5)
+            s.callback(stop)
+            eventually(lambda:audio.stat().st_size>=38400,12,'Private monitor did not yield 200 ms of PCM')
+        if display:
+            video=capture_display(tv,s,label,limit,info)
+            # An opened MP4 only certifies that the recorder created its file.
+            # Allow composition/encoding before playing; trim by barcode later.
+            time.sleep(DISPLAY_PREROLL_SECONDS)
+            info['displayPrerollS']=DISPLAY_PREROLL_SECONDS
         if begin is None:
             tv.adb('logcat','-c')  # Only this private guest, before each playback.
         launch=time.monotonic(); pid=''; saw_session=False; saw_surface=False
@@ -521,20 +659,23 @@ def record(tv,lab,item,label,speed,info,begin=None):
                             saw_surface|=active
                     except (sp.CalledProcessError,sp.TimeoutExpired):
                         pass  # A missing probe never substitutes for EOF.
-                    time.sleep(.75)
-                time.sleep(.75)  # Keep the renderer/monitor tail past the end signal.
+                    time.sleep(1.25)
             except expired:
-                pass
+                info['captureDeadline']=timeout_label(label+' playback limit',tv.host_history)
         info['watchedS']=round(time.monotonic()-launch,2)
+        # Keep each tap past the observed end; monitor wall time and PCM length
+        # can diverge when the guest or sink is briefly starved.
+        time.sleep(3 if sound else .75)
         if pid.isdecimal():
             try:
                 logs=tv.adb('logcat','-d','--pid='+pid,'-v','threadtime',timeout=3)
                 (tv.work/(label+'-logcat.log')).write_bytes(logs)
                 app_runtime(logs.decode(errors='replace'),info)
             except (sp.CalledProcessError,sp.TimeoutExpired):pass
-    info['videoBytes']=video.stat().st_size if video.is_file() else 0
-    info['audioBytes']=audio.stat().st_size
-    info['audioDurationS']=round(info['audioBytes']/192000,3)
+    if video is not None:info['videoBytes']=video.stat().st_size if video.is_file() else 0
+    if audio is not None:
+        info['audioBytes']=audio.stat().st_size
+        info['audioDurationS']=round(info['audioBytes']/192000,3)
     info['runtimeVerified']=bool(info.get('libmpvAO') and info.get('libmpvVO') and info.get('playMethod')=='DirectPlay')
     print(f"{label}: {speed:g}x, {info['endSignal']}, watched {info['watchedS']:g}s; DirectPlay and libmpv AO/VO verified: {info['runtimeVerified']}",file=sys.stderr,flush=True)
     return video,audio
@@ -587,12 +728,6 @@ def has_routes(info):
     return len(info.get('grantRouteDeltas',[]))==3 and min(info['grantRouteDeltas'])>0
 
 
-def session_command(lab, session, name, at=None):
-    path='/Sessions/'+session['Id']+'/Playing/'+name
-    if at is not None:path+='?seekPositionTicks='+str(at*10000)
-    lab.api(path,'POST',user=lab.one)
-
-
 def shown_frame(tv,scorer):
     data=tv.adb('exec-out','screencap','-p',timeout=8)
     raw=run('ffmpeg','-v','error','-f','image2pipe','-i','pipe:0','-vf','scale=160:90:flags=area,format=gray','-frames:v','1','-threads:v','1','-f','rawvideo','pipe:1',input=data,timeout=5)
@@ -602,33 +737,40 @@ def shown_frame(tv,scorer):
 def prepare_slow(tv,lab,ui,item,scorer,info):
     tv.adb('logcat','-c')
     play(tv,lab,item)
-    session=eventually(lambda:now(lab,item),15,'Quarter-speed setup: no native playback session')
-    cmd=lambda name,at=None:session_command(lab,session,name,at)
-    paused=lambda:(now(lab,item) or {}).get('PlayState',{}).get('IsPaused') is True
-    cmd('Pause')
-    eventually(paused,8,'Quarter-speed setup: Pause not acknowledged')
+    eventually(lambda:now(lab,item),15,'Quarter-speed setup: no native playback session')
+    def command(op,value='0'):
+        if not ui.action(op,value):raise RuntimeError('Quarter-speed setup: stock Android MediaSession '+op+' unavailable')
+    command('pause')
+    eventually(ui.paused,8,'Quarter-speed setup: stock pause not acknowledged')
     info['speedSetting']=ui.slow_playback()
-    if not paused():raise RuntimeError('Quarter-speed setup: player left paused state')
-    cmd('Seek',0)
-    eventually(lambda:shown_frame(tv,scorer)==0,8,'Quarter-speed setup: paused seek did not present frame zero')
-    return lambda:cmd('Unpause')
+    if not ui.paused():raise RuntimeError('Quarter-speed setup: player left paused state')
+    # The stock MPV player does not advertise MediaSession seeking. With
+    # overlays dismissed, Wholphin's left key takes its own rewind path.
+    if shown_frame(tv,scorer)!=0:
+        ui.key('DPAD_LEFT')
+        ui.key('DPAD_LEFT')  # Two default 10 s steps cover the whole fixture.
+    eventually(lambda:shown_frame(tv,scorer)==0,10,'Quarter-speed setup: paused rewind did not present frame zero')
+    return lambda:command('play')
 
 
-def measure(tv,lab,ui,out):
+def measure(tv,lab,ui,out,split):
     from tv_score import picture,audio,compare
     scorer=module('analyze-capture'); takes=out['recordings']={}
     out['audioLevels']=configure_audio(tv)
     print('Private audio setup:',json.dumps(out['audioLevels']),file=sys.stderr,flush=True)
     def score(key,scorer_fn,*args):
         try:out[key]=scorer_fn(*args)
-        except (ValueError,OSError,sp.CalledProcessError) as exc:
-            out.setdefault('scoreIssues',{})[key]=str(exc) if isinstance(exc,ValueError) else type(exc).__name__
-    def take(label,item,speed,*,sound=False,filtered=False):
+        except (ValueError,OSError,sp.CalledProcessError,sp.TimeoutExpired) as exc:
+            msg=timeout_label(key,tv.host_history) if isinstance(exc,sp.TimeoutExpired) else str(exc) if isinstance(exc,ValueError) else type(exc).__name__
+            out.setdefault('scoreIssues',{})[key]=msg
+    def take(label,item,speed,*,sound=False,display=True,filtered=False):
         out['milestone']=label
         before=handoff(lab) if filtered else None
         offset=lab.wire_log.stat().st_size
         info=takes[label]={'speed':speed}
         try:
+            # Keep Activity cold-start work out of the first barcode frames.
+            if speed==1:tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity')
             begin=prepare_slow(tv,lab,ui,item,scorer,info) if speed!=1 else None
         except RuntimeError as exc:
             if not str(exc).startswith(('Quarter-speed setup:','Playback controls did not expose','Wholphin did not display','No focused')):raise
@@ -636,7 +778,7 @@ def measure(tv,lab,ui,out):
             tv.adb('shell','am','force-stop',APP)
             print(f'{label}: {exc}',file=sys.stderr,flush=True)
             return None
-        v,a=record(tv,lab,item,label,speed,info,begin)
+        v,a=record(tv,lab,item,label,speed,info,begin,display=display,sound=sound)
         with lab.wire_log.open() as log:
             log.seek(offset)
             info['observedPlaybackInfo']=[json.loads(line) for line in log if line.startswith('{') and line.endswith('\n')]
@@ -647,33 +789,63 @@ def measure(tv,lab,ui,out):
             if not has_routes(info):
                 print('Filtered request:',json.dumps(info['observedPlaybackInfo']),
                       '; logged refusal codes:',info['serverLoggedRefusalCodes'],file=sys.stderr,flush=True)
-        # A broken instrument, missing stop report or invalid calibration on
-        # one channel cannot discard the other channel's observations.
-        score(label+'Picture',picture,v,scorer)
-        if sound:score(label+'Sound',audio,a,scorer)
-        # Force-stop only after capture was finalized; each intent starts from
-        # zero independently, even when a session was left stale at the limit.
+        # Stop player work before running host-side analysis; all captures are
+        # already finalized, and each next playback starts independently.
         tv.adb('shell','am','force-stop',APP)
+        if display:score(label+'Picture',picture,v,scorer)
+        if sound:score(label+'Sound',audio,a,scorer)
+        if 'captureDeadline' in info:
+            if info['captureDeadline'].startswith('Host too busy'):raise RuntimeError(info['captureDeadline'])
+            print(info['captureDeadline'],file=sys.stderr,flush=True)
         return a
-    ca=take('control',lab.item,1,sound=True)
-    fa=take('filtered',lab.pointer,1,sound=True,filtered=True)
-    if 'controlSound' in out:
-        ref=scorer.media(lab.work/'fixture/source.mp4','ffmpeg','-i','/lab','-map','0:a:0','-f','s16le','-ac','2','-ar','48000','pipe:1',readonly=True)
-        matched=has_routes(takes['filtered']) and takes['filtered'].get('runtimeVerified') and 'filteredSound' in out
-        score('waveform',compare,ca,fa if matched else None,ref,out['controlSound']['preRollPeakLSB'],
-              out['filteredSound']['preRollPeakLSB'] if matched else None)
-    if has_routes(takes['filtered']):
-        controls(tv,lab,ui,out)
-    if not out.get('controlPicture',{}).get('controlComplete'):
+    ca=take('control',lab.item,1,sound=True,display=not split)
+    cb=take('repeatControl',lab.item,1,sound=True,display=not split)
+    out['milestone']='PCM reference origin and repeatability'
+    refs=None
+    if all(label+'Sound' in out and takes[label].get('runtimeVerified') and not takes[label].get('captureDeadline') for label in ('control','repeatControl')):
+        try:
+            refs=scorer.media(lab.work/'fixture/source.mp4','ffmpeg','-i','/lab','-map','0:a:0','-f','s16le','-ac','2','-ar','48000','pipe:1',readonly=True)
+        except (sp.CalledProcessError,sp.TimeoutExpired):
+            out.setdefault('scoreIssues',{})['pcmReference']='Could not decode source onset witness'
+        if refs is not None:
+            noise={label:out[label+'Sound']['preRollPeakLSB'] for label in ('control','repeatControl')}
+            score('waveform',compare,ca,cb,None,refs,noise)
+            floor=out.get('waveform',{}).get('repeatability',{})
+            if floor:
+                def detail(k):
+                    f=floor[k]; rms='/'.join(f'{v:g}' for v in f['errorRmsLSB'])
+                    return f"{f['differentSampleFrames']}/{f['comparedSampleFrames']} changed frames, {rms} L/R LSB RMS"
+                print('Uncut PCM repeatability: 20 ms before:',detail('joinBefore20ms'),
+                      '; 20 ms after:',detail('joinAfter20ms'),file=sys.stderr,flush=True)
+    fa=take('filtered',lab.pointer,1,sound=True,display=not split,filtered=True)
+    out['milestone']='filtered PCM comparison'
+    if refs is not None and 'filteredSound' in out and takes['filtered'].get('runtimeVerified') and has_routes(takes['filtered']):
+        noise['filtered']=out['filteredSound']['preRollPeakLSB']
+        score('waveform',compare,ca,cb,fa,refs,noise)
+    control_names=('control','repeatControl')
+    picture_cut='filtered'
+    if split:
+        control_names=('controlDisplay',)
+        picture_cut='filteredDisplay'
+        take('controlDisplay',lab.item,1)
+        take(picture_cut,lab.pointer,1,filtered=True)
+    real=any(picture_calibrated(out.get(label+'Picture',{}),takes[label]) for label in control_names)
+    cut=out.get(picture_cut+'Picture',{})
+    need_slow_cut=(has_routes(takes[picture_cut]) and not cut.get('marked') and
+                   not cut.get('filteredComplete') and not picture_resolved(cut,1))
+    if not real or need_slow_cut:
         take('slowControl',lab.item,PICTURE_SPEED)
         if takes['slowControl'].get('speedSetting'):
             out['verifiedSlowSettings']=takes['slowControl']['speedSetting']
         if has_routes(takes['filtered']) and picture_calibrated(out.get('slowControlPicture',{}),takes['slowControl']):
             take('slowFiltered',lab.pointer,PICTURE_SPEED,filtered=True)
+    if has_routes(takes['filtered']):
+        out['milestone']='seeks and persisted resume'
+        controls(tv,lab,ui,out)
 
 
 def controls(tv,lab,ui,out):
-    """Exercise the player's own Jellyfin remote commands and visible resume choice."""
+    """Exercise stock D-pad seeks and the player's visible Jellyfin Resume choice."""
     from uuid import UUID
     scorer=module('analyze-capture'); receipt=out['controlOperations']={}
     def witness(fn,limit,reason):
@@ -682,30 +854,61 @@ def controls(tv,lab,ui,out):
             if str(exc)!=reason:raise
             receipt.setdefault('limits',[]).append(reason)
             return None
-    play(tv,lab,lab.pointer)
-    s=witness(lambda:now(lab,lab.pointer),20,'Control playback did not start')
-    if not s:return
-    def command(name,at=None):return session_command(lab,s,name,at)
-    def shown():return shown_frame(tv,scorer)
-    command('Pause')
-    receipt['pauseAcknowledged']=bool(witness(lambda:(now(lab,lab.pointer) or {}).get('PlayState',{}).get('IsPaused'),10,'Player did not acknowledge pause'))
-    # Paused seek destinations on both sides and exactly at the cut. Never use
-    # server playhead ticks alone as evidence of what was actually presented.
-    if receipt['pauseAcknowledged']:
-        for ms in (7600,2400,8000,3600,5480,7600):
-            target=ms//40+(126 if ms>=5480 else 0);command('Seek',ms)
-            observed=[]
-            def landed():
-                n=shown()
-                if n is not None:observed.append(n)
-                return n==target
-            exact=bool(witness(landed,5,f'No exact paused seek landing at {ms} ms'))
-            receipt.setdefault('pausedSeeks',[]).append(dict(filteredMs=ms,expectedFrame=target,observed=observed,exact=exact))
-    if now(lab,lab.pointer):command('Stop')
-    receipt['stopAcknowledged']=bool(witness(lambda:not now(lab,lab.pointer),10,'No Jellyfin session clear after Stop'))
+    receipt['transport']='Stock Wholphin D-pad seeks, Android MediaSession pause, TV Stop key'
+    tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity')
+    try:receipt['verifiedSkipForwardMs']=ui.skip_forward_five_seconds()
+    except RuntimeError as exc:
+        receipt['seekLimit']=str(exc)
+        tv.adb('shell','am','force-stop',APP)
     def ticks():
         return lab.api('/Users/'+lab.viewer+'/Items/'+lab.pointer,user=lab.one).get('UserData',{}).get('PlaybackPositionTicks',0)
-    receipt['bookmarkTicks']=witness(ticks,10,'No persisted pointer bookmark')
+    receipt['bookmarkBeforeTicks']=ticks()
+    tv.adb('logcat','-c')
+    play(tv,lab,lab.pointer)
+    if not witness(lambda:now(lab,lab.pointer),20,'Control playback did not start'):return
+    def shown():return shown_frame(tv,scorer)
+    if 'verifiedSkipForwardMs' in receipt:
+        receipt['pauseRequest']=ui.input_result('pause')
+        receipt['pauseAcknowledged']=bool(receipt['pauseRequest']=='applied' and witness(ui.paused,8,'Stock Android player did not acknowledge pause'))
+        if receipt['pauseAcknowledged']:
+            ui.key('DPAD_LEFT');ui.key('DPAD_LEFT')
+            receipt['rewindAnchor']=bool(witness(lambda:shown()==0,5,'Stock rewind did not present frame zero'))
+        if receipt.get('rewindAnchor'):
+            for direction,ms in (('RIGHT',5000),('RIGHT',10000),('LEFT',0))*2:
+                target=ms//40+(126 if ms>=5480 else 0)
+                ui.key('DPAD_'+direction)
+                observed=[]
+                def landed():
+                    n=shown()
+                    if n is not None:observed.append(n)
+                    return n==target
+                exact=bool(witness(landed,5,f'No exact paused seek landing at {ms} ms'))
+                receipt.setdefault('pausedSeeks',[]).append(dict(filteredMs=ms,expectedFrame=target,observed=observed,exact=exact,request=direction))
+                if not exact:break  # Relative expectations cannot be chained from an unverified position.
+        # Resume the same stock player and stop past the cut, away from EOF.
+        if receipt['pauseAcknowledged']:ui.action('play')
+    receipt['preStopReadings']=[]
+    def beyond_cut():
+        n=shown()
+        if n is not None:receipt['preStopReadings'].append(n)
+        return n if n is not None and 280<=n<=410 else None
+    receipt['preStopFrame']=witness(beyond_cut,12,'No kept frame sufficiently far past the cut before Stop')
+    session=now(lab,lab.pointer)
+    if not session:
+        receipt.setdefault('limits',[]).append('Player left before stock Stop could be sent');return
+    receipt['preStopSessionTicks']=session.get('PlayState',{}).get('PositionTicks')
+    ui.key('KEYCODE_MEDIA_STOP')
+    receipt['stopAcknowledged']=bool(witness(lambda:not now(lab,lab.pointer),10,'No Jellyfin session clear after Stop'))
+    try:
+        pid=tv.adb('shell','pidof',APP,timeout=2).decode().strip()
+        if pid.isdecimal():
+            logs=tv.adb('logcat','-d','--pid='+pid,'-v','tag',timeout=3).decode(errors='replace')
+            receipt['reportedStopPositions']=[pos for item,pos in re.findall(r'reportPlaybackStopped for ([a-fA-F0-9-]{32,36}) at ([-0-9. hms]{1,24})(?:\r?\n|$)',logs) if item.replace('-','').lower()==lab.pointer]
+    except (sp.CalledProcessError,sp.TimeoutExpired):pass
+    def new_ticks():
+        value=ticks()
+        return value if value>0 and value!=receipt['bookmarkBeforeTicks'] else None
+    receipt['bookmarkTicks']=witness(new_ticks,10,'No new persisted pointer bookmark after Stop')
     if not receipt['bookmarkTicks']:return
     tv.adb('shell','am','force-stop',APP)
     tv.adb('shell','am','start','-n',APP+'/.MainActivity','-a','android.intent.action.VIEW','--es','itemId',str(UUID(lab.pointer)),'--es','userId',str(UUID(lab.viewer)),'--es','serverId',str(UUID(lab.api('/System/Info/Public')['Id'])))
@@ -713,25 +916,44 @@ def controls(tv,lab,ui,out):
     nodes=witness(matches,15,'No actual Resume choice after stopping Wholphin')
     if not nodes:return
     n=nodes[0];label=n.get('content-desc') or n.get('text')
-    try:ui.activate(label)
+    before=handoff(lab)[0]
+    tv.adb('logcat','-c')
+    info=receipt['resumeTake']={}
+    try:video,_=record(tv,lab,lab.pointer,'resume',1,info,lambda:ui.activate(label),sound=False)
     except RuntimeError as exc:
         if not str(exc).startswith('Focus did not reach'):raise
         receipt.setdefault('limits',[]).append('Resume choice visible but did not receive focus');return
-    def sample():
-        frame=shown()
-        return (frame,) if frame is not None else None
-    seen=witness(sample,10,'Resume picture unreadable')
-    if seen:
-        receipt['resumedFrame']=seen[0]
-        receipt['resumeObservation']='One sample after actual Resume; not the first presented frame'
+    info['grantRouteDeltas']=[b-a for a,b in zip(before,handoff(lab)[0])]
+    from tv_score import picture
+    try:pic=picture(video,scorer)
+    except (ValueError,OSError,sp.CalledProcessError,sp.TimeoutExpired):
+        receipt.setdefault('limits',[]).append('Resume display capture unreadable');return
+    tick=receipt['bookmarkTicks']
+    receipt['expectedResumeFrame']=tick//400000+(126 if tick>=54800000 else 0)
+    receipt['resumePicture']={key:pic.get(key) for key in ('first','last','maxCaptureGapMs','interiorUnreadable')}
+    print('Resume observation:',json.dumps({k:receipt[k] for k in ('bookmarkTicks','expectedResumeFrame','resumePicture')}),file=sys.stderr,flush=True)
 
 
 CLAIMS=('filtered handoff','picture control','marked picture','kept picture at join','real-speed join','sound control','marked sound','kept tones','kept PCM at join','seek forward/back','persisted resume')
 
 
+def speed_witnessed(pic,info):
+    expected=info['fixtureDurationS']/info['speed']
+    return .85*expected<=pic.get('witnessSpanS',0)<=1.15*expected
+
+
 def picture_calibrated(pic,info):
-    return bool(info.get('runtimeVerified') and pic.get('controlComplete') and
-                (info['speed']==1 or pic['witnessSpanS']>=.85*info['fixtureDurationS']/info['speed']))
+    return bool(info.get('runtimeVerified') and pic.get('controlComplete') and speed_witnessed(pic,info))
+
+
+def picture_resolved(pic,speed):
+    return (pic.get('maxCaptureGapMs',float('inf'))<40/speed and not pic.get('interiorUnreadable') and
+            pic.get('first')==0 and pic.get('last')==499)
+
+
+def live_pcm(take):
+    return (take.get('runtimeVerified') and not take.get('captureDeadline') and
+            take.get('activeQemuAudioRoute')==[{'sink':'fixture','mute':False,'corked':False}])
 
 
 def compact_frames(frames):
@@ -741,24 +963,31 @@ def compact_frames(frames):
 
 def verdicts(raw,reason):
     out={k:('not-measured',reason or 'No calibrated capture') for k in CLAIMS}
-    takes=raw.get('recordings',{}); normal=takes.get('control',{}); cut=takes.get('filtered',{})
-    c=raw.get('controlPicture',{});f=raw.get('filteredPicture',{});a=raw.get('controlSound',{});b=raw.get('filteredSound',{});w=raw.get('waveform',{})
+    takes=raw.get('recordings',{}); normal=takes.get('control',{}); sound_cut=takes.get('filtered',{})
+    cut=takes.get('filteredDisplay',sound_cut); display_normal=takes.get('controlDisplay',normal)
+    c=raw.get('controlDisplayPicture',raw.get('controlPicture',{}))
+    f=raw.get('filteredDisplayPicture',raw.get('filteredPicture',{}))
+    a=raw.get('controlSound',{});b=raw.get('filteredSound',{});w=raw.get('waveform',{})
     sc=raw.get('slowControlPicture',{});sf=raw.get('slowFilteredPicture',{}); slow=takes.get('slowControl',{}); slow_cut=takes.get('slowFiltered',{})
-    if 'grantRouteDeltas' in cut:
-        out['filtered handoff']=('PASS' if has_routes(cut) else 'FAIL',
-            f"Pointer POST / list GET / original range GET: {cut['grantRouteDeltas']}; 1x")
-    real_valid=picture_calibrated(c,normal); slow_valid=picture_calibrated(sc,slow)
+    if 'grantRouteDeltas' in sound_cut:
+        out['filtered handoff']=('PASS' if has_routes(sound_cut) else 'FAIL',
+            f"Pointer POST / list GET / original range GET: {sound_cut['grantRouteDeltas']}; 1x")
+    rep=takes.get('repeatControl',{}); rc=raw.get('repeatControlPicture',{}); ar=raw.get('repeatControlSound',{})
     def coverage(pic,info):
-        return f"{pic['distinct']}/500, {pic['marked']}/126 marked at {info['speed']:g}x (max gap {pic.get('maxCaptureGapMs','unknown')} ms)"
-    sizes=[coverage(pic,info) for pic,info in ((c,normal),(sc,slow)) if pic]
+        return (f"{pic['distinct']}/500, {pic['marked']}/126 marked at {info['speed']:g}x "
+                f"({pic.get('witnessSpanS','unknown')} s span, {pic.get('maxCaptureGapMs','unknown')} ms max gap)")
+    sizes=[coverage(pic,info) for pic,info in ((c,display_normal),(rc,rep),(sc,slow)) if pic]
+    c,normal_pic=next(((pic,info) for pic,info in ((c,display_normal),(rc,rep)) if picture_calibrated(pic,info)),(c,display_normal))
+    real_valid=picture_calibrated(c,normal_pic); slow_valid=picture_calibrated(sc,slow)
     if sizes:
         out['picture control']=('PASS' if real_valid or slow_valid else 'FAIL','; '.join(sizes))
     if real_valid or slow_valid:
-        pic,info,source_info=(f,cut,normal) if real_valid else (sf,slow_cut,slow)
-        if pic and info.get('runtimeVerified') and has_routes(info) and source_info['displayTap']==info['displayTap']:
+        use_slow=slow_valid and (not real_valid or (not f.get('marked') and not f.get('filteredComplete') and not picture_resolved(f,1)))
+        pic,info,source_info=(sf,slow_cut,slow) if use_slow else (f,cut,normal_pic)
+        if pic and info.get('runtimeVerified') and has_routes(info) and source_info['displayTap']==info['displayTap'] and speed_witnessed(pic,info):
             gap=pic.get('maxCaptureGapMs',float('inf')); speed=info['speed']
-            resolved=(gap<40/speed and not pic['interiorUnreadable'] and pic['first']==0 and pic['last']==499)
-            limit=f"{speed:g}x display, max gap {gap:g} ms"
+            resolved=picture_resolved(pic,speed)
+            limit=f"{speed:g}x display, {pic.get('witnessSpanS','unknown')} s span, max gap {gap:g} ms"
             out['marked picture']=('FAIL' if pic['marked'] else ('PASS' if resolved else 'not-measured'),
                                    f"{pic['marked']} distinct marked; {limit}")
             fail_frames=pic['missingKept']; note=f"; missing {compact_frames(fail_frames)}" if resolved and fail_frames else ''
@@ -771,50 +1000,70 @@ def verdicts(raw,reason):
     if f and cut.get('runtimeVerified') and has_routes(cut):
         hold=f.get('joinTiming',{}).get('136-263'); ref=c.get('joinTiming',{}).get('136-137')
         status='not-measured'; timing='join neighbours not fully bracketed'
+        same_tap=normal_pic.get('runtimeVerified') and normal_pic['displayTap']==cut['displayTap']
         if hold and ref:
             low=hold['lowerMs']-ref['upperMs'];high=hold['upperMs']-ref['lowerMs']
             timing=f'{low:g}–{high:g} ms extra hold vs uncut; 40 ms stall threshold'
-            if real_valid and normal['displayTap']==cut['displayTap']:
-                status='FAIL' if low>=40 or f['marked'] else 'PASS' if high<40 and out['marked picture'][0]=='PASS' else 'not-measured'
-        out['real-speed join']=(status,f"{timing}; sampled {f['distinct']}/374 distinct, {f['marked']} marked at 1x")
+            if same_tap:
+                status='FAIL' if low>=40 else 'PASS' if high<40 and real_valid and picture_resolved(f,1) else 'not-measured'
+        if same_tap and f['marked']:status='FAIL'
+        out['real-speed join']=(status,f"{timing}; sampled {374-len(f['missingKept'])}/374 kept, {f['marked']} marked at 1x")
     if a:
-        ct=a['tones']
-        runtime=bool(normal.get('runtimeVerified'))
-        marked_ok=runtime and all(abs(t['880']-5040)<=5 for t in ct)
-        kept_ok=runtime and all(abs(t['440']-5480)<=5 and abs(t['660']-9480)<=5 for t in ct)
-        matches=lambda tones,hz: '/'.join(f'{t[hz]:g}' for t in tones)
-        peak='/'.join(map(str,a['capturePeakLSB']))
-        out['sound control']=('PASS' if marked_ok else 'FAIL',f"880 Hz L/R {matches(ct,'880')} ms (expected 5040); 48 kHz stereo, floor {a['preRollRmsLSB']:g} LSB RMS, peak {peak} LSB; 5 ms at 0.10 FS")
-        filtered=bool(b and cut.get('runtimeVerified') and has_routes(cut))
+        ct=a['tones']; rt=ar.get('tones',[])
+        both=bool(rt and live_pcm(normal) and live_pcm(rep))
+        marked_ok=both and all(abs(t['880']-5040)<=5 for t in ct+rt)
+        kept_ok=both and all(t['440']>=5475 and t['660']>=9475 for t in ct+rt)
+        lr=lambda vals:'/'.join(f'{x:g}' for x in vals) or 'unavailable'
+        matches=lambda tones,hz:lr([t[hz] for t in tones])
+        peak=lr(a['capturePeakLSB']); noise=lr([a['preRollRmsLSB']]+([ar['preRollRmsLSB']] if ar else []))
+        out['sound control']=('PASS' if marked_ok else 'FAIL',f"880 Hz L/R {matches(ct,'880')} and {matches(rt,'880')} ms (expected 5040); 48 kHz stereo, pre-roll {noise} LSB RMS, peak {peak} LSB; 5 ms at 0.10 FS")
+        filtered=bool(b and live_pcm(sound_cut) and has_routes(sound_cut))
         if not marked_ok:
-            out['marked sound']=('not-measured','Uncut rendered control failed marked-tone calibration')
+            out['marked sound']=('not-measured','Two uncut controls did not calibrate the known marked tone')
         elif not filtered:
             out['marked sound']=('not-measured','No verified filtered render')
         else:
-            vals=b['tones']; leak=any(t['880'] for t in vals); ended=not cut['endSignal'].startswith('fixture duration')
-            out['marked sound']=('FAIL' if leak else 'PASS' if ended and all(t['660'] for t in vals) else 'not-measured',f"880 Hz L/R {matches(vals,'880')} ms at >=0.10 FS in 5 ms windows")
+            vals=b['tones']; leak=any(t['880'] for t in vals)
+            out['marked sound']=('FAIL' if leak else 'PASS' if w.get('valid') and all(t['660'] for t in vals) else 'not-measured',f"880 Hz L/R {matches(vals,'880')} ms at >=0.10 FS in 5 ms windows")
         if not kept_ok:
-            out['kept tones']=('not-measured',f"Uncut 440/660 Hz L/R {matches(ct,'440')}, {matches(ct,'660')} ms (expected 5480, 9480)")
+            out['kept tones']=('not-measured',f"Uncut 440/660 Hz L/R {matches(ct,'440')}, {matches(ct,'660')} ms; repeat {matches(rt,'440')}, {matches(rt,'660')} ms (expected 5480, 9480)")
         elif not filtered:
             out['kept tones']=('not-measured','No verified filtered render')
         else:
-            vals=b['tones']
-            out['kept tones']=('PASS' if all(abs(t['440']-5480)<=5 and abs(t['660']-9480)<=5 for t in vals) else 'FAIL',f"440 Hz L/R {matches(vals,'440')} ms; 660 Hz {matches(vals,'660')} ms; 5 ms windows")
-        if w and w['valid'] and filtered:
-            pre=w['prefix']['differentSampleFrames'];post=w['suffix']['differentSampleFrames'];join=w['join20msEachSide']
-            first=join['firstDifferentFrame']; where='' if first is None else f" at join samples {first-960}…{join['lastDifferentFrame']-960}"
-            out['kept PCM at join']=('FAIL' if pre or post else 'PASS',f"{join['differentSampleFrames']}/1920 changed stereo frames{where}; {pre} prefix, {post} suffix; fixed offset, 1 LSB")
-        elif w and not w['valid']:
-            base=w.get('controlVsDecoded',{}); detail=f" ({base['differentSampleFrames']}/{base['comparedSampleFrames']} uncut stereo frames differ)" if base else ''
-            out['kept PCM at join']=('not-measured',w['reason']+detail)
+            def loss(hz):
+                delta=[x[hz]-y[hz] for x,y in zip(ct,b['tones'])]
+                floor=[max(5,abs(x[hz]-r[hz])) for x,r in zip(ct,rt)]
+                return any(d>f for d,f in zip(delta,floor)),f'{hz} Hz loss L/R {lr(delta)} ms (floor {lr(floor)})'
+            lose440,msg440=loss('440');lose660,msg660=loss('660')
+            out['kept tones']=('FAIL' if lose440 or lose660 else 'PASS',f'{msg440}; {msg660}; 5 ms windows')
+        if w.get('valid') and filtered:
+            obs=w['controlVsFiltered'];base=w['repeatability'];before,after='joinBefore20ms','joinAfter20ms'
+            def changed(d,k):return d[k]['differentSampleFrames']
+            def region(k,offset):
+                x=obs[k]; first=x['firstDifferentFrame']
+                where='' if first is None else f" [samples {first+offset}…{x['lastDifferentFrame']+offset}]"
+                return (f"{changed(obs,k)}/960 ({x['differentDurationMs']:g} ms){where}, "
+                        f"{lr(x['errorRmsLSB'])} LSB RMS vs floor {lr(base[k]['errorRmsLSB'])}")
+            join=[obs[before],obs[after]]
+            definite=any(not x['withinFloor'] and x['floorBelowSignal'] for x in join)
+            bounded=all(x['withinFloor'] and x['floorBelowSignal'] for x in join)
+            status='FAIL' if definite else 'PASS' if bounded else 'not-measured'
+            out['kept PCM at join']=(status,f"Changed stereo frames: before {region(before,-960)}; after {region(after,0)}; prefix/suffix {changed(obs,'prefix')}/{changed(obs,'suffix')} (repeat {changed(base,'prefix')}/{changed(base,'suffix')}); frozen onset")
+        elif w:
+            out['kept PCM at join']=('not-measured',w.get('reason','Filtered audio did not complete on the calibrated tap'))
         else:
-            out['kept PCM at join']=('not-measured','No verified filtered render or fixed-offset PCM comparison')
+            out['kept PCM at join']=('not-measured','No second verified uncut PCM render for repeatability')
     ops=raw.get('controlOperations',{});seeks=ops.get('pausedSeeks',[])
     if seeks:
-        n=sum(x['exact'] for x in seeks); obs=f"{n}/6 exact paused landings; samples, not travel"
-        out['seek forward/back']=(('PASS' if n==6 else 'FAIL') if (real_valid or slow_valid) else 'not-measured',obs)
-    elif ops.get('limits'):out['seek forward/back']=('not-measured',ops['limits'][0])
-    if 'resumedFrame' in ops:out['persisted resume']=('not-measured',f"Stored {ops['bookmarkTicks']} filtered ticks; Resume sampled source frame {ops['resumedFrame']}, first frame unresolved")
+        n=sum(x['exact'] for x in seeks); obs=f"{n}/6 exact paused landings ({len(seeks)} attempted); samples, not travel"
+        out['seek forward/back']=('PASS' if n==6 else 'FAIL' if (real_valid or slow_valid) else 'not-measured',obs)
+    elif ops.get('seekLimit') or ops.get('limits'):
+        out['seek forward/back']=('not-measured',ops.get('seekLimit') or ops['limits'][0])
+    if 'resumePicture' in ops:
+        r=ops['resumePicture']; info=ops['resumeTake']; want=ops['expectedResumeFrame']; got=r['first']
+        ok=(ops['stopAcknowledged'] and info.get('runtimeVerified') and has_routes(info) and
+            (real_valid or slow_valid) and got==want and not r['interiorUnreadable'])
+        out['persisted resume']=('PASS' if ok else 'not-measured',f"Stored {ops['bookmarkTicks']} filtered ticks; first readable Resume frame {got}, expected {want}; capture cannot exclude earlier unreadable frames")
     elif ops.get('limits'):out['persisted resume']=('not-measured',ops['limits'][-1])
     return out
 
@@ -833,31 +1082,50 @@ def main():
     from datetime import datetime,timezone
     from contextlib import redirect_stdout
     import secrets
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--keep',action='store_true',help='retain private synthetic data and credentials (never running services)');parser.add_argument('--json',action='store_true',help='print a single JSON object on stdout');parser.add_argument('--gpu',choices=('swangle','host'),default='swangle',help='declared emulator graphics mode');opts=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--keep',action='store_true',help='retain private synthetic data and credentials (never running services)')
+    parser.add_argument('--json',action='store_true',help='print a single JSON object on stdout')
+    parser.add_argument('--gpu',choices=('swangle','host'),default='swangle',help='declared emulator graphics mode')
+    parser.add_argument('--llvmpipe-threads',type=int,choices=(2,4),help='bound software raster workers in the owned emulator only')
+    parser.add_argument('--ram-mib',type=int,choices=(1536,1792,2048),default=2048,help='guest RAM; part of the measured device mode')
+    parser.add_argument('--split-capture',action='store_true',help='diagnostic: use separate 1x audio and display takes, without changing player outputs')
+    opts=parser.parse_args()
     if not __debug__:parser.error('Python assertions are required')
+    if opts.llvmpipe_threads is not None and opts.gpu!='host':parser.error('--llvmpipe-threads requires --gpu host')
     start=time.monotonic(); stamp=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'); uid=secrets.token_hex(5)
     work=Path(tempfile.mkdtemp(prefix='cleanyfin-tv-'));sdk=Path(os.environ.get('ANDROID_HOME') or Path.home()/'Android/Sdk').resolve()
     output=HERE.parents[1]/'delivery/evidence/runs'/('tv-'+stamp+'-'+uid)
     summary={'startedUtc':stamp,'recording':'Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz'}
+    from collections import deque
     raw=summary['observations']={};row=None;error=None;peak=0;over=threading.Event();done=threading.Event()
+    history=deque(maxlen=5);worst_io=host_health()
+    worst_scoped={k:worst_io[k] for k in ('scopeMemoryFull10sPct','scopeIOFull10sPct')}
     def budget():
-        nonlocal peak
+        nonlocal peak,worst_io
         while not done.is_set():
+            health=host_health();history.append(health)
+            if (health['ioFull10sPct'] or 0)>(worst_io['ioFull10sPct'] or 0):worst_io=health
+            for key in ('scopeMemoryFull10sPct','scopeIOFull10sPct'):
+                if (health[key] or 0)>(worst_scoped[key] or 0):worst_scoped[key]=health[key]
             peak=max(peak,allocated(work))
             if peak>6_000_000_000:
                 over.set();os.kill(os.getpid(),signal.SIGTERM);return
-            done.wait(.75)
-    def interrupt(sig,frame): raise RuntimeError('Scratch budget exceeded' if over.is_set() else 'Wall timeout' if sig==signal.SIGALRM else 'Run interrupted')
-    for sig in (signal.SIGTERM,signal.SIGALRM,signal.SIGINT):signal.signal(sig,interrupt)
-    signal.alarm(1200);resource.setrlimit(resource.RLIMIT_CORE,(0,0));watcher=threading.Thread(target=budget,daemon=True);watcher.start()
+            done.wait(1.5)
+    def interrupted(sig,frame):
+        raise RuntimeError('Scratch budget exceeded' if over.is_set() else
+                           timeout_label(raw.get('milestone','setup'),list(history)) if sig==signal.SIGALRM else 'Run interrupted')
+    for sig in (signal.SIGTERM,signal.SIGALRM,signal.SIGINT):signal.signal(sig,interrupted)
+    resource.setrlimit(resource.RLIMIT_CORE,(0,0));watcher=threading.Thread(target=budget,daemon=True);watcher.start()
     try:
+        summary['hostBeforeRun']=wait_for_host()
+        signal.alarm(1200)
         with ExitStack() as stack, redirect_stdout(sys.stderr):
             # Every Docker child, including fixture-generator subprocesses, gets
             # an ownership label so an interrupted image build is collected too.
             docker=shutil.which('docker')
             if not docker:raise RuntimeError('Docker unavailable')
             wrappers=work/'bin';wrappers.mkdir();wrapper=wrappers/'docker';label='org.cleanyfin.tv-run='+uid
-            wrapper.write_text('#!/bin/sh\ncase "$1" in run|create) verb=$1;shift;exec '+shlex.quote(docker)+' "$verb" --label '+shlex.quote(label)+' "$@";; esac\nexec '+shlex.quote(docker)+' "$@"\n');wrapper.chmod(0o700)
+            wrapper.write_text('#!/bin/sh\ncase "$1" in run|create) verb=$1;shift;exec '+shlex.quote(docker)+' "$verb" --ulimit core=0 --label '+shlex.quote(label)+' "$@";; esac\nexec '+shlex.quote(docker)+' "$@"\n');wrapper.chmod(0o700)
             oldpath=os.environ['PATH'];os.environ['PATH']=str(wrappers)+':'+oldpath
             def sweep():
                 os.environ['PATH']=oldpath
@@ -867,26 +1135,38 @@ def main():
             if not (sdk/'emulator/emulator').is_file():raise RuntimeError('Android emulator SDK unavailable')
             check=run(sdk/'emulator/emulator','-accel-check').decode()
             if 'KVM' not in check or 'usable' not in check:raise RuntimeError('KVM not usable')
+            raw['milestone']='official Wholphin release verification'
             apk=release(work);summary['apkSha256']=DIGEST
             summary['emulatorVersion']=(sdk/'emulator/source.properties').read_text().split('Pkg.Revision=')[-1].splitlines()[0].strip()
             def host_audio():
                 return (run('pactl','get-default-sink').decode().strip(),sorted(line.split('\t')[1] for line in run('pactl','list','short','sinks').decode().splitlines()))
             before=host_audio()
-            tv=TV(work,sdk,stack,opts.gpu);summary['declaredGpu']=opts.gpu
+            raw['milestone']='private emulator and audio boot'
+            tv=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads)
+            summary.update(declaredGpu=opts.gpu,llvmpipeThreadsRequested=opts.llvmpipe_threads,guestRamMiB=opts.ram_mib);tv.host_history=history
             tv.boot();summary['graphicsAdapter']=tv.graphicsAdapter
             print('Emulator graphics:',tv.graphicsAdapter or opts.gpu+' requested; renderer not reported',file=sys.stderr,flush=True)
             tv.adb('install','--no-streaming',apk,timeout=75)
             summary['androidFingerprint']=tv.adb('shell','getprop','ro.build.fingerprint').decode().strip();summary['audioInputFormat']=tv.call('pactl','list','short','sink-inputs').decode().strip().split('\t')[-1]
+            mem=re.search(rb'^MemTotal:\s+(\d+) kB',tv.adb('shell','cat','/proc/meminfo'),re.M)
+            if mem:summary['guestKernelMemTotalKiB']=int(mem[1])
+            raw['milestone']='disposable Jellyfin build and setup'
             lab=setup_lab(work,tv,stack);summary['pluginBuild']=lab.plugin_build;summary['fixtureSha256']=hashlib.sha256(lab.original).hexdigest()
             row=lab.stub_register()['rows'][0];row['controls']=[];row['status']='experimental'
+            raw['milestone']='Wholphin login, enrollment and MPV settings'
             ui=Screen(tv);ui.setup(lab);raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
             print('Disposable TV enrollment:',json.dumps(lab.tv_identity),file=sys.stderr,flush=True)
-            measure(tv,lab,ui,raw)
+            raw['milestone']='separate stock transport test input install'
+            install_input(tv)
+            summary['splitCapture']=opts.split_capture
+            measure(tv,lab,ui,raw,opts.split_capture)
     except (Exception,KeyboardInterrupt) as exc:
         # Never serialize child command lines, queries, login codes or stderr.
-        error=str(exc) if isinstance(exc,(RuntimeError,ValueError)) else type(exc).__name__
+        if isinstance(exc,sp.TimeoutExpired):error=timeout_label(raw.get('milestone','setup'),list(history))
+        else:error=str(exc) if isinstance(exc,(RuntimeError,ValueError)) else type(exc).__name__
     finally:
         signal.alarm(0);done.set();watcher.join(timeout=3);peak=max(peak,allocated(work));summary['scratchPeakBytesObserved']=peak
+        summary['hostWorstObservedIo']=worst_io;summary['hostWorstScopedFullPsi']=worst_scoped;summary['hostAfterRun']=host_health()
         if 'before' in locals():
             after=host_audio();summary['defaultSinkUnchanged']=before[0]==after[0];summary['hostSinkListUnchanged']=before[1]==after[1]
         if 'tv' in locals():summary['privateNamespaceExited']=tv.ns.poll() is not None
@@ -899,7 +1179,7 @@ def main():
     summary['claims']=[status+' '+name+' — '+limit for name,(status,limit) in claims.items()]
     # A speed-altered picture observation is not evidence about the 1x tuple.
     # Keep the complete mixed-speed observations in the summary only.
-    if 'verifiedSlowSettings' in raw or not has_routes(raw.get('recordings',{}).get('filtered',{})):row=None
+    if opts.split_capture or 'verifiedSlowSettings' in raw or not has_routes(raw.get('recordings',{}).get('filtered',{})):row=None
     output.mkdir(parents=True,exist_ok=False);summary['evidenceDirectory']=str(output.relative_to(HERE.parents[1]));summary['candidateWritten']=row is not None
     if row is not None:
         row.update(date=stamp[:4]+'-'+stamp[4:6]+'-'+stamp[6:8],evidenceRef=summary['evidenceDirectory']+'/summary.json',observation='Synthetic emulator only. See control calibration, route receipts and limits. Never grants production eligibility.')

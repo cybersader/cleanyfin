@@ -89,7 +89,7 @@ internal sealed class PinnedAsset
         finally { if (!child.HasExited) { child.Kill(true); child.WaitForExit(); } }
     }
     internal static bool Matches(MediaSourceInfo src) => src.Protocol == MediaProtocol.File && src.VideoType == VideoType.VideoFile &&
-        !src.IsRemote && !src.IsInfiniteStream && !src.RequiresOpening && src.SupportsDirectPlay && src.Container is ("mp4" or "mov,mp4,m4a,3gp,3g2,mj2") &&
+        !src.IsRemote && !src.IsInfiniteStream && !src.RequiresOpening && src.SupportsDirectPlay && PinnedMp4Container.DescribesSource(src.Container) &&
         src.RunTimeTicks is > 0 && src.RunTimeTicks % 10000 == 0 && src.MediaAttachments.Count == 0 && src.MediaStreams.Count == 2 &&
         src.MediaStreams.All(s => !s.IsExternal && s.IsExternalUrl != true) &&
         src.MediaStreams.Any(s => s.Index == 0 && s.Type == MediaStreamType.Video && s.Codec == "h264") &&

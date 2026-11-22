@@ -52,7 +52,7 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
             var gate = ctx.RequestServices.GetRequiredService<FixtureGate>();
             var (binding,ticks) = await gate.Prepare(ctx,id,backend); // both ACLs, immutable original, exact evidence tuple
             if (profile.ContainerProfiles.Length != 0 || profile.CodecProfiles.Length != 0 ||
-                !profile.DirectPlayProfiles.Any(p => p.Type == DlnaProfileType.Video && p.Container.Split(',').Contains("mp4") &&
+                !profile.DirectPlayProfiles.Any(p => p.Type == DlnaProfileType.Video && PinnedMp4Container.OfferedByProfile(p.Container) &&
                     p.VideoCodec?.Split(',').Contains("h264") == true && p.AudioCodec?.Split(',').Contains("aac") == true))
             { action.Result = denied; return; }
             // Run the real POST for the original, with this principal/profile/bitrate/track choice.

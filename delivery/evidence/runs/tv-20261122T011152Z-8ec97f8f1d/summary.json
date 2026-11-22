@@ -1,0 +1,3799 @@
+{
+  "startedUtc": "20261122T011152Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "milestone": "seeks and persisted resume",
+    "verifiedSettings": {
+      "backend": "MPV",
+      "mpvOptions": [
+        "hwdec=no",
+        "vo=gpu",
+        "gpu-context=android",
+        "opengl-es=yes",
+        "msg-level=all=v"
+      ],
+      "verification": "MPV-only preferences visible and saved mpv.conf reopened"
+    },
+    "sessionIdentity": {
+      "client": "Wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "deviceIdSha256": "4974cd43f3d533d33325bd079b836afce80fade54d742aa5f6cab406a689e188",
+      "exactDeviceEnrollment": true,
+      "labTuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "1",
+        "appId": "Wholphin",
+        "appVersion": "1.1.2-0-gc530f5c5",
+        "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+        "backend": "mpv",
+        "deviceMode": "Google TV API 36 x86_64 emulator 1280x720, 1536 MiB, llvmpipe, software video vo-gpu Android GLES, stereo PCM",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "7a7ef83a8cf72e226758461b01e0f2026104ca1c890ee516d330aea6a67722f6",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+          "durationMs": 20000
+        }
+      }
+    },
+    "recordings": {
+      "control": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 0,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 22.72,
+        "audioBytes": 3909120,
+        "audioDurationS": 20.36,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "repeatControl": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 0,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 21.97,
+        "audioBytes": 3705600,
+        "audioDurationS": 19.3,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "filtered": {
+        "speed": 1,
+        "fixtureDurationS": 14.96,
+        "wallCeilingS": 28.96,
+        "endSignal": "Wholphin video surface left foreground",
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 18.57,
+        "audioBytes": 3306240,
+        "audioDurationS": 17.22,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "pointer",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "pointer",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mp4",
+              "protocol": "Http",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": false,
+              "remote": true
+            }
+          }
+        ],
+        "grantRouteDeltas": [
+          1,
+          1,
+          1
+        ],
+        "serverLoggedRefusalCodes": []
+      },
+      "controlDisplay": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 22.75,
+        "videoBytes": 219279,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "filteredDisplay": {
+        "speed": 1,
+        "fixtureDurationS": 14.96,
+        "wallCeilingS": 28.96,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 17.39,
+        "videoBytes": 135757,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "pointer",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "pointer",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mp4",
+              "protocol": "Http",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": false,
+              "remote": true
+            }
+          }
+        ],
+        "grantRouteDeltas": [
+          1,
+          1,
+          1
+        ],
+        "serverLoggedRefusalCodes": []
+      },
+      "slowControl": {
+        "speed": 0.25,
+        "setupLimit": "Quarter-speed setup: stock settings button did not accept its accessibility click"
+      }
+    },
+    "audioLevels": {
+      "androidMusicVolumeBefore": 3,
+      "androidMusicVolumeAfter": 3,
+      "androidMusicVolumeMax": 15,
+      "androidMusicVolumeAfterKeys": 15,
+      "privateQemuStreamVolume": {
+        "front-left": "100%",
+        "front-right": "100%"
+      }
+    },
+    "controlSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 977280,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        32768,
+        32768
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              1285,
+              1510
+            ],
+            [
+              1530,
+              1545
+            ],
+            [
+              1590,
+              1595
+            ],
+            [
+              1610,
+              1620
+            ],
+            [
+              1695,
+              1710
+            ],
+            [
+              1735,
+              1745
+            ],
+            [
+              1780,
+              1795
+            ],
+            [
+              1825,
+              1830
+            ],
+            [
+              1865,
+              1885
+            ],
+            [
+              1910,
+              1920
+            ],
+            [
+              1925,
+              1935
+            ],
+            [
+              1940,
+              1990
+            ],
+            [
+              1995,
+              2010
+            ],
+            [
+              2025,
+              2060
+            ],
+            [
+              2150,
+              2160
+            ],
+            [
+              2185,
+              2190
+            ],
+            [
+              2195,
+              2230
+            ],
+            [
+              2250,
+              2265
+            ],
+            [
+              2285,
+              2290
+            ],
+            [
+              2295,
+              2300
+            ],
+            [
+              2305,
+              2315
+            ],
+            [
+              2355,
+              2370
+            ],
+            [
+              2395,
+              2400
+            ],
+            [
+              2420,
+              2435
+            ],
+            [
+              2440,
+              2455
+            ],
+            [
+              2490,
+              2530
+            ],
+            [
+              2580,
+              2590
+            ],
+            [
+              2620,
+              2625
+            ],
+            [
+              2640,
+              2650
+            ],
+            [
+              2695,
+              2735
+            ],
+            [
+              2765,
+              2865
+            ],
+            [
+              2870,
+              2875
+            ],
+            [
+              2880,
+              2890
+            ],
+            [
+              2895,
+              2935
+            ],
+            [
+              2940,
+              2950
+            ],
+            [
+              2975,
+              3005
+            ],
+            [
+              3070,
+              3095
+            ],
+            [
+              3115,
+              3150
+            ],
+            [
+              3270,
+              3310
+            ],
+            [
+              3435,
+              3450
+            ],
+            [
+              3515,
+              3525
+            ],
+            [
+              3555,
+              3575
+            ],
+            [
+              3580,
+              3595
+            ],
+            [
+              3630,
+              3650
+            ],
+            [
+              3710,
+              3745
+            ],
+            [
+              3775,
+              3815
+            ],
+            [
+              3840,
+              3850
+            ],
+            [
+              3900,
+              3905
+            ],
+            [
+              3910,
+              3930
+            ],
+            [
+              3935,
+              3980
+            ],
+            [
+              4000,
+              4035
+            ],
+            [
+              4085,
+              4095
+            ],
+            [
+              4140,
+              4200
+            ],
+            [
+              4205,
+              4220
+            ],
+            [
+              4280,
+              4305
+            ],
+            [
+              4405,
+              4410
+            ],
+            [
+              4415,
+              4425
+            ],
+            [
+              4445,
+              4455
+            ],
+            [
+              4460,
+              4470
+            ],
+            [
+              4535,
+              4540
+            ],
+            [
+              4545,
+              4550
+            ],
+            [
+              4580,
+              4605
+            ],
+            [
+              4640,
+              4650
+            ],
+            [
+              4680,
+              4700
+            ],
+            [
+              4725,
+              4745
+            ],
+            [
+              4800,
+              4825
+            ],
+            [
+              4840,
+              4845
+            ],
+            [
+              4850,
+              4860
+            ],
+            [
+              4885,
+              4895
+            ],
+            [
+              4900,
+              4910
+            ],
+            [
+              4990,
+              5000
+            ],
+            [
+              5050,
+              5080
+            ],
+            [
+              5110,
+              5125
+            ],
+            [
+              5160,
+              5200
+            ],
+            [
+              5240,
+              5275
+            ],
+            [
+              5355,
+              5360
+            ],
+            [
+              5395,
+              5405
+            ],
+            [
+              5555,
+              5575
+            ],
+            [
+              5685,
+              5690
+            ],
+            [
+              5730,
+              5750
+            ]
+          ],
+          "880": [
+            [
+              2290,
+              2295
+            ],
+            [
+              2715,
+              2720
+            ],
+            [
+              4640,
+              4645
+            ],
+            [
+              4885,
+              4890
+            ],
+            [
+              5165,
+              5170
+            ],
+            [
+              5365,
+              5390
+            ],
+            [
+              5395,
+              5420
+            ],
+            [
+              5550,
+              5575
+            ],
+            [
+              5650,
+              5660
+            ],
+            [
+              5665,
+              5710
+            ],
+            [
+              5720,
+              5810
+            ],
+            [
+              5815,
+              5825
+            ],
+            [
+              5840,
+              5855
+            ],
+            [
+              5865,
+              5885
+            ],
+            [
+              5905,
+              5925
+            ],
+            [
+              5930,
+              5935
+            ],
+            [
+              5985,
+              5995
+            ],
+            [
+              6025,
+              6030
+            ],
+            [
+              6045,
+              6060
+            ],
+            [
+              6115,
+              6125
+            ],
+            [
+              6155,
+              6165
+            ],
+            [
+              6170,
+              6175
+            ],
+            [
+              6190,
+              6200
+            ],
+            [
+              6235,
+              6265
+            ],
+            [
+              6280,
+              6295
+            ],
+            [
+              6335,
+              6340
+            ],
+            [
+              6345,
+              6350
+            ],
+            [
+              6415,
+              6420
+            ],
+            [
+              6425,
+              6455
+            ],
+            [
+              6515,
+              6535
+            ],
+            [
+              6540,
+              6550
+            ],
+            [
+              6575,
+              6590
+            ],
+            [
+              6620,
+              6630
+            ],
+            [
+              6650,
+              6665
+            ],
+            [
+              6695,
+              6710
+            ],
+            [
+              6790,
+              6800
+            ],
+            [
+              6880,
+              6920
+            ],
+            [
+              6940,
+              6950
+            ],
+            [
+              7010,
+              7020
+            ],
+            [
+              7050,
+              7055
+            ],
+            [
+              7090,
+              7130
+            ],
+            [
+              7230,
+              7265
+            ],
+            [
+              7310,
+              7320
+            ],
+            [
+              7400,
+              7410
+            ],
+            [
+              7500,
+              7505
+            ],
+            [
+              7835,
+              7840
+            ],
+            [
+              7930,
+              7935
+            ]
+          ],
+          "660": [
+            [
+              1330,
+              1335
+            ],
+            [
+              1420,
+              1425
+            ],
+            [
+              1655,
+              1660
+            ],
+            [
+              1790,
+              1795
+            ],
+            [
+              1865,
+              1870
+            ],
+            [
+              1880,
+              1885
+            ],
+            [
+              2285,
+              2295
+            ],
+            [
+              2305,
+              2310
+            ],
+            [
+              2360,
+              2370
+            ],
+            [
+              2705,
+              2710
+            ],
+            [
+              2715,
+              2725
+            ],
+            [
+              2815,
+              2820
+            ],
+            [
+              3085,
+              3090
+            ],
+            [
+              3295,
+              3300
+            ],
+            [
+              3305,
+              3310
+            ],
+            [
+              3555,
+              3560
+            ],
+            [
+              3570,
+              3575
+            ],
+            [
+              3585,
+              3590
+            ],
+            [
+              3625,
+              3630
+            ],
+            [
+              3640,
+              3650
+            ],
+            [
+              3710,
+              3715
+            ],
+            [
+              3740,
+              3745
+            ],
+            [
+              3805,
+              3810
+            ],
+            [
+              3845,
+              3850
+            ],
+            [
+              3915,
+              3925
+            ],
+            [
+              3950,
+              3955
+            ],
+            [
+              3975,
+              3980
+            ],
+            [
+              4000,
+              4005
+            ],
+            [
+              4175,
+              4180
+            ],
+            [
+              4185,
+              4190
+            ],
+            [
+              4415,
+              4420
+            ],
+            [
+              4530,
+              4535
+            ],
+            [
+              4580,
+              4585
+            ],
+            [
+              4600,
+              4605
+            ],
+            [
+              4640,
+              4645
+            ],
+            [
+              4685,
+              4690
+            ],
+            [
+              4695,
+              4700
+            ],
+            [
+              4800,
+              4805
+            ],
+            [
+              4840,
+              4850
+            ],
+            [
+              4885,
+              4890
+            ],
+            [
+              4900,
+              4905
+            ],
+            [
+              5050,
+              5055
+            ],
+            [
+              5075,
+              5080
+            ],
+            [
+              5115,
+              5120
+            ],
+            [
+              5160,
+              5170
+            ],
+            [
+              5395,
+              5400
+            ],
+            [
+              5550,
+              5555
+            ],
+            [
+              5650,
+              5660
+            ],
+            [
+              5665,
+              5670
+            ],
+            [
+              5725,
+              5730
+            ],
+            [
+              5750,
+              5755
+            ],
+            [
+              5925,
+              5930
+            ],
+            [
+              6190,
+              6200
+            ],
+            [
+              6280,
+              6285
+            ],
+            [
+              6435,
+              6440
+            ],
+            [
+              6445,
+              6450
+            ],
+            [
+              6585,
+              6590
+            ],
+            [
+              6790,
+              6795
+            ],
+            [
+              6915,
+              6920
+            ],
+            [
+              7090,
+              7095
+            ],
+            [
+              7235,
+              7240
+            ],
+            [
+              7255,
+              7260
+            ],
+            [
+              7310,
+              7320
+            ],
+            [
+              7400,
+              7405
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              1285,
+              1420
+            ],
+            [
+              1425,
+              1510
+            ],
+            [
+              1530,
+              1545
+            ],
+            [
+              1590,
+              1595
+            ],
+            [
+              1610,
+              1620
+            ],
+            [
+              1695,
+              1710
+            ],
+            [
+              1735,
+              1745
+            ],
+            [
+              1780,
+              1795
+            ],
+            [
+              1825,
+              1830
+            ],
+            [
+              1865,
+              1885
+            ],
+            [
+              1910,
+              1920
+            ],
+            [
+              1925,
+              1935
+            ],
+            [
+              1940,
+              1990
+            ],
+            [
+              1995,
+              2010
+            ],
+            [
+              2025,
+              2060
+            ],
+            [
+              2150,
+              2160
+            ],
+            [
+              2185,
+              2190
+            ],
+            [
+              2195,
+              2230
+            ],
+            [
+              2250,
+              2265
+            ],
+            [
+              2285,
+              2290
+            ],
+            [
+              2295,
+              2300
+            ],
+            [
+              2305,
+              2315
+            ],
+            [
+              2355,
+              2370
+            ],
+            [
+              2395,
+              2405
+            ],
+            [
+              2420,
+              2435
+            ],
+            [
+              2440,
+              2455
+            ],
+            [
+              2490,
+              2530
+            ],
+            [
+              2580,
+              2590
+            ],
+            [
+              2620,
+              2625
+            ],
+            [
+              2640,
+              2650
+            ],
+            [
+              2695,
+              2735
+            ],
+            [
+              2765,
+              2865
+            ],
+            [
+              2870,
+              2875
+            ],
+            [
+              2880,
+              2890
+            ],
+            [
+              2895,
+              2935
+            ],
+            [
+              2940,
+              2950
+            ],
+            [
+              2975,
+              3005
+            ],
+            [
+              3070,
+              3095
+            ],
+            [
+              3115,
+              3150
+            ],
+            [
+              3235,
+              3245
+            ],
+            [
+              3270,
+              3310
+            ],
+            [
+              3435,
+              3450
+            ],
+            [
+              3515,
+              3525
+            ],
+            [
+              3555,
+              3575
+            ],
+            [
+              3580,
+              3595
+            ],
+            [
+              3630,
+              3650
+            ],
+            [
+              3710,
+              3745
+            ],
+            [
+              3775,
+              3815
+            ],
+            [
+              3840,
+              3850
+            ],
+            [
+              3900,
+              3905
+            ],
+            [
+              3910,
+              3930
+            ],
+            [
+              3935,
+              3980
+            ],
+            [
+              4000,
+              4035
+            ],
+            [
+              4085,
+              4095
+            ],
+            [
+              4140,
+              4200
+            ],
+            [
+              4205,
+              4220
+            ],
+            [
+              4280,
+              4305
+            ],
+            [
+              4405,
+              4415
+            ],
+            [
+              4445,
+              4455
+            ],
+            [
+              4460,
+              4470
+            ],
+            [
+              4535,
+              4540
+            ],
+            [
+              4545,
+              4550
+            ],
+            [
+              4580,
+              4605
+            ],
+            [
+              4640,
+              4650
+            ],
+            [
+              4680,
+              4700
+            ],
+            [
+              4725,
+              4745
+            ],
+            [
+              4800,
+              4825
+            ],
+            [
+              4840,
+              4845
+            ],
+            [
+              4850,
+              4860
+            ],
+            [
+              4885,
+              4895
+            ],
+            [
+              4900,
+              4910
+            ],
+            [
+              4990,
+              5000
+            ],
+            [
+              5050,
+              5080
+            ],
+            [
+              5095,
+              5105
+            ],
+            [
+              5110,
+              5125
+            ],
+            [
+              5160,
+              5200
+            ],
+            [
+              5240,
+              5275
+            ],
+            [
+              5355,
+              5360
+            ],
+            [
+              5395,
+              5405
+            ],
+            [
+              5555,
+              5575
+            ],
+            [
+              5685,
+              5690
+            ],
+            [
+              5730,
+              5750
+            ]
+          ],
+          "880": [
+            [
+              2290,
+              2295
+            ],
+            [
+              2715,
+              2720
+            ],
+            [
+              4640,
+              4645
+            ],
+            [
+              4885,
+              4890
+            ],
+            [
+              5100,
+              5105
+            ],
+            [
+              5165,
+              5170
+            ],
+            [
+              5365,
+              5390
+            ],
+            [
+              5395,
+              5420
+            ],
+            [
+              5550,
+              5575
+            ],
+            [
+              5650,
+              5660
+            ],
+            [
+              5665,
+              5710
+            ],
+            [
+              5720,
+              5810
+            ],
+            [
+              5815,
+              5825
+            ],
+            [
+              5840,
+              5855
+            ],
+            [
+              5865,
+              5885
+            ],
+            [
+              5905,
+              5925
+            ],
+            [
+              5930,
+              5935
+            ],
+            [
+              5985,
+              5995
+            ],
+            [
+              6025,
+              6030
+            ],
+            [
+              6045,
+              6060
+            ],
+            [
+              6115,
+              6125
+            ],
+            [
+              6155,
+              6165
+            ],
+            [
+              6170,
+              6175
+            ],
+            [
+              6190,
+              6200
+            ],
+            [
+              6235,
+              6265
+            ],
+            [
+              6280,
+              6295
+            ],
+            [
+              6335,
+              6340
+            ],
+            [
+              6345,
+              6350
+            ],
+            [
+              6415,
+              6420
+            ],
+            [
+              6425,
+              6455
+            ],
+            [
+              6515,
+              6535
+            ],
+            [
+              6540,
+              6550
+            ],
+            [
+              6575,
+              6590
+            ],
+            [
+              6620,
+              6630
+            ],
+            [
+              6650,
+              6665
+            ],
+            [
+              6695,
+              6710
+            ],
+            [
+              6790,
+              6800
+            ],
+            [
+              6880,
+              6920
+            ],
+            [
+              6940,
+              6950
+            ],
+            [
+              7010,
+              7020
+            ],
+            [
+              7050,
+              7055
+            ],
+            [
+              7090,
+              7130
+            ],
+            [
+              7230,
+              7265
+            ],
+            [
+              7310,
+              7320
+            ],
+            [
+              7400,
+              7410
+            ],
+            [
+              7500,
+              7505
+            ],
+            [
+              7835,
+              7840
+            ],
+            [
+              7930,
+              7935
+            ]
+          ],
+          "660": [
+            [
+              1330,
+              1335
+            ],
+            [
+              1655,
+              1660
+            ],
+            [
+              1790,
+              1795
+            ],
+            [
+              1865,
+              1870
+            ],
+            [
+              1880,
+              1885
+            ],
+            [
+              2285,
+              2295
+            ],
+            [
+              2305,
+              2310
+            ],
+            [
+              2360,
+              2370
+            ],
+            [
+              2705,
+              2710
+            ],
+            [
+              2715,
+              2725
+            ],
+            [
+              2815,
+              2820
+            ],
+            [
+              3295,
+              3300
+            ],
+            [
+              3305,
+              3310
+            ],
+            [
+              3555,
+              3560
+            ],
+            [
+              3570,
+              3575
+            ],
+            [
+              3585,
+              3590
+            ],
+            [
+              3625,
+              3630
+            ],
+            [
+              3640,
+              3650
+            ],
+            [
+              3710,
+              3715
+            ],
+            [
+              3740,
+              3745
+            ],
+            [
+              3805,
+              3810
+            ],
+            [
+              3845,
+              3850
+            ],
+            [
+              3915,
+              3925
+            ],
+            [
+              3950,
+              3955
+            ],
+            [
+              3975,
+              3980
+            ],
+            [
+              4000,
+              4005
+            ],
+            [
+              4175,
+              4180
+            ],
+            [
+              4185,
+              4190
+            ],
+            [
+              4530,
+              4535
+            ],
+            [
+              4580,
+              4585
+            ],
+            [
+              4600,
+              4605
+            ],
+            [
+              4640,
+              4645
+            ],
+            [
+              4685,
+              4690
+            ],
+            [
+              4695,
+              4700
+            ],
+            [
+              4800,
+              4805
+            ],
+            [
+              4840,
+              4850
+            ],
+            [
+              4885,
+              4890
+            ],
+            [
+              4900,
+              4905
+            ],
+            [
+              5050,
+              5055
+            ],
+            [
+              5075,
+              5080
+            ],
+            [
+              5115,
+              5120
+            ],
+            [
+              5160,
+              5170
+            ],
+            [
+              5395,
+              5400
+            ],
+            [
+              5550,
+              5555
+            ],
+            [
+              5650,
+              5660
+            ],
+            [
+              5665,
+              5670
+            ],
+            [
+              5725,
+              5730
+            ],
+            [
+              5750,
+              5755
+            ],
+            [
+              5925,
+              5930
+            ],
+            [
+              6190,
+              6200
+            ],
+            [
+              6280,
+              6285
+            ],
+            [
+              6435,
+              6440
+            ],
+            [
+              6445,
+              6450
+            ],
+            [
+              6585,
+              6590
+            ],
+            [
+              6790,
+              6795
+            ],
+            [
+              6915,
+              6920
+            ],
+            [
+              7090,
+              7095
+            ],
+            [
+              7235,
+              7240
+            ],
+            [
+              7255,
+              7260
+            ],
+            [
+              7310,
+              7320
+            ],
+            [
+              7400,
+              7405
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 1725,
+          "880": 740,
+          "660": 370
+        },
+        {
+          "440": 1740,
+          "880": 745,
+          "660": 355
+        }
+      ]
+    },
+    "repeatControlSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 926400,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        16013,
+        16013
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              1095,
+              1125
+            ],
+            [
+              1135,
+              1145
+            ],
+            [
+              1180,
+              1195
+            ],
+            [
+              1285,
+              1305
+            ],
+            [
+              1350,
+              1380
+            ],
+            [
+              1440,
+              1460
+            ],
+            [
+              1530,
+              1535
+            ],
+            [
+              1545,
+              1570
+            ],
+            [
+              1595,
+              1600
+            ],
+            [
+              1620,
+              1625
+            ],
+            [
+              1750,
+              1755
+            ],
+            [
+              1820,
+              1825
+            ],
+            [
+              1910,
+              1915
+            ],
+            [
+              2000,
+              2005
+            ]
+          ],
+          "880": [],
+          "660": [
+            [
+              1285,
+              1290
+            ],
+            [
+              1525,
+              1530
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              1095,
+              1125
+            ],
+            [
+              1135,
+              1145
+            ],
+            [
+              1180,
+              1195
+            ],
+            [
+              1285,
+              1305
+            ],
+            [
+              1350,
+              1380
+            ],
+            [
+              1435,
+              1460
+            ],
+            [
+              1530,
+              1535
+            ],
+            [
+              1545,
+              1570
+            ],
+            [
+              1585,
+              1590
+            ],
+            [
+              1595,
+              1600
+            ],
+            [
+              1620,
+              1625
+            ],
+            [
+              1750,
+              1755
+            ],
+            [
+              1820,
+              1825
+            ],
+            [
+              1910,
+              1915
+            ],
+            [
+              2000,
+              2005
+            ]
+          ],
+          "880": [],
+          "660": [
+            [
+              1285,
+              1290
+            ],
+            [
+              1525,
+              1530
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 185,
+          "880": 0,
+          "660": 10
+        },
+        {
+          "440": 195,
+          "880": 0,
+          "660": 10
+        }
+      ]
+    },
+    "waveform": {
+      "triggerLSB": 512,
+      "offsetFromTriggerSamples": -1,
+      "noisePeakLSB": {
+        "control": 0,
+        "repeatControl": 0,
+        "filtered": 0
+      },
+      "starts": {
+        "control": 61751
+      },
+      "valid": false,
+      "reason": "control: truncated capture at frozen onset"
+    },
+    "filteredSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 826560,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        32768,
+        32768
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              1090,
+              1140
+            ],
+            [
+              1160,
+              1195
+            ],
+            [
+              1295,
+              1305
+            ],
+            [
+              1315,
+              1340
+            ],
+            [
+              1365,
+              1370
+            ],
+            [
+              1430,
+              1440
+            ],
+            [
+              1525,
+              1530
+            ],
+            [
+              1580,
+              1590
+            ],
+            [
+              1630,
+              1635
+            ],
+            [
+              1650,
+              1665
+            ],
+            [
+              1705,
+              1710
+            ],
+            [
+              1735,
+              1740
+            ],
+            [
+              1770,
+              1785
+            ],
+            [
+              1830,
+              1840
+            ],
+            [
+              1905,
+              1915
+            ],
+            [
+              1960,
+              1980
+            ],
+            [
+              2050,
+              2055
+            ],
+            [
+              2090,
+              2095
+            ],
+            [
+              2120,
+              2130
+            ],
+            [
+              2180,
+              2200
+            ],
+            [
+              2210,
+              2225
+            ],
+            [
+              2230,
+              2245
+            ],
+            [
+              2250,
+              2290
+            ],
+            [
+              2405,
+              2410
+            ],
+            [
+              2415,
+              2430
+            ],
+            [
+              2440,
+              2445
+            ],
+            [
+              2500,
+              2505
+            ],
+            [
+              2510,
+              2530
+            ],
+            [
+              2540,
+              2545
+            ],
+            [
+              2550,
+              2570
+            ],
+            [
+              2580,
+              2585
+            ],
+            [
+              2590,
+              2600
+            ],
+            [
+              2625,
+              2660
+            ],
+            [
+              2725,
+              2730
+            ],
+            [
+              2770,
+              2810
+            ],
+            [
+              2815,
+              2830
+            ],
+            [
+              2850,
+              2885
+            ],
+            [
+              2890,
+              2900
+            ],
+            [
+              3045,
+              3070
+            ],
+            [
+              3110,
+              3150
+            ],
+            [
+              3230,
+              3240
+            ],
+            [
+              3245,
+              3260
+            ],
+            [
+              3290,
+              3295
+            ],
+            [
+              3335,
+              3345
+            ],
+            [
+              3385,
+              3410
+            ],
+            [
+              3495,
+              3505
+            ],
+            [
+              3510,
+              3530
+            ],
+            [
+              3555,
+              3570
+            ],
+            [
+              3590,
+              3595
+            ],
+            [
+              3600,
+              3610
+            ],
+            [
+              3625,
+              3640
+            ],
+            [
+              3665,
+              3670
+            ],
+            [
+              3705,
+              3710
+            ],
+            [
+              3795,
+              3810
+            ],
+            [
+              3830,
+              3835
+            ],
+            [
+              3840,
+              3845
+            ],
+            [
+              3850,
+              3885
+            ],
+            [
+              3890,
+              3915
+            ],
+            [
+              3920,
+              3930
+            ],
+            [
+              3945,
+              3985
+            ],
+            [
+              4200,
+              4210
+            ],
+            [
+              4215,
+              4220
+            ],
+            [
+              4255,
+              4260
+            ],
+            [
+              4275,
+              4290
+            ],
+            [
+              4315,
+              4330
+            ],
+            [
+              4400,
+              4420
+            ],
+            [
+              4430,
+              4435
+            ],
+            [
+              4440,
+              4460
+            ],
+            [
+              4520,
+              4545
+            ],
+            [
+              4575,
+              4580
+            ],
+            [
+              4600,
+              4620
+            ],
+            [
+              4645,
+              4660
+            ],
+            [
+              4705,
+              4710
+            ],
+            [
+              4735,
+              4745
+            ],
+            [
+              4815,
+              4835
+            ],
+            [
+              4865,
+              4870
+            ],
+            [
+              4905,
+              4920
+            ],
+            [
+              4925,
+              4950
+            ],
+            [
+              4960,
+              4965
+            ],
+            [
+              4970,
+              4975
+            ],
+            [
+              4985,
+              4995
+            ]
+          ],
+          "880": [
+            [
+              2120,
+              2125
+            ],
+            [
+              3395,
+              3400
+            ],
+            [
+              3495,
+              3500
+            ],
+            [
+              3705,
+              3710
+            ]
+          ],
+          "660": [
+            [
+              1520,
+              1525
+            ],
+            [
+              1705,
+              1710
+            ],
+            [
+              1955,
+              1960
+            ],
+            [
+              2120,
+              2130
+            ],
+            [
+              2195,
+              2200
+            ],
+            [
+              2265,
+              2270
+            ],
+            [
+              2510,
+              2520
+            ],
+            [
+              2825,
+              2830
+            ],
+            [
+              2850,
+              2855
+            ],
+            [
+              3050,
+              3055
+            ],
+            [
+              3110,
+              3120
+            ],
+            [
+              3145,
+              3150
+            ],
+            [
+              3230,
+              3235
+            ],
+            [
+              3245,
+              3250
+            ],
+            [
+              3285,
+              3290
+            ],
+            [
+              3395,
+              3400
+            ],
+            [
+              3405,
+              3410
+            ],
+            [
+              3495,
+              3505
+            ],
+            [
+              3510,
+              3515
+            ],
+            [
+              3555,
+              3565
+            ],
+            [
+              3630,
+              3635
+            ],
+            [
+              3665,
+              3670
+            ],
+            [
+              3705,
+              3710
+            ],
+            [
+              3800,
+              3805
+            ],
+            [
+              3880,
+              3885
+            ],
+            [
+              3900,
+              3905
+            ],
+            [
+              4320,
+              4325
+            ],
+            [
+              4400,
+              4405
+            ],
+            [
+              4535,
+              4540
+            ],
+            [
+              4735,
+              4745
+            ],
+            [
+              4830,
+              4835
+            ],
+            [
+              4910,
+              4915
+            ],
+            [
+              4985,
+              4995
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              1090,
+              1140
+            ],
+            [
+              1160,
+              1195
+            ],
+            [
+              1300,
+              1305
+            ],
+            [
+              1315,
+              1340
+            ],
+            [
+              1365,
+              1370
+            ],
+            [
+              1430,
+              1440
+            ],
+            [
+              1525,
+              1530
+            ],
+            [
+              1580,
+              1590
+            ],
+            [
+              1630,
+              1635
+            ],
+            [
+              1650,
+              1665
+            ],
+            [
+              1705,
+              1710
+            ],
+            [
+              1735,
+              1740
+            ],
+            [
+              1770,
+              1785
+            ],
+            [
+              1830,
+              1840
+            ],
+            [
+              1905,
+              1915
+            ],
+            [
+              1960,
+              1980
+            ],
+            [
+              2050,
+              2055
+            ],
+            [
+              2090,
+              2095
+            ],
+            [
+              2120,
+              2130
+            ],
+            [
+              2180,
+              2200
+            ],
+            [
+              2210,
+              2225
+            ],
+            [
+              2230,
+              2245
+            ],
+            [
+              2250,
+              2290
+            ],
+            [
+              2405,
+              2410
+            ],
+            [
+              2415,
+              2430
+            ],
+            [
+              2440,
+              2445
+            ],
+            [
+              2500,
+              2505
+            ],
+            [
+              2510,
+              2530
+            ],
+            [
+              2540,
+              2545
+            ],
+            [
+              2550,
+              2570
+            ],
+            [
+              2580,
+              2585
+            ],
+            [
+              2590,
+              2600
+            ],
+            [
+              2625,
+              2660
+            ],
+            [
+              2725,
+              2730
+            ],
+            [
+              2770,
+              2810
+            ],
+            [
+              2820,
+              2830
+            ],
+            [
+              2850,
+              2885
+            ],
+            [
+              2890,
+              2900
+            ],
+            [
+              3045,
+              3070
+            ],
+            [
+              3110,
+              3150
+            ],
+            [
+              3230,
+              3240
+            ],
+            [
+              3245,
+              3260
+            ],
+            [
+              3290,
+              3295
+            ],
+            [
+              3335,
+              3345
+            ],
+            [
+              3385,
+              3410
+            ],
+            [
+              3495,
+              3505
+            ],
+            [
+              3510,
+              3530
+            ],
+            [
+              3555,
+              3570
+            ],
+            [
+              3590,
+              3595
+            ],
+            [
+              3600,
+              3610
+            ],
+            [
+              3625,
+              3640
+            ],
+            [
+              3680,
+              3685
+            ],
+            [
+              3705,
+              3710
+            ],
+            [
+              3795,
+              3810
+            ],
+            [
+              3830,
+              3835
+            ],
+            [
+              3840,
+              3845
+            ],
+            [
+              3850,
+              3885
+            ],
+            [
+              3890,
+              3915
+            ],
+            [
+              3920,
+              3930
+            ],
+            [
+              3945,
+              3985
+            ],
+            [
+              4200,
+              4210
+            ],
+            [
+              4215,
+              4220
+            ],
+            [
+              4255,
+              4260
+            ],
+            [
+              4275,
+              4290
+            ],
+            [
+              4315,
+              4330
+            ],
+            [
+              4400,
+              4420
+            ],
+            [
+              4430,
+              4435
+            ],
+            [
+              4440,
+              4455
+            ],
+            [
+              4520,
+              4545
+            ],
+            [
+              4575,
+              4580
+            ],
+            [
+              4600,
+              4620
+            ],
+            [
+              4645,
+              4660
+            ],
+            [
+              4705,
+              4710
+            ],
+            [
+              4735,
+              4745
+            ],
+            [
+              4815,
+              4835
+            ],
+            [
+              4865,
+              4870
+            ],
+            [
+              4905,
+              4920
+            ],
+            [
+              4925,
+              4950
+            ],
+            [
+              4960,
+              4965
+            ],
+            [
+              4970,
+              4975
+            ],
+            [
+              4985,
+              4995
+            ]
+          ],
+          "880": [
+            [
+              2120,
+              2125
+            ],
+            [
+              3395,
+              3400
+            ],
+            [
+              3495,
+              3500
+            ],
+            [
+              3705,
+              3710
+            ]
+          ],
+          "660": [
+            [
+              1520,
+              1525
+            ],
+            [
+              1705,
+              1710
+            ],
+            [
+              1955,
+              1960
+            ],
+            [
+              2120,
+              2130
+            ],
+            [
+              2195,
+              2200
+            ],
+            [
+              2265,
+              2270
+            ],
+            [
+              2510,
+              2520
+            ],
+            [
+              2825,
+              2830
+            ],
+            [
+              2850,
+              2855
+            ],
+            [
+              3050,
+              3055
+            ],
+            [
+              3110,
+              3120
+            ],
+            [
+              3145,
+              3150
+            ],
+            [
+              3230,
+              3235
+            ],
+            [
+              3245,
+              3250
+            ],
+            [
+              3285,
+              3290
+            ],
+            [
+              3395,
+              3400
+            ],
+            [
+              3405,
+              3410
+            ],
+            [
+              3495,
+              3505
+            ],
+            [
+              3510,
+              3515
+            ],
+            [
+              3555,
+              3565
+            ],
+            [
+              3630,
+              3635
+            ],
+            [
+              3680,
+              3685
+            ],
+            [
+              3705,
+              3710
+            ],
+            [
+              3800,
+              3805
+            ],
+            [
+              3880,
+              3885
+            ],
+            [
+              3900,
+              3905
+            ],
+            [
+              4320,
+              4325
+            ],
+            [
+              4400,
+              4405
+            ],
+            [
+              4535,
+              4540
+            ],
+            [
+              4735,
+              4745
+            ],
+            [
+              4830,
+              4835
+            ],
+            [
+              4910,
+              4915
+            ],
+            [
+              4985,
+              4995
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 1185,
+          "880": 20,
+          "660": 200
+        },
+        {
+          "440": 1170,
+          "880": 20,
+          "660": 200
+        }
+      ]
+    },
+    "controlDisplayPicture": {
+      "captured": 302,
+      "readable": 244,
+      "interiorUnreadable": 0,
+      "distinct": 241,
+      "marked": 58,
+      "missingKept": [
+        2,
+        3,
+        5,
+        6,
+        8,
+        11,
+        13,
+        15,
+        16,
+        18,
+        20,
+        21,
+        23,
+        25,
+        27,
+        29,
+        31,
+        32,
+        34,
+        36,
+        44,
+        45,
+        47,
+        49,
+        51,
+        53,
+        54,
+        56,
+        58,
+        59,
+        61,
+        63,
+        64,
+        66,
+        68,
+        69,
+        71,
+        73,
+        74,
+        76,
+        78,
+        79,
+        81,
+        83,
+        84,
+        86,
+        88,
+        89,
+        91,
+        93,
+        94,
+        96,
+        98,
+        99,
+        101,
+        103,
+        104,
+        106,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        118,
+        119,
+        121,
+        123,
+        124,
+        126,
+        128,
+        129,
+        131,
+        133,
+        134,
+        136,
+        264,
+        266,
+        267,
+        269,
+        271,
+        272,
+        274,
+        275,
+        277,
+        279,
+        280,
+        282,
+        284,
+        285,
+        287,
+        289,
+        290,
+        292,
+        294,
+        295,
+        297,
+        299,
+        300,
+        302,
+        304,
+        305,
+        307,
+        309,
+        310,
+        312,
+        315,
+        316,
+        318,
+        319,
+        321,
+        322,
+        324,
+        326,
+        327,
+        329,
+        331,
+        332,
+        334,
+        336,
+        337,
+        339,
+        340,
+        347,
+        349,
+        351,
+        353,
+        354,
+        356,
+        357,
+        359,
+        361,
+        362,
+        364,
+        366,
+        367,
+        369,
+        371,
+        372,
+        374,
+        376,
+        378,
+        379,
+        381,
+        383,
+        384,
+        386,
+        391,
+        393,
+        395,
+        397,
+        398,
+        400,
+        402,
+        403,
+        406,
+        408,
+        410,
+        411,
+        413,
+        415,
+        450,
+        452,
+        453,
+        455,
+        457,
+        458,
+        460,
+        463,
+        464,
+        466,
+        468,
+        469,
+        471,
+        473,
+        474,
+        476,
+        478,
+        479,
+        481,
+        483,
+        484,
+        486,
+        488,
+        489,
+        491,
+        493,
+        494,
+        496,
+        498,
+        499
+      ],
+      "missingMarked": [
+        138,
+        139,
+        141,
+        143,
+        144,
+        146,
+        148,
+        149,
+        151,
+        153,
+        154,
+        156,
+        158,
+        160,
+        162,
+        163,
+        165,
+        167,
+        168,
+        170,
+        172,
+        173,
+        175,
+        177,
+        178,
+        180,
+        182,
+        184,
+        185,
+        187,
+        188,
+        190,
+        192,
+        193,
+        195,
+        197,
+        203,
+        205,
+        206,
+        208,
+        210,
+        212,
+        213,
+        215,
+        217,
+        218,
+        220,
+        222,
+        223,
+        225,
+        227,
+        228,
+        230,
+        232,
+        241,
+        242,
+        244,
+        246,
+        247,
+        249,
+        251,
+        252,
+        254,
+        256,
+        257,
+        259,
+        261,
+        262
+      ],
+      "outOfOrder": 0,
+      "duplicates": 3,
+      "controlComplete": false,
+      "filteredComplete": false,
+      "joinAdjacent": false,
+      "first": 0,
+      "last": 497,
+      "captureSpanS": 24.3583,
+      "witnessSpanS": 20.8936,
+      "joinTiming": {},
+      "maxWitnessIntervalMs": 287.73,
+      "maxCaptureGapMs": 190.09
+    },
+    "filteredDisplayPicture": {
+      "captured": 254,
+      "readable": 177,
+      "interiorUnreadable": 0,
+      "distinct": 173,
+      "marked": 0,
+      "missingKept": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        11,
+        13,
+        18,
+        20,
+        22,
+        23,
+        25,
+        27,
+        28,
+        30,
+        32,
+        34,
+        36,
+        37,
+        39,
+        41,
+        43,
+        44,
+        46,
+        48,
+        49,
+        51,
+        53,
+        54,
+        56,
+        58,
+        59,
+        61,
+        63,
+        64,
+        66,
+        68,
+        70,
+        71,
+        73,
+        76,
+        77,
+        79,
+        81,
+        82,
+        84,
+        86,
+        87,
+        89,
+        91,
+        92,
+        94,
+        96,
+        97,
+        99,
+        101,
+        102,
+        104,
+        106,
+        107,
+        109,
+        111,
+        112,
+        114,
+        116,
+        127,
+        129,
+        131,
+        132,
+        134,
+        136,
+        263,
+        265,
+        267,
+        269,
+        270,
+        272,
+        274,
+        275,
+        277,
+        280,
+        281,
+        286,
+        287,
+        289,
+        291,
+        293,
+        294,
+        296,
+        298,
+        299,
+        301,
+        303,
+        304,
+        306,
+        311,
+        313,
+        314,
+        316,
+        318,
+        319,
+        321,
+        323,
+        324,
+        326,
+        328,
+        330,
+        331,
+        333,
+        335,
+        336,
+        338,
+        340,
+        341,
+        343,
+        345,
+        346,
+        348,
+        350,
+        352,
+        354,
+        355,
+        357,
+        359,
+        360,
+        362,
+        364,
+        365,
+        367,
+        369,
+        370,
+        372,
+        374,
+        376,
+        377,
+        379,
+        381,
+        382,
+        384,
+        389,
+        391,
+        392,
+        394,
+        396,
+        397,
+        399,
+        401,
+        402,
+        404,
+        406,
+        407,
+        417,
+        419,
+        420,
+        422,
+        424,
+        427,
+        428,
+        430,
+        432,
+        434,
+        435,
+        437,
+        439,
+        440,
+        442,
+        444,
+        445,
+        447,
+        449,
+        450,
+        452,
+        454,
+        455,
+        457,
+        459,
+        461,
+        462,
+        464,
+        466,
+        467,
+        469,
+        472,
+        473,
+        475,
+        477,
+        478,
+        480,
+        482,
+        484,
+        485,
+        487,
+        489,
+        490,
+        492,
+        494,
+        495,
+        497,
+        499
+      ],
+      "missingMarked": [
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255,
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262
+      ],
+      "outOfOrder": 0,
+      "duplicates": 4,
+      "controlComplete": false,
+      "filteredComplete": false,
+      "joinAdjacent": false,
+      "first": 0,
+      "last": 498,
+      "captureSpanS": 19.2073,
+      "witnessSpanS": 15.3029,
+      "joinTiming": {},
+      "maxWitnessIntervalMs": 265.75,
+      "maxCaptureGapMs": 186.09
+    },
+    "controlOperations": {
+      "transport": "Stock Wholphin D-pad seeks, Android MediaSession pause, TV Stop key",
+      "seekLimit": "No focused native Skip forward slider",
+      "bookmarkBeforeTicks": 0,
+      "limits": [
+        "No kept frame sufficiently far past the cut before Stop",
+        "No new persisted pointer bookmark after Stop"
+      ],
+      "preStopFrame": null,
+      "stopAcknowledged": true,
+      "bookmarkTicks": null
+    }
+  },
+  "hostBeforeRun": {
+    "load1": 0.7,
+    "cpus": 8.0,
+    "availableGiB": 17.53,
+    "ioFull10sPct": 0.02,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "emulatorVersion": "37.2.12",
+  "declaredGpu": "host",
+  "guestRamMiB": 1536,
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "audioInputFormat": "s16le 2ch 48000Hz",
+  "guestKernelMemTotalKiB": 1502724,
+  "pluginBuild": "7a7ef83a8cf72e226758461b01e0f2026104ca1c890ee516d330aea6a67722f6",
+  "fixtureSha256": "c389aa672ebd63dcf1cb77fbaa2ea9946cd3ff4e8430b6ce5b8710d1669502c8",
+  "splitCapture": true,
+  "scratchPeakBytesObserved": 1360887808,
+  "hostWorstObservedIo": {
+    "load1": 2.56,
+    "cpus": 8.0,
+    "availableGiB": 15.43,
+    "ioFull10sPct": 0.41,
+    "scopeMemoryFull10sPct": 0.43,
+    "scopeIOFull10sPct": 0.77,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 0.79,
+    "scopeIOFull10sPct": 0.77
+  },
+  "hostAfterRun": {
+    "load1": 6.45,
+    "cpus": 8.0,
+    "availableGiB": 18.0,
+    "ioFull10sPct": 0.0,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 490.7,
+  "blocker": null,
+  "claims": [
+    "PASS filtered handoff \u2014 Pointer POST / list GET / original range GET: [1, 1, 1]; 1x",
+    "FAIL picture control \u2014 241/500, 58/126 marked at 1x (20.8936 s span, 190.09 ms max gap)",
+    "not-measured marked picture \u2014 Uncut display did not witness all 500 in order on a verified tap",
+    "not-measured kept picture at join \u2014 Uncut display did not witness all 500 in order on a verified tap",
+    "not-measured real-speed join \u2014 join neighbours not fully bracketed; sampled 173/374 kept, 0 marked at 1x",
+    "FAIL sound control \u2014 880 Hz L/R 740/745 and 0/0 ms (expected 5040); 48 kHz stereo, pre-roll 0/0 LSB RMS, peak 32768/32768 LSB; 5 ms at 0.10 FS",
+    "not-measured marked sound \u2014 Two uncut controls did not calibrate the known marked tone",
+    "not-measured kept tones \u2014 Uncut 440/660 Hz L/R 1725/1740, 370/355 ms; repeat 185/195, 10/10 ms (expected 5480, 9480)",
+    "not-measured kept PCM at join \u2014 control: truncated capture at frozen onset",
+    "not-measured seek forward/back \u2014 No focused native Skip forward slider",
+    "not-measured persisted resume \u2014 No new persisted pointer bookmark after Stop"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261122T011152Z-8ec97f8f1d",
+  "candidateWritten": false
+}

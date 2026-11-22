@@ -417,8 +417,8 @@ class PointerLab(Lab):
     def posted(self,body=None):
         return self.api('/Items/'+self.pointer+'/PlaybackInfo','POST',body or self.body,user=self.one)
 
-    def projection(self):
-        info=self.posted();sources=info.get('MediaSources',[])
+    def projection(self, body=None):
+        info=self.posted(body);sources=info.get('MediaSources',[])
         if len(sources)!=1:raise RuntimeError('one direct-play source (got '+str(len(sources))+')')
         s=sources[0];assert s['Protocol']=='Http' and s['IsRemote'] and s['Id']==self.pointer and s['SupportsDirectPlay'] and not s['SupportsDirectStream'] and not s['SupportsTranscoding'] and not s.get('TranscodingUrl') and not s['RequiresOpening'] and s['RunTimeTicks']==149600000 and s['Container']=='mp4','direct-only filtered source'
         facts='Index Type Codec Profile Level Width Height AverageFrameRate RealFrameRate BitRate SampleRate Channels ChannelLayout IsDefault'.split()
@@ -426,6 +426,24 @@ class PointerLab(Lab):
         rows=s['MediaStreams']; assert len(rows)==2 and all([r.get(k) for k in facts]==[o.get(k) for k in facts] and not r.get('Path') and not r.get('DeliveryUrl') for r,o in zip(rows,original['MediaStreams'])),'whitelisted original stream facts'
         assert self.item not in json.dumps(info) and self.one[1] not in json.dumps(info),'original identity exposed'
         return self.verify_offer(s['Path'])
+
+    def check_wholphin_containers(self):
+        # Replay the relevant fields observed on the real TV POST: explicit
+        # selection, audio index, unbounded channels, native MPV flags and both
+        # MP4 spellings. The synthetic legacy POST below only exercised mp4.
+        def request(container):
+            direct = [dict(self.profile['DirectPlayProfiles'][0], Container=container)]
+            return dict(self.body, DeviceProfile=dict(self.profile, DirectPlayProfiles=direct),
+                        AudioStreamIndex=1, MaxStreamingBitrate=104857600,
+                        EnableDirectPlay=True, EnableDirectStream=True, EnableTranscoding=True)
+        observed=request('mov,mp4')
+        native=self.api('/Items/'+self.item+'/PlaybackInfo','POST',dict(observed,MediaSourceId=self.item),user=self.one)
+        check('Wholphin-shaped original PlaybackInfo negotiates mov',len(native['MediaSources'])==1 and native['MediaSources'][0]['Container']=='mov' and native['MediaSources'][0]['SupportsDirectPlay'])
+        self.projection(observed)
+        self.projection(request('mov'))
+        check('Wholphin-shaped and mov-only profiles get the pinned filtered source',True)
+        refused=self.posted(request('mkv,matroska'))
+        check('Matroska-only profile still gets NoCompatibleStream for the same pointer',refused.get('ErrorCode')=='NoCompatibleStream' and refused['MediaSources']==[])
 
     def original_shape(self):
         status,_,body=self.request('/Items/'+self.item+'/PlaybackInfo','POST',{'DeviceProfile':self.profile},user=self.one)
@@ -440,6 +458,7 @@ class PointerLab(Lab):
         check('inert locator: anonymous, viewer, admin, probe',probe.returncode!=0 and probe_count()>count and not probe.stdout and all(self.request(self.locator,user=u)[0] in (404,410) for u in (None,self.one,self.admin)))
         check('browse: filtered runtime and tracks',self.browse())
         url,source=self.projection();check('one HTTP direct-play list; filtered runtime; H.264/AAC',True)
+        self.check_wholphin_containers()
         self.player(url)
         original=self.original_shape()
         uri='/Items/'+self.pointer+'/PlaybackInfo'

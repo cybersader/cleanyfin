@@ -18,6 +18,7 @@
     <None Include="../../delivery/evidence/register-v1.json" Link="evidence-register-v1.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../../plugin/AuthRange/PinnedMp4Container.cs" Link="PinnedMp4Container.cs" />
     <Compile Include="../../plugin/AuthRange/ShelfRow.cs" Link="ShelfRow.cs" />
     <Compile Include="../../plugin/AuthRange/GrantTable.cs" Link="GrantTable.cs" />
   </ItemGroup>

@@ -1,0 +1,2752 @@
+{
+  "startedUtc": "20261122T012628Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "milestone": "seeks and persisted resume",
+    "verifiedSettings": {
+      "backend": "MPV",
+      "mpvOptions": [
+        "hwdec=no",
+        "vo=gpu",
+        "gpu-context=android",
+        "opengl-es=yes",
+        "msg-level=all=v"
+      ],
+      "verification": "MPV-only preferences visible and saved mpv.conf reopened"
+    },
+    "sessionIdentity": {
+      "client": "Wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "deviceIdSha256": "ee25e66b3bb2d9c9af7ee6468d62faa674d2f91491c018adcd9dfbf591522ce3",
+      "exactDeviceEnrollment": true,
+      "labTuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "1",
+        "appId": "Wholphin",
+        "appVersion": "1.1.2-0-gc530f5c5",
+        "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+        "backend": "mpv",
+        "deviceMode": "Google TV API 36 x86_64 emulator 1280x720, 1536 MiB, llvmpipe with 2 requested llvmpipe workers, software video vo-gpu Android GLES, stereo PCM",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "7a7ef83a8cf72e226758461b01e0f2026104ca1c890ee516d330aea6a67722f6",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+          "durationMs": 20000
+        }
+      }
+    },
+    "recordings": {
+      "control": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 0,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 21.67,
+        "audioBytes": 4807680,
+        "audioDurationS": 25.04,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "repeatControl": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 21.64,
+        "audioBytes": 4800000,
+        "audioDurationS": 25.0,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "filtered": {
+        "speed": 1,
+        "fixtureDurationS": 14.96,
+        "wallCeilingS": 28.96,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 16.25,
+        "audioBytes": 3767040,
+        "audioDurationS": 19.62,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "pointer",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "pointer",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mp4",
+              "protocol": "Http",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": false,
+              "remote": true
+            }
+          }
+        ],
+        "grantRouteDeltas": [
+          1,
+          1,
+          1
+        ],
+        "serverLoggedRefusalCodes": []
+      },
+      "controlDisplay": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 21.7,
+        "videoBytes": 417720,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "filteredDisplay": {
+        "speed": 1,
+        "fixtureDurationS": 14.96,
+        "wallCeilingS": 28.96,
+        "endSignal": "Wholphin video surface left foreground",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 17.7,
+        "videoBytes": 194706,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "pointer",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "pointer",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mp4",
+              "protocol": "Http",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": false,
+              "remote": true
+            }
+          }
+        ],
+        "grantRouteDeltas": [
+          1,
+          1,
+          1
+        ],
+        "serverLoggedRefusalCodes": []
+      },
+      "slowControl": {
+        "speed": 0.25,
+        "speedSetting": {
+          "backend": "MPV",
+          "playbackSpeed": 0.25,
+          "verification": "stock playback settings read back 0.25 while paused"
+        },
+        "fixtureDurationS": 20,
+        "wallCeilingS": 94.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "audioUnderruns": 2,
+        "libmpvEof": false,
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 80.35,
+        "videoBytes": 396176,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "slowFiltered": {
+        "speed": 0.25,
+        "speedSetting": {
+          "backend": "MPV",
+          "playbackSpeed": 0.25,
+          "verification": "stock playback settings read back 0.25 while paused"
+        },
+        "fixtureDurationS": 14.96,
+        "wallCeilingS": 73.84,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "audioUnderruns": 2,
+        "libmpvEof": false,
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 61.28,
+        "videoBytes": 135932,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "pointer",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "pointer",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mp4",
+              "protocol": "Http",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": false,
+              "remote": true
+            }
+          }
+        ],
+        "grantRouteDeltas": [
+          1,
+          1,
+          1
+        ],
+        "serverLoggedRefusalCodes": []
+      }
+    },
+    "audioLevels": {
+      "androidMusicVolumeBefore": 3,
+      "androidMusicVolumeAfter": 3,
+      "androidMusicVolumeMax": 15,
+      "androidMusicVolumeAfterKeys": 15,
+      "privateQemuStreamVolume": {
+        "front-left": "100%",
+        "front-right": "100%"
+      }
+    },
+    "controlSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 1201920,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        8608,
+        8608
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              1210,
+              2190
+            ],
+            [
+              2195,
+              5605
+            ],
+            [
+              5610,
+              6710
+            ]
+          ],
+          "880": [
+            [
+              6710,
+              6725
+            ],
+            [
+              6730,
+              6815
+            ],
+            [
+              6820,
+              7090
+            ],
+            [
+              7095,
+              7830
+            ],
+            [
+              7835,
+              7920
+            ],
+            [
+              7925,
+              8285
+            ],
+            [
+              8290,
+              9945
+            ],
+            [
+              9950,
+              11765
+            ],
+            [
+              12125,
+              12130
+            ]
+          ],
+          "660": [
+            [
+              1255,
+              1260
+            ],
+            [
+              1540,
+              1545
+            ],
+            [
+              1630,
+              1635
+            ],
+            [
+              2100,
+              2105
+            ],
+            [
+              2190,
+              2195
+            ],
+            [
+              2385,
+              2390
+            ],
+            [
+              2475,
+              2480
+            ],
+            [
+              2830,
+              2835
+            ],
+            [
+              3025,
+              3030
+            ],
+            [
+              3310,
+              3315
+            ],
+            [
+              3400,
+              3405
+            ],
+            [
+              3675,
+              3680
+            ],
+            [
+              3870,
+              3875
+            ],
+            [
+              3960,
+              3965
+            ],
+            [
+              4040,
+              4045
+            ],
+            [
+              4235,
+              4240
+            ],
+            [
+              4325,
+              4330
+            ],
+            [
+              4600,
+              4605
+            ],
+            [
+              4795,
+              4800
+            ],
+            [
+              4885,
+              4890
+            ],
+            [
+              5240,
+              5245
+            ],
+            [
+              5330,
+              5335
+            ],
+            [
+              5515,
+              5520
+            ],
+            [
+              5605,
+              5610
+            ],
+            [
+              5890,
+              5895
+            ],
+            [
+              6165,
+              6170
+            ],
+            [
+              6440,
+              6445
+            ],
+            [
+              6530,
+              6535
+            ],
+            [
+              6725,
+              6730
+            ],
+            [
+              6815,
+              6820
+            ],
+            [
+              7090,
+              7095
+            ],
+            [
+              7830,
+              7835
+            ],
+            [
+              7920,
+              7925
+            ],
+            [
+              8285,
+              8290
+            ],
+            [
+              8945,
+              8950
+            ],
+            [
+              9410,
+              9415
+            ],
+            [
+              9945,
+              9950
+            ],
+            [
+              10310,
+              10315
+            ],
+            [
+              11765,
+              21250
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              1210,
+              2190
+            ],
+            [
+              2195,
+              5605
+            ],
+            [
+              5610,
+              6710
+            ]
+          ],
+          "880": [
+            [
+              6710,
+              6725
+            ],
+            [
+              6730,
+              6815
+            ],
+            [
+              6820,
+              7090
+            ],
+            [
+              7095,
+              7830
+            ],
+            [
+              7835,
+              7920
+            ],
+            [
+              7925,
+              8285
+            ],
+            [
+              8290,
+              9945
+            ],
+            [
+              9950,
+              11765
+            ],
+            [
+              12125,
+              12130
+            ]
+          ],
+          "660": [
+            [
+              1255,
+              1260
+            ],
+            [
+              1540,
+              1545
+            ],
+            [
+              1630,
+              1635
+            ],
+            [
+              2100,
+              2105
+            ],
+            [
+              2190,
+              2195
+            ],
+            [
+              2385,
+              2390
+            ],
+            [
+              2475,
+              2480
+            ],
+            [
+              2830,
+              2835
+            ],
+            [
+              3025,
+              3030
+            ],
+            [
+              3310,
+              3315
+            ],
+            [
+              3400,
+              3405
+            ],
+            [
+              3675,
+              3680
+            ],
+            [
+              3870,
+              3875
+            ],
+            [
+              3960,
+              3965
+            ],
+            [
+              4040,
+              4045
+            ],
+            [
+              4235,
+              4240
+            ],
+            [
+              4325,
+              4330
+            ],
+            [
+              4600,
+              4605
+            ],
+            [
+              4795,
+              4800
+            ],
+            [
+              4885,
+              4890
+            ],
+            [
+              5240,
+              5245
+            ],
+            [
+              5330,
+              5335
+            ],
+            [
+              5515,
+              5520
+            ],
+            [
+              5605,
+              5610
+            ],
+            [
+              5890,
+              5895
+            ],
+            [
+              6165,
+              6170
+            ],
+            [
+              6440,
+              6445
+            ],
+            [
+              6530,
+              6535
+            ],
+            [
+              6725,
+              6730
+            ],
+            [
+              6815,
+              6820
+            ],
+            [
+              7090,
+              7095
+            ],
+            [
+              7830,
+              7835
+            ],
+            [
+              7920,
+              7925
+            ],
+            [
+              8285,
+              8290
+            ],
+            [
+              8945,
+              8950
+            ],
+            [
+              9410,
+              9415
+            ],
+            [
+              9945,
+              9950
+            ],
+            [
+              10310,
+              10315
+            ],
+            [
+              11765,
+              21250
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 5490,
+          "880": 5025,
+          "660": 9675
+        },
+        {
+          "440": 5490,
+          "880": 5025,
+          "660": 9675
+        }
+      ]
+    },
+    "repeatControlSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 1200000,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        8608,
+        8608
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              955,
+              4060
+            ],
+            [
+              4065,
+              4985
+            ],
+            [
+              4990,
+              5350
+            ],
+            [
+              5355,
+              6195
+            ],
+            [
+              6200,
+              6455
+            ],
+            [
+              13105,
+              13110
+            ],
+            [
+              13275,
+              13280
+            ]
+          ],
+          "880": [
+            [
+              6455,
+              6470
+            ],
+            [
+              6475,
+              6835
+            ],
+            [
+              6840,
+              7485
+            ],
+            [
+              7490,
+              8030
+            ],
+            [
+              8035,
+              8405
+            ],
+            [
+              8410,
+              8600
+            ],
+            [
+              8605,
+              9520
+            ],
+            [
+              9525,
+              10440
+            ],
+            [
+              10445,
+              11510
+            ],
+            [
+              13105,
+              13110
+            ],
+            [
+              13275,
+              13280
+            ]
+          ],
+          "660": [
+            [
+              1045,
+              1050
+            ],
+            [
+              1135,
+              1140
+            ],
+            [
+              1410,
+              1415
+            ],
+            [
+              1500,
+              1505
+            ],
+            [
+              1580,
+              1585
+            ],
+            [
+              1765,
+              1770
+            ],
+            [
+              1855,
+              1860
+            ],
+            [
+              2050,
+              2055
+            ],
+            [
+              2415,
+              2420
+            ],
+            [
+              2690,
+              2695
+            ],
+            [
+              2780,
+              2785
+            ],
+            [
+              2860,
+              2865
+            ],
+            [
+              3135,
+              3140
+            ],
+            [
+              3420,
+              3425
+            ],
+            [
+              3695,
+              3700
+            ],
+            [
+              3785,
+              3790
+            ],
+            [
+              4060,
+              4065
+            ],
+            [
+              4150,
+              4155
+            ],
+            [
+              4415,
+              4420
+            ],
+            [
+              4700,
+              4705
+            ],
+            [
+              4790,
+              4795
+            ],
+            [
+              4985,
+              4990
+            ],
+            [
+              5260,
+              5265
+            ],
+            [
+              5350,
+              5355
+            ],
+            [
+              5635,
+              5640
+            ],
+            [
+              6105,
+              6110
+            ],
+            [
+              6195,
+              6200
+            ],
+            [
+              6455,
+              6460
+            ],
+            [
+              6470,
+              6475
+            ],
+            [
+              6560,
+              6565
+            ],
+            [
+              6835,
+              6840
+            ],
+            [
+              7110,
+              7115
+            ],
+            [
+              7290,
+              7295
+            ],
+            [
+              7485,
+              7490
+            ],
+            [
+              7575,
+              7580
+            ],
+            [
+              8030,
+              8035
+            ],
+            [
+              8405,
+              8410
+            ],
+            [
+              8600,
+              8605
+            ],
+            [
+              8690,
+              8695
+            ],
+            [
+              9520,
+              9525
+            ],
+            [
+              10075,
+              10080
+            ],
+            [
+              10440,
+              10445
+            ],
+            [
+              11510,
+              13105
+            ],
+            [
+              13110,
+              13275
+            ],
+            [
+              13280,
+              20995
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              955,
+              4060
+            ],
+            [
+              4065,
+              4985
+            ],
+            [
+              4990,
+              5350
+            ],
+            [
+              5355,
+              6195
+            ],
+            [
+              6200,
+              6455
+            ],
+            [
+              13105,
+              13110
+            ],
+            [
+              13275,
+              13280
+            ]
+          ],
+          "880": [
+            [
+              6455,
+              6470
+            ],
+            [
+              6475,
+              6835
+            ],
+            [
+              6840,
+              7485
+            ],
+            [
+              7490,
+              8030
+            ],
+            [
+              8035,
+              8405
+            ],
+            [
+              8410,
+              8600
+            ],
+            [
+              8605,
+              9520
+            ],
+            [
+              9525,
+              10440
+            ],
+            [
+              10445,
+              11510
+            ],
+            [
+              13105,
+              13110
+            ],
+            [
+              13275,
+              13280
+            ]
+          ],
+          "660": [
+            [
+              1045,
+              1050
+            ],
+            [
+              1135,
+              1140
+            ],
+            [
+              1410,
+              1415
+            ],
+            [
+              1500,
+              1505
+            ],
+            [
+              1580,
+              1585
+            ],
+            [
+              1765,
+              1770
+            ],
+            [
+              1855,
+              1860
+            ],
+            [
+              2050,
+              2055
+            ],
+            [
+              2415,
+              2420
+            ],
+            [
+              2690,
+              2695
+            ],
+            [
+              2780,
+              2785
+            ],
+            [
+              2860,
+              2865
+            ],
+            [
+              3135,
+              3140
+            ],
+            [
+              3420,
+              3425
+            ],
+            [
+              3695,
+              3700
+            ],
+            [
+              3785,
+              3790
+            ],
+            [
+              4060,
+              4065
+            ],
+            [
+              4150,
+              4155
+            ],
+            [
+              4415,
+              4420
+            ],
+            [
+              4700,
+              4705
+            ],
+            [
+              4790,
+              4795
+            ],
+            [
+              4985,
+              4990
+            ],
+            [
+              5260,
+              5265
+            ],
+            [
+              5350,
+              5355
+            ],
+            [
+              5635,
+              5640
+            ],
+            [
+              6105,
+              6110
+            ],
+            [
+              6195,
+              6200
+            ],
+            [
+              6455,
+              6460
+            ],
+            [
+              6470,
+              6475
+            ],
+            [
+              6560,
+              6565
+            ],
+            [
+              6835,
+              6840
+            ],
+            [
+              7110,
+              7115
+            ],
+            [
+              7290,
+              7295
+            ],
+            [
+              7485,
+              7490
+            ],
+            [
+              7575,
+              7580
+            ],
+            [
+              8030,
+              8035
+            ],
+            [
+              8405,
+              8410
+            ],
+            [
+              8600,
+              8605
+            ],
+            [
+              8690,
+              8695
+            ],
+            [
+              9520,
+              9525
+            ],
+            [
+              10075,
+              10080
+            ],
+            [
+              10440,
+              10445
+            ],
+            [
+              11510,
+              13105
+            ],
+            [
+              13110,
+              13275
+            ],
+            [
+              13280,
+              20995
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 5490,
+          "880": 5025,
+          "660": 9685
+        },
+        {
+          "440": 5490,
+          "880": 5025,
+          "660": 9685
+        }
+      ]
+    },
+    "waveform": {
+      "triggerLSB": 512,
+      "offsetFromTriggerSamples": -1,
+      "noisePeakLSB": {
+        "control": 0,
+        "repeatControl": 0,
+        "filtered": 0
+      },
+      "starts": {
+        "control": 58111,
+        "repeatControl": 45879,
+        "filtered": 47211
+      },
+      "valid": true,
+      "repeatability": {
+        "prefix": {
+          "comparedSampleFrames": 263040,
+          "differentSampleFrames": 36819,
+          "differentSamplesLR": [
+            36819,
+            36819
+          ],
+          "differentDurationMs": 767.0625,
+          "firstDifferentFrame": 2177,
+          "lastDifferentFrame": 260406,
+          "peakErrorLSB": [
+            13733,
+            13733
+          ],
+          "errorEnergyLSB2": [
+            3233317635322,
+            3233317756786
+          ],
+          "errorRmsLSB": [
+            3506.011106833861,
+            3506.011172687912
+          ],
+          "referenceRmsLSB": [
+            5769.299674939116,
+            5769.299645989289
+          ]
+        },
+        "suffix": {
+          "comparedSampleFrames": 455040,
+          "differentSampleFrames": 454789,
+          "differentSamplesLR": [
+            454789,
+            454789
+          ],
+          "differentDurationMs": 9474.77083,
+          "firstDifferentFrame": 0,
+          "lastDifferentFrame": 455039,
+          "peakErrorLSB": [
+            15778,
+            15778
+          ],
+          "errorEnergyLSB2": [
+            8987511674286,
+            8987511665958
+          ],
+          "errorRmsLSB": [
+            4444.21382875044,
+            4444.2138266913935
+          ],
+          "referenceRmsLSB": [
+            5789.899945763971,
+            5789.899945763971
+          ]
+        },
+        "joinBefore20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 0,
+          "differentSamplesLR": [
+            0,
+            0
+          ],
+          "differentDurationMs": 0.0,
+          "firstDifferentFrame": null,
+          "lastDifferentFrame": null,
+          "peakErrorLSB": [
+            0,
+            0
+          ],
+          "errorEnergyLSB2": [
+            0,
+            0
+          ],
+          "errorRmsLSB": [
+            0.0,
+            0.0
+          ],
+          "referenceRmsLSB": [
+            5749.7293949911245,
+            5749.7293949911245
+          ]
+        },
+        "joinAfter20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 960,
+          "differentSamplesLR": [
+            960,
+            960
+          ],
+          "differentDurationMs": 20.0,
+          "firstDifferentFrame": 0,
+          "lastDifferentFrame": 959,
+          "peakErrorLSB": [
+            13057,
+            13057
+          ],
+          "errorEnergyLSB2": [
+            82079194205,
+            82079194205
+          ],
+          "errorRmsLSB": [
+            9246.575616421916,
+            9246.575616421916
+          ],
+          "referenceRmsLSB": [
+            5786.800217592909,
+            5786.800217592909
+          ]
+        }
+      },
+      "controlVsFiltered": {
+        "prefix": {
+          "comparedSampleFrames": 263040,
+          "differentSampleFrames": 64201,
+          "differentSamplesLR": [
+            64201,
+            64201
+          ],
+          "differentDurationMs": 1337.52083,
+          "firstDifferentFrame": 2177,
+          "lastDifferentFrame": 263039,
+          "peakErrorLSB": [
+            13733,
+            13733
+          ],
+          "errorEnergyLSB2": [
+            5729826591239,
+            5729826607423
+          ],
+          "errorRmsLSB": [
+            4667.236856583604,
+            4667.236863174952
+          ],
+          "referenceRmsLSB": [
+            5769.299674939116,
+            5769.299645989289
+          ],
+          "withinFloor": false,
+          "floorBelowSignal": true
+        },
+        "suffix": {
+          "comparedSampleFrames": 455040,
+          "differentSampleFrames": 454962,
+          "differentSamplesLR": [
+            454962,
+            454961
+          ],
+          "differentDurationMs": 9478.375,
+          "firstDifferentFrame": 0,
+          "lastDifferentFrame": 455039,
+          "peakErrorLSB": [
+            16418,
+            16418
+          ],
+          "errorEnergyLSB2": [
+            24377284406842,
+            24377284414562
+          ],
+          "errorRmsLSB": [
+            7319.271797270651,
+            7319.271798429615
+          ],
+          "referenceRmsLSB": [
+            5789.899945763971,
+            5789.899945763971
+          ],
+          "withinFloor": false,
+          "floorBelowSignal": true
+        },
+        "joinBefore20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 960,
+          "differentSamplesLR": [
+            960,
+            960
+          ],
+          "differentDurationMs": 20.0,
+          "firstDifferentFrame": 0,
+          "lastDifferentFrame": 959,
+          "peakErrorLSB": [
+            13622,
+            13622
+          ],
+          "errorEnergyLSB2": [
+            88914623983,
+            88914623983
+          ],
+          "errorRmsLSB": [
+            9623.89733851581,
+            9623.89733851581
+          ],
+          "referenceRmsLSB": [
+            5749.7293949911245,
+            5749.7293949911245
+          ],
+          "withinFloor": false,
+          "floorBelowSignal": true
+        },
+        "joinAfter20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 959,
+          "differentSamplesLR": [
+            959,
+            959
+          ],
+          "differentDurationMs": 19.97917,
+          "firstDifferentFrame": 0,
+          "lastDifferentFrame": 959,
+          "peakErrorLSB": [
+            16418,
+            16418
+          ],
+          "errorEnergyLSB2": [
+            65568915782,
+            65568915782
+          ],
+          "errorRmsLSB": [
+            8264.43911826951,
+            8264.43911826951
+          ],
+          "referenceRmsLSB": [
+            5786.800217592909,
+            5786.800217592909
+          ],
+          "withinFloor": false,
+          "floorBelowSignal": false
+        }
+      }
+    },
+    "filteredSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 941760,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        8608,
+        8608
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              985,
+              1495
+            ],
+            [
+              1500,
+              4990
+            ],
+            [
+              4995,
+              6485
+            ],
+            [
+              6715,
+              6720
+            ],
+            [
+              6805,
+              6810
+            ],
+            [
+              7080,
+              7085
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7720,
+              7725
+            ],
+            [
+              7900,
+              7905
+            ],
+            [
+              8800,
+              8805
+            ],
+            [
+              9165,
+              9170
+            ],
+            [
+              9255,
+              9260
+            ],
+            [
+              10085,
+              10090
+            ],
+            [
+              11175,
+              11180
+            ],
+            [
+              12435,
+              12440
+            ]
+          ],
+          "880": [
+            [
+              6715,
+              6720
+            ],
+            [
+              6805,
+              6810
+            ],
+            [
+              6990,
+              6995
+            ],
+            [
+              7080,
+              7085
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7720,
+              7725
+            ],
+            [
+              7900,
+              7905
+            ],
+            [
+              8435,
+              8440
+            ],
+            [
+              8800,
+              8805
+            ],
+            [
+              9165,
+              9170
+            ],
+            [
+              9255,
+              9260
+            ],
+            [
+              10085,
+              10090
+            ],
+            [
+              11175,
+              11180
+            ],
+            [
+              12435,
+              12440
+            ]
+          ],
+          "660": [
+            [
+              1130,
+              1135
+            ],
+            [
+              1220,
+              1225
+            ],
+            [
+              1495,
+              1500
+            ],
+            [
+              1770,
+              1775
+            ],
+            [
+              1860,
+              1865
+            ],
+            [
+              2135,
+              2140
+            ],
+            [
+              2305,
+              2310
+            ],
+            [
+              2695,
+              2700
+            ],
+            [
+              2785,
+              2790
+            ],
+            [
+              3060,
+              3065
+            ],
+            [
+              3255,
+              3260
+            ],
+            [
+              3345,
+              3350
+            ],
+            [
+              3620,
+              3625
+            ],
+            [
+              3710,
+              3715
+            ],
+            [
+              3985,
+              3990
+            ],
+            [
+              4075,
+              4080
+            ],
+            [
+              4430,
+              4435
+            ],
+            [
+              4625,
+              4630
+            ],
+            [
+              4715,
+              4720
+            ],
+            [
+              4990,
+              4995
+            ],
+            [
+              5265,
+              5270
+            ],
+            [
+              5355,
+              5360
+            ],
+            [
+              5710,
+              5715
+            ],
+            [
+              5800,
+              5805
+            ],
+            [
+              6075,
+              6080
+            ],
+            [
+              6350,
+              6355
+            ],
+            [
+              6440,
+              6445
+            ],
+            [
+              6485,
+              6715
+            ],
+            [
+              6720,
+              7080
+            ],
+            [
+              7085,
+              7355
+            ],
+            [
+              7360,
+              7720
+            ],
+            [
+              7725,
+              8800
+            ],
+            [
+              8805,
+              9165
+            ],
+            [
+              9170,
+              9255
+            ],
+            [
+              9260,
+              10085
+            ],
+            [
+              10090,
+              11175
+            ],
+            [
+              11180,
+              12435
+            ],
+            [
+              12440,
+              15985
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              985,
+              1495
+            ],
+            [
+              1500,
+              4990
+            ],
+            [
+              4995,
+              6485
+            ],
+            [
+              6715,
+              6720
+            ],
+            [
+              6805,
+              6810
+            ],
+            [
+              7080,
+              7085
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7720,
+              7725
+            ],
+            [
+              7900,
+              7905
+            ],
+            [
+              8800,
+              8805
+            ],
+            [
+              9165,
+              9170
+            ],
+            [
+              9255,
+              9260
+            ],
+            [
+              10085,
+              10090
+            ],
+            [
+              11175,
+              11180
+            ],
+            [
+              12435,
+              12440
+            ]
+          ],
+          "880": [
+            [
+              6715,
+              6720
+            ],
+            [
+              6805,
+              6810
+            ],
+            [
+              6990,
+              6995
+            ],
+            [
+              7080,
+              7085
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7720,
+              7725
+            ],
+            [
+              7900,
+              7905
+            ],
+            [
+              8435,
+              8440
+            ],
+            [
+              8800,
+              8805
+            ],
+            [
+              9165,
+              9170
+            ],
+            [
+              9255,
+              9260
+            ],
+            [
+              10085,
+              10090
+            ],
+            [
+              11175,
+              11180
+            ],
+            [
+              12435,
+              12440
+            ]
+          ],
+          "660": [
+            [
+              1130,
+              1135
+            ],
+            [
+              1220,
+              1225
+            ],
+            [
+              1495,
+              1500
+            ],
+            [
+              1770,
+              1775
+            ],
+            [
+              1860,
+              1865
+            ],
+            [
+              2135,
+              2140
+            ],
+            [
+              2305,
+              2310
+            ],
+            [
+              2695,
+              2700
+            ],
+            [
+              2785,
+              2790
+            ],
+            [
+              3060,
+              3065
+            ],
+            [
+              3255,
+              3260
+            ],
+            [
+              3345,
+              3350
+            ],
+            [
+              3620,
+              3625
+            ],
+            [
+              3710,
+              3715
+            ],
+            [
+              3985,
+              3990
+            ],
+            [
+              4075,
+              4080
+            ],
+            [
+              4430,
+              4435
+            ],
+            [
+              4625,
+              4630
+            ],
+            [
+              4715,
+              4720
+            ],
+            [
+              4990,
+              4995
+            ],
+            [
+              5265,
+              5270
+            ],
+            [
+              5355,
+              5360
+            ],
+            [
+              5710,
+              5715
+            ],
+            [
+              5800,
+              5805
+            ],
+            [
+              6075,
+              6080
+            ],
+            [
+              6350,
+              6355
+            ],
+            [
+              6440,
+              6445
+            ],
+            [
+              6485,
+              6715
+            ],
+            [
+              6720,
+              7080
+            ],
+            [
+              7085,
+              7355
+            ],
+            [
+              7360,
+              7720
+            ],
+            [
+              7725,
+              8800
+            ],
+            [
+              8805,
+              9165
+            ],
+            [
+              9170,
+              9255
+            ],
+            [
+              9260,
+              10085
+            ],
+            [
+              10090,
+              11175
+            ],
+            [
+              11180,
+              12435
+            ],
+            [
+              12440,
+              15985
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 5550,
+          "880": 70,
+          "660": 9585
+        },
+        {
+          "440": 5550,
+          "880": 70,
+          "660": 9585
+        }
+      ]
+    },
+    "controlDisplayPicture": {
+      "captured": 577,
+      "readable": 503,
+      "interiorUnreadable": 0,
+      "distinct": 498,
+      "marked": 126,
+      "missingKept": [
+        4,
+        9
+      ],
+      "missingMarked": [],
+      "outOfOrder": 0,
+      "duplicates": 5,
+      "controlComplete": false,
+      "filteredComplete": false,
+      "joinAdjacent": false,
+      "first": 0,
+      "last": 499,
+      "captureSpanS": 23.4728,
+      "witnessSpanS": 19.9575,
+      "joinTiming": {
+        "136-137": {
+          "observedMs": 37.95,
+          "lowerMs": 0.0,
+          "upperMs": 76.32
+        },
+        "262-263": {
+          "observedMs": 38.27,
+          "lowerMs": 0.0,
+          "upperMs": 79.3
+        }
+      },
+      "maxWitnessIntervalMs": 114.39,
+      "maxCaptureGapMs": 53.01
+    },
+    "filteredDisplayPicture": {
+      "captured": 461,
+      "readable": 378,
+      "interiorUnreadable": 2,
+      "distinct": 373,
+      "marked": 0,
+      "missingKept": [
+        4
+      ],
+      "missingMarked": [
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255,
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262
+      ],
+      "outOfOrder": 0,
+      "duplicates": 6,
+      "controlComplete": false,
+      "filteredComplete": false,
+      "joinAdjacent": true,
+      "first": 0,
+      "last": 499,
+      "captureSpanS": 20.0033,
+      "witnessSpanS": 14.9507,
+      "joinTiming": {
+        "136-263": {
+          "observedMs": 40.21,
+          "lowerMs": 0.0,
+          "upperMs": 79.9
+        }
+      },
+      "maxWitnessIntervalMs": 114.48,
+      "maxCaptureGapMs": 46.86
+    },
+    "slowControlPicture": {
+      "captured": 562,
+      "readable": 560,
+      "interiorUnreadable": 0,
+      "distinct": 500,
+      "marked": 126,
+      "missingKept": [],
+      "missingMarked": [],
+      "outOfOrder": 0,
+      "duplicates": 60,
+      "controlComplete": true,
+      "filteredComplete": false,
+      "joinAdjacent": false,
+      "first": 0,
+      "last": 499,
+      "captureSpanS": 83.1031,
+      "witnessSpanS": 82.3914,
+      "joinTiming": {
+        "136-137": {
+          "observedMs": 151.52,
+          "lowerMs": 0.0,
+          "upperMs": 317.1
+        },
+        "262-263": {
+          "observedMs": 167.9,
+          "lowerMs": 0.0,
+          "upperMs": 313.73
+        }
+      },
+      "maxWitnessIntervalMs": 2608.12,
+      "maxCaptureGapMs": 2116.74
+    },
+    "verifiedSlowSettings": {
+      "backend": "MPV",
+      "playbackSpeed": 0.25,
+      "verification": "stock playback settings read back 0.25 while paused"
+    },
+    "slowFilteredPicture": {
+      "captured": 415,
+      "readable": 378,
+      "interiorUnreadable": 0,
+      "distinct": 374,
+      "marked": 0,
+      "missingKept": [],
+      "missingMarked": [
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255,
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262
+      ],
+      "outOfOrder": 0,
+      "duplicates": 4,
+      "controlComplete": false,
+      "filteredComplete": true,
+      "joinAdjacent": true,
+      "first": 0,
+      "last": 499,
+      "captureSpanS": 62.9781,
+      "witnessSpanS": 62.2652,
+      "joinTiming": {
+        "136-263": {
+          "observedMs": 149.79,
+          "lowerMs": 0.0,
+          "upperMs": 316.07
+        }
+      },
+      "maxWitnessIntervalMs": 2647.26,
+      "maxCaptureGapMs": 2480.08
+    },
+    "controlOperations": {
+      "transport": "Stock Wholphin D-pad seeks, Android MediaSession pause, TV Stop key",
+      "seekLimit": "D-pad did not enter the navigation drawer",
+      "bookmarkBeforeTicks": 0,
+      "preStopReadings": [],
+      "limits": [
+        "No kept frame sufficiently far past the cut before Stop",
+        "No new persisted pointer bookmark after Stop"
+      ],
+      "preStopFrame": null,
+      "preStopSessionTicks": 140000000,
+      "stopAcknowledged": true,
+      "reportedStopPositions": [],
+      "bookmarkTicks": null
+    }
+  },
+  "hostBeforeRun": {
+    "load1": 0.97,
+    "cpus": 8.0,
+    "availableGiB": 18.3,
+    "ioFull10sPct": 0.0,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "emulatorVersion": "37.2.12",
+  "declaredGpu": "host",
+  "llvmpipeThreadsRequested": 2,
+  "guestRamMiB": 1536,
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "audioInputFormat": "s16le 2ch 48000Hz",
+  "guestKernelMemTotalKiB": 1502724,
+  "pluginBuild": "7a7ef83a8cf72e226758461b01e0f2026104ca1c890ee516d330aea6a67722f6",
+  "fixtureSha256": "c389aa672ebd63dcf1cb77fbaa2ea9946cd3ff4e8430b6ce5b8710d1669502c8",
+  "splitCapture": true,
+  "scratchPeakBytesObserved": 1349627904,
+  "hostWorstObservedIo": {
+    "load1": 7.07,
+    "cpus": 8.0,
+    "availableGiB": 14.61,
+    "ioFull10sPct": 7.02,
+    "scopeMemoryFull10sPct": 5.27,
+    "scopeIOFull10sPct": 10.92,
+    "busy": true
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 5.4,
+    "scopeIOFull10sPct": 10.93
+  },
+  "hostAfterRun": {
+    "load1": 7.83,
+    "cpus": 8.0,
+    "availableGiB": 17.69,
+    "ioFull10sPct": 5.03,
+    "scopeMemoryFull10sPct": 4.16,
+    "scopeIOFull10sPct": 8.48,
+    "busy": true
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 715.5,
+  "blocker": null,
+  "claims": [
+    "PASS filtered handoff \u2014 Pointer POST / list GET / original range GET: [1, 1, 1]; 1x",
+    "PASS picture control \u2014 498/500, 126/126 marked at 1x (19.9575 s span, 53.01 ms max gap); 500/500, 126/126 marked at 0.25x (82.3914 s span, 2116.74 ms max gap)",
+    "not-measured marked picture \u2014 0 distinct marked; 0.25x display, 62.2652 s span, max gap 2480.08 ms",
+    "PASS kept picture at join \u2014 374/374 kept; 136\u2192263 True; 0.25x display, 62.2652 s span, max gap 2480.08 ms",
+    "not-measured real-speed join \u2014 -76.32\u201379.9 ms extra hold vs uncut; 40 ms stall threshold; sampled 373/374 kept, 0 marked at 1x",
+    "FAIL sound control \u2014 880 Hz L/R 5025/5025 and 5025/5025 ms (expected 5040); 48 kHz stereo, pre-roll 0/0 LSB RMS, peak 8608/8608 LSB; 5 ms at 0.10 FS",
+    "not-measured marked sound \u2014 Two uncut controls did not calibrate the known marked tone",
+    "FAIL kept tones \u2014 440 Hz loss L/R -60/-60 ms (floor 5/5); 660 Hz loss L/R 90/90 ms (floor 10/10); 5 ms windows",
+    "FAIL kept PCM at join \u2014 Changed stereo frames: before 960/960 (20 ms) [samples -960\u2026-1], 9623.9/9623.9 LSB RMS vs floor 0/0; after 959/960 (19.9792 ms) [samples 0\u2026959], 8264.44/8264.44 LSB RMS vs floor 9246.58/9246.58; prefix/suffix 64201/454962 (repeat 36819/454789); frozen onset",
+    "not-measured seek forward/back \u2014 D-pad did not enter the navigation drawer",
+    "not-measured persisted resume \u2014 No new persisted pointer bookmark after Stop"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261122T012628Z-f3729b8a03",
+  "candidateWritten": false
+}

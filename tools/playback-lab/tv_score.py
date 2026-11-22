@@ -85,46 +85,70 @@ def audio(pcm,scorer):
                 tones=[{f:v['presentMs'] for f,v in result['tonesHz'].items()} for result in results])
 
 
-def compare(control,filtered,source,noise,filtered_noise=None):
-    # Independent capture start is NOT the playback clock. For each take use the
-    # same fixed first-onset trigger, then apply one offset learned on control.
-    # Never search for an alignment at (or after) the join. Calibrate the uncut
-    # path even if no filtered render ever starts.
-    ctl=samples(control.read_bytes()); ref=samples(source)
-    if len(ref)<TOTAL*2: raise ValueError('Decoded original shorter than fixture')
-    def onset(v):return next((i//2 for i in range(0,len(v),2) if max(abs(v[i]),abs(v[i+1]))>=512),None)
-    src,pre=map(onset,(ref,ctl)); out={'triggerLSB':512,'noisePeakLSB':noise,'valid':False}
-    if None in (src,pre) or noise>=512:
-        return dict(out,reason='No usable quiet-to-tone onset at 512 LSB in the decoded source or uncut capture')
-    offset=-src; pre+=offset; out.update(offsetFromTriggerSamples=offset,controlStart=pre)
-    if pre<0 or (pre+TOTAL)*2>len(ctl):
-        return dict(out,reason='Incomplete uncut capture at fixed onset')
-    def diff(a,b):
-        if len(a)!=len(b): raise ValueError('Unequal comparison length')
-        changed=[i//2 for i in range(0,len(a),2) if a[i]!=b[i] or a[i+1]!=b[i+1]]
-        return dict(comparedSampleFrames=len(a)//2,differentSampleFrames=len(changed),
-                    firstDifferentFrame=changed[0] if changed else None,lastDifferentFrame=changed[-1] if changed else None,
-                    differentSamplesLR=[sum(x!=y for x,y in zip(a[ch::2],b[ch::2])) for ch in range(2)],
-                    peakErrorLSB=[max((abs(x-y) for x,y in zip(a[ch::2],b[ch::2])),default=0) for ch in range(2)])
-    out['controlVsDecoded']=diff(ctl[pre*2:(pre+TOTAL)*2],ref[:TOTAL*2])
-    control_exact=out['controlVsDecoded']['differentSampleFrames']==0 and noise==0
-    if not control_exact:
-        out['reason']='The uncut render is not sample-identical to decoded original at the frozen onset; output-path differences cannot be attributed to the cut'
-    if filtered is None:
-        out.setdefault('reason','No verified filtered render for fixed-offset comparison')
-        return out
-    cut=samples(filtered.read_bytes()); post=onset(cut)
-    cut_noise=noise if filtered_noise is None else filtered_noise
-    if post is None or cut_noise>=512:
-        out.setdefault('reason','No usable quiet-to-tone onset at 512 LSB in filtered capture')
-        return out
-    post+=offset; out['filteredStart']=post
-    if post<0 or (post+TOTAL-(END-START))*2>len(cut):
-        out.setdefault('reason','Incomplete filtered capture at fixed onset')
-        return out
-    refcut=ref[:START*2]+ref[END*2:TOTAL*2]; actual=cut[post*2:post*2+len(refcut)]
-    for label,lo,hi in [('prefix',0,START),('suffix',START,len(refcut)//2),('join20msEachSide',START-960,START+960)]:
-        out[label]=diff(actual[lo*2:hi*2],refcut[lo*2:hi*2])
-    out['valid']=control_exact and cut_noise==0
-    if not out['valid']:out.setdefault('reason','Filtered pre-roll is not quiet at the fixed onset')
+TRIGGER = 512
+JOIN_HALF = RATE // 50  # 20 ms
+KEPT = TOTAL - (END - START)
+REGIONS = {'prefix': (0, START), 'suffix': (START, KEPT),
+           'joinBefore20ms': (START-JOIN_HALF, START),
+           'joinAfter20ms': (START, START+JOIN_HALF)}
+
+
+def onset(pcm):
+    return next((i//2 for i in range(0,len(pcm),2) if max(abs(pcm[i]),abs(pcm[i+1]))>=TRIGGER),None)
+
+
+def pcm_diff(a,b):
+    if len(a)!=len(b) or len(a)%2 or not a:
+        raise ValueError('PCM comparisons need equal, nonempty stereo blocks')
+    n=len(a)//2; peak=[0,0]; energy=[0,0]; signal=[0,0]; channels=[0,0]
+    first=last=None; changed=0
+    for i in range(0,len(a),2):
+        if a[i]!=b[i] or a[i+1]!=b[i+1]:
+            changed+=1
+            if first is None:first=i//2
+            last=i//2
+        for ch in range(2):
+            d=abs(a[i+ch]-b[i+ch]); peak[ch]=max(peak[ch],d)
+            energy[ch]+=d*d; signal[ch]+=a[i+ch]**2; channels[ch]+=bool(d)
+    return dict(comparedSampleFrames=n, differentSampleFrames=changed,
+                differentSamplesLR=channels, differentDurationMs=round(changed*1000/RATE,5),
+                firstDifferentFrame=first, lastDifferentFrame=last,
+                peakErrorLSB=peak, errorEnergyLSB2=energy,
+                errorRmsLSB=[math.sqrt(e/n) for e in energy], referenceRmsLSB=[math.sqrt(e/n) for e in signal])
+
+
+def compare(control,repeat,filtered,source,noise):
+    # Use decoded fixture only to locate its first threshold crossing relative
+    # to sample zero. Then fix ONE origin per capture using that same crossing.
+    # No waveform reference from the decoded file and no search near the splice.
+    ref=samples(source); trigger=onset(ref)
+    if len(ref)<TOTAL*2 or trigger is None:raise ValueError('Missing decoded onset or truncated original')
+    out=dict(triggerLSB=TRIGGER, offsetFromTriggerSamples=-trigger, noisePeakLSB=noise, starts={}, valid=False)
+    def aligned(path,label,frames):
+        pcm=samples(path.read_bytes()); t=onset(pcm)
+        if len(pcm)%2 or t is None or noise[label]>=TRIGGER or t<trigger:
+            raise ValueError(label+': no usable quiet-to-tone onset at 512 LSB')
+        start=t-trigger; out['starts'][label]=start
+        if (start+frames)*2>len(pcm):raise ValueError(label+': truncated capture at frozen onset')
+        return pcm[start*2:(start+frames)*2]
+    def kept(pcm):return pcm[:START*2]+pcm[END*2:TOTAL*2]
+    def regions(a,b):
+        return {key:pcm_diff(a[lo*2:hi*2],b[lo*2:hi*2]) for key,(lo,hi) in REGIONS.items()}
+    try:
+        a=kept(aligned(control,'control',TOTAL)); b=kept(aligned(repeat,'repeatControl',TOTAL))
+        out['repeatability']=regions(a,b)
+        if filtered is None:return dict(out,reason='No verified filtered render for the frozen-offset PCM comparison')
+        c=aligned(filtered,'filtered',KEPT)
+        out['controlVsFiltered']=regions(a,c)
+        # Compare against the floor separately on each side. If repeated renders
+        # differ more than the reference signal itself, that floor cannot resolve
+        # preservation. Above-floor energy is still an observation, not proof of
+        # an exact number of samples inserted/deleted by the player.
+        for key,floor in out['repeatability'].items():
+            obs=out['controlVsFiltered'][key]
+            obs['withinFloor']=(obs['differentSampleFrames']<=floor['differentSampleFrames'] and
+                all(x<=y for k in ('peakErrorLSB','errorEnergyLSB2') for x,y in zip(obs[k],floor[k])))
+            obs['floorBelowSignal']=all(e<sig for e,sig in zip(floor['errorRmsLSB'],floor['referenceRmsLSB']))
+    except ValueError as exc:return dict(out,reason=str(exc))
+    out['valid']=True
     return out
