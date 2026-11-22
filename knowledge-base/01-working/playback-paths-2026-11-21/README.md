@@ -31,12 +31,12 @@ Run on a Linux desktop in containers. No Jellyfin server, no Android device and 
 
 | Prototype | Marked picture shown | Marked sound (880 Hz) | Kept material lost | Notes |
 | --- | --- | --- | --- | --- |
-| mpv 0.40.0 playing the kept-range EDL | 0 of 126 frames; all 374 kept frames present, in order | 0 ms | About 10 ms of sound right after the splice differs from the reference (448 PCM frames) | Seek into the removed interval and seek back across the splice showed no marked frame. Missing or malformed EDL: exit 2, no fallback to the original. |
+| mpv 0.40.0 playing the kept-range EDL | 0 of 126 frames; all 374 kept frames present, in order | 0 ms | About 10 ms of sound right after the splice differs from the reference (448 PCM frames; [superseded on 2026-11-22: measured with video disabled](../exact-audio-2026-11-22/01-audio-at-the-join.md)) | Seek into the removed interval and seek back across the splice showed no marked frame. Missing or malformed EDL: exit 2, no fallback to the original. |
 | mpv mute (no cut, sample-index volume filter) | n/a | 0 ms; zero non-zero PCM frames inside the mark | none after the mark | Desktop only. |
 | Kodi 21.2 with a cut `.edl` | Leaked: source frame 255 appeared in 12 screen snapshots | 0 ms detected | Inconclusive (screen capture ran at about 17 fps and the control missed frames) | Fails the owner's rule on this fixture. |
 | Server-style HLS packager (pinned Jellyfin ffmpeg, MPEG-TS) | 0 marked; passes four decoder variants including two seeks | 0 ms | none beyond scorer tolerance | 300 video frames stream-copied, 74 re-encoded; about 10 s to package the 20 s clip; audio re-encoded once. fMP4 was rejected because an ffmpeg seek landed 1 s late. Offline ffmpeg decoding only. |
 
-`run-mpv.py` and `check-hls.py` were each run twice independently; the numbers above match both runs. Kodi was not rerun. A constant 10 ms loss of the 440 Hz tone at the very start of every mpv capture, control included, is a capture artifact and is not counted.
+`run-mpv.py` and `check-hls.py` were each run twice independently; the numbers above match both runs. Kodi was not rerun. A constant 10 ms loss of the 440 Hz tone at the very start of every mpv capture, control included, is a capture artifact and is not counted ([superseded on 2026-11-22: measured with video disabled](../exact-audio-2026-11-22/01-audio-at-the-join.md)).
 
 ## Media3 test player on a Google TV emulator, 2026-11-21
 

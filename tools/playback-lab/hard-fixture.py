@@ -9,7 +9,8 @@ from fractions import Fraction
 from pathlib import Path
 
 sys.dont_write_bytecode = True
-from hard_fixture_lab import BITS, CELL, FPS, HEIGHT, HZ, SYNC, WIDTH, X, Y, media, write_cut
+from hard_fixture_lab import (BITS, CELL, FPS, HEIGHT, HZ, IDENTIFIABLE_CUT, SYNC,
+                              WIDTH, X, Y, media, write_cut, write_identifiable_movie)
 
 FRAMES, GOP = 500, 50
 START, END = 137, 263  # Half-open; source frame 262 is the last marked frame.
@@ -101,13 +102,31 @@ def generate(out):
     write_edit_lists(plan_path)
 
 
+def generate_identifiable(out):
+    source_samples = FRAMES*HZ//FPS
+    write_identifiable_movie(out, source_samples)
+    start, end = IDENTIFIABLE_CUT
+    variant = 'identifiable.mp4'
+    digest = hashlib.sha256((out/variant).read_bytes()).hexdigest()
+    plan = {'version': 0, 'source': {'sha256': digest, 'frames': FRAMES, 'fps': FPS, 'sampleRate': HZ},
+            'cuts': [{'startFrame': start, 'endFrame': end,
+                      'startMs': start*1000//FPS, 'endMs': end*1000//FPS}]}
+    (out/'identifiable.plan.json').write_text(json.dumps(plan, indent=2) + '\n')
+    write_cut(out, 'identifiable-reference.mkv', (start, end), (start*HZ//FPS, end*HZ//FPS),
+              source_samples, source=variant)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path, metavar='NEW_DIRECTORY')
-    out = parser.parse_args().directory.resolve()
+    parser.add_argument('--identifiable', action='store_true', help='also create the lossless sample-ID variant')
+    parser_args = parser.parse_args()
+    out = parser_args.directory.resolve()
     try:
         out.mkdir(mode=0o700, exist_ok=False)
         generate(out)
+        if parser_args.identifiable:
+            generate_identifiable(out)
     except (OSError, ValueError, subprocess.CalledProcessError) as exc:
         parser.exit(1, f'FAIL: {exc}\n')
     print(out)

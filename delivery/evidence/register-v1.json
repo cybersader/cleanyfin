@@ -86,19 +86,19 @@
         },
         "markedSound": {
           "outcome": "pass",
-          "limit": "No 880 Hz leak detected with 5 ms detector windows and threshold 0.10 full scale. Not proof below detector limit."
+          "limit": "Joint straight cut exactly matches the kept decoded PCM with the marked sample indices removed; 0 ms of 880 Hz detected in 5 ms windows as a coarse cross-check."
         },
         "keptPictureAtJoin": {
           "outcome": "pass",
           "limit": "All 374 kept source frames present in order, including the join."
         },
         "keptSoundAtJoin": {
-          "outcome": "fail",
-          "limit": "448 kept PCM frames altered after the splice, about 9 ms at 48 kHz. A separate startup artifact also exists in the uncut control."
+          "outcome": "pass",
+          "limit": "Joint straight cut: 718,080/718,080 kept stereo samples at 48 kHz match the uninterrupted decode at the exact source indices; 0 differing samples, length delta 0, without realignment. Not a seek, resume or physical output claim."
         }
       },
-      "evidenceRef": "knowledge-base/01-working/playback-paths-2026-11-21/README.md",
-      "date": "2026-11-21",
+      "evidenceRef": "tools/playback-lab/prototypes/exact-audio/joint-receipt-2026-11-22.json",
+      "date": "2026-11-22",
       "status": "experimental",
       "observation": "Desktop diagnostic lab player, not a household client. Local file EDL; no Jellyfin or plugin involved, no physical output or persisted resume measurement."
     },

@@ -15,8 +15,9 @@ import sys
 import tempfile
 import time
 from urllib.parse import urlencode
-import wave
 
+sys.dont_write_bytecode = True
+from exact_audio import compare_cut, read_pcm, summary
 from hard_fixture_lab import IMAGE
 
 LAB = Path(__file__).resolve().parent
@@ -62,9 +63,19 @@ class Lab:
             (w/name).mkdir(parents=True)
         for folder in ('plugin', 'delivery/Cleanyfin.Delivery', 'delivery/evidence'):
             shutil.copytree(ROOT/folder, w/'src'/folder, ignore=shutil.ignore_patterns('bin','obj'))
+        # A pre-staged package source permits a completely networkless SDK build.
+        feed = os.environ.get('CLEANYFIN_NUGET_FEED')
+        sdk_options, build_options = [], []
+        if feed:
+            path = Path(feed).resolve(strict=True)
+            if not path.is_dir():
+                raise ValueError('CLEANYFIN_NUGET_FEED must be a local package directory')
+            sdk_options = ['--network', 'none', '-v', f'{path}:/packages:ro,z']
+            build_options = ['--source', '/packages', '-p:NuGetAudit=false']
         docker('run', '--rm', '--pull=never', '--user', USER, '-e', 'HOME=/out/home',
-                       '-v', f'{w}:/out:z', '-w', '/out/src', SDK,
-                       'dotnet', 'build', 'plugin', '-c', 'Release', '--artifacts-path', '/out/artifacts', '-v:q')
+                       '-v', f'{w}:/out:z', '-w', '/out/src', *sdk_options, SDK,
+                       'dotnet', 'build', 'plugin', '-c', 'Release', '--artifacts-path', '/out/artifacts',
+                       '-v:q', *build_options)
         install = w/'config/plugins/Cleanyfin_0.1.0.0'
         install.mkdir(parents=True)
         for dll in ('Jellyfin.Plugin.Cleanyfin.dll', 'Cleanyfin.Delivery.dll'):
@@ -273,36 +284,57 @@ class Lab:
 
     def mpv(self,source,mounts,driver):
         docker('run','-i','--rm','--pull=never','--network','container:'+self.cid,'--user',USER,'-e','HOME=/tmp',*mounts,
-                       '--entrypoint','sh',MPV,'-c','IFS= read -r src; exec mpv --no-config --no-terminal --load-scripts=no --hwdec=no --untimed "$@" -- "$src"','mpv',*driver,
+                       '--entrypoint','sh',MPV,'-c','IFS= read -r src; exec mpv --no-config --no-terminal --load-scripts=no --hwdec=no --audio-file-auto=no --sub-auto=no --framedrop=no --hr-seek=yes --untimed "$@" -- "$src"','mpv',*driver,
                        input=(source+'\n').encode(),stderr=subprocess.DEVNULL,timeout=120)
+
+    def capture_av(self, label, source, *, local=False):
+        capture = self.work/'capture'
+        frames, wav = capture/(label+'-frames'), capture/(label+'.wav')
+        frames.mkdir()
+        mounts = ['-v', f'{capture}:/capture:z']
+        if local:
+            mounts += ['-v', f'{self.work}/fixture/source.mp4:/source.mp4:ro,z']
+        # Both tracks in one playback, in the same isolated network namespace.
+        # Supply URL through stdin, not docker create args, mpv logs or a playlist file.
+        self.mpv(source, mounts, ('--vo=image', '--vf=scale=160:90', '--vo-image-format=png',
+                 f'--vo-image-outdir=/capture/{frames.name}', '--ao=pcm', '--ao-pcm-waveheader=yes',
+                 f'--ao-pcm-file=/capture/{wav.name}', '--audio-samplerate=48000',
+                 '--audio-channels=stereo', '--audio-format=s16'))
+        return frames, wav
+
+    def score_av(self, plan, frames, wav=None):
+        args = ['--audio', wav] if wav is not None else []
+        result = subprocess.run([sys.executable, LAB/'analyze-capture.py', '--plan', plan, '--video',
+                                 frames, '--json', *args], capture_output=True, text=True, timeout=120)
+        lines = result.stdout.splitlines()
+        report = json.loads(lines[-1])
+        if 'error' in report:
+            raise RuntimeError(report['error'])
+        return report, lines[:-2]
+
+    def check_pcm(self, label, plan, wav):
+        report = compare_cut(plan, self.control_pcm, read_pcm(wav))
+        check(f'{label}: {summary(report)}', report['exact'])
 
     def player(self, url):
         docker('image','inspect',MPV)
-        w=self.work; capture=w/'capture'; plan=w/'fixture/plan.json'
-        for label, source in [('control','/source.mp4'),('cut',url)]:
-            frames=capture/(label+'-frames'); frames.mkdir()
-            for driver in [('--no-audio','--vo=image','--vo-image-format=png',f'--vo-image-outdir=/capture/{frames.name}'),('--no-video','--ao=pcm','--ao-pcm-waveheader=yes',f'--ao-pcm-file=/capture/{label}.wav','--audio-samplerate=48000','--audio-channels=stereo','--audio-format=s16')]:
-                mounts=['-v',f'{capture}:/capture:z']
-                if label=='control': mounts += ['-v',f'{w}/fixture/source.mp4:/source.mp4:ro,z']
-                # Same isolated network namespace. No host networking or second bind. Supply URL
-                # through stdin, not docker create args, mpv logs or a playlist file.
-                self.mpv(source,mounts,driver)
-            scored=subprocess.run([sys.executable,LAB/'analyze-capture.py','--plan',plan,'--video',frames,'--audio',capture/(label+'.wav'),'--json'],capture_output=True,text=True,timeout=120)
-            lines=scored.stdout.splitlines(); metrics=json.loads(lines[-1]); v=metrics['video']; a=metrics['audio']
-            if label=='control':
-                check('mpv positive control: 500 frames, 126 marked and marked tone',v['frames']==500 and v['markedCount']==126 and not v['missingCount'] and abs(a['leakMs']-5040)<=5)
-            else:
-                # Presentation is a separate verdict, including known kept-audio loss. Never
-                # overwrite the scorer or silently drop its negative result from the receipt.
-                print('\n'.join(lines[:-1]), flush=True)
-                check('mpv handoff: all 374 kept, zero marked frames or detected tone',v['pass'] and v['frames']==374 and v['markedCount']==0 and a['leakMs']==0)
-        def pcm(label):
-            with wave.open(str(capture/(label+'.wav')),'rb') as f:
-                assert (f.getframerate(),f.getnchannels(),f.getsampwidth())==(48000,2,2)
-                return f.readframes(f.getnframes())
-        full=pcm('control'); actual=pcm('cut'); expected=full[:5480*48*4]+full[10520*48*4:20000*48*4]
-        delta=[i//4 for i in range(0,min(len(actual),len(expected)),4) if actual[i:i+4]!=expected[i:i+4]]
-        print(f'PCM: {len(delta)} unequal frames; first/last {delta[:1]}/{delta[-1:]}; length delta {(len(actual)-len(expected))//4}',flush=True)
+        plan = self.work/'fixture/plan.json'
+        frames, wav = self.capture_av('control', '/source.mp4', local=True)
+        metrics, _ = self.score_av(plan, frames, wav)
+        v, a = metrics['video'], metrics['audio']
+        check('mpv positive control: 500 frames, 126 marked and marked tone',
+              v['frames']==500 and v['markedCount']==126 and not v['missingCount']
+              and not v['unreadableCount'] and not v['duplicateCount'] and v['monotonic']
+              and abs(a['leakMs']-5040)<=5)
+        self.control_pcm = read_pcm(wav)
+        frames, wav = self.capture_av('cut', url)
+        metrics, detail = self.score_av(plan, frames, wav)
+        print('\n'.join(detail), flush=True)
+        v, a = metrics['video'], metrics['audio']
+        check('mpv handoff: all 374 kept, zero marked frames or detected tone',
+              v['pass'] and v['frames']==374 and not v['duplicateCount'] and a['leakMs']==0)
+        self.check_pcm('mpv handoff joint PCM', json.loads(plan.read_text()), wav)
+        check('mpv handoff tone-window cross-check', a['pass'])
 
     def inspect(self):
         log=docker('logs',self.cid,stderr=subprocess.STDOUT)
@@ -634,13 +666,18 @@ class ShelfLab(PointerLab):
     def state(self,user,uid,item):
         return self.api('/Users/'+uid+'/Items/'+item,user=user)['UserData']
 
-    def second_video(self,url):
-        oracle=json.loads((self.work/'fixture/plan.json').read_text());oracle['cuts']=[dict(startFrame=137,endFrame=200,startMs=5480,endMs=8000)]
-        plan=self.work/'capture/profile-two.v0.json';plan.write_text(json.dumps(oracle));frames=self.work/'capture/profile-two';frames.mkdir()
-        self.mpv(url,['-v',f'{frames}:/capture:z'],('--no-audio','--vo=image','--vo-image-format=png','--vo-image-outdir=/capture'))
-        scored=subprocess.run([sys.executable,LAB/'analyze-capture.py','--plan',plan,'--video',frames,'--json'],capture_output=True,text=True,timeout=120)
-        v=json.loads(scored.stdout.splitlines()[-1])['video']
-        check('profile B: 437 kept frames, zero cut frames',scored.returncode==0 and v['frames']==437 and v['markedCount']==0 and v['missingCount']==0)
+    def second_av(self, url):
+        oracle = json.loads((self.work/'fixture/plan.json').read_text())
+        oracle['cuts'] = [dict(startFrame=137, endFrame=200, startMs=5480, endMs=8000)]
+        plan = self.work/'capture/profile-two.v0.json'
+        plan.write_text(json.dumps(oracle))
+        frames, wav = self.capture_av('profile-two', url)
+        # This cut retains part of the 880 Hz tone; the first cut's tone oracle does not apply.
+        metrics, _ = self.score_av(plan, frames)
+        v = metrics['video']
+        check('profile B: 437 kept frames, zero cut frames',
+              v['pass'] and v['frames']==437 and v['markedCount']==0 and v['missingCount']==0)
+        self.check_pcm('profile B joint PCM', oracle, wav)
 
     def exercise(self):
         media=lambda:docker('exec',self.cid,'find','/fixture-library','-type','f','-exec','sha256sum','{}',';')
@@ -664,7 +701,7 @@ class ShelfLab(PointerLab):
         check('browse and play: 14.96 s and 17.48 s',self.browse() and source['RunTimeTicks']==item_b['RunTimeTicks']==174800000)
         extra=self.api('/Users/'+self.viewer+'/Items/'+a+'?Fields=Chapters,Trickplay,MediaSources',user=self.one)
         check('no chapters, previews, subtitles, alternate audio or download',not extra.get('Chapters') and not extra.get('Trickplay') and not extra.get('ImageTags') and [x['Type'] for x in extra['MediaStreams']]==['Video','Audio'] and self.request('/Items/'+a+'/Download',user=self.one)[0]==404 and self.request('/Items/'+a+'/Images/Primary',user=self.one)[0]==404)
-        self.player(first[0]);self.second_video(other[0]);saved=self.state(self.one,self.viewer,self.item)
+        self.player(first[0]);self.second_av(other[0]);saved=self.state(self.one,self.viewer,self.item)
         cfg=self.api('/System/Configuration',user=self.admin);cfg.update(MinResumeDurationSeconds=1,MinResumePct=1,MaxResumePct=95);self.api('/System/Configuration','POST',cfg,user=self.admin)
         event=dict(ItemId=a,MediaSourceId=a,PlaySessionId=self.posted()['PlaySessionId'],CanSeek=True,PlayMethod='DirectPlay',PositionTicks=0)
         for path,pos in [('/Sessions/Playing',0),('/Sessions/Playing/Progress',70000000),('/Sessions/Playing/Stopped',70000000)]:

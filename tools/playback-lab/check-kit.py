@@ -8,6 +8,8 @@ import sys
 import tempfile
 
 sys.dont_write_bytecode = True
+from exact_audio import (BYTES_PER_FRAME, compare_cut, marked_witness, plan_frames,
+                         stereo_samples, summary)
 from hard_fixture_lab import FPS, HZ, media, write_cut
 
 HERE = Path(__file__).resolve().parent
@@ -25,8 +27,39 @@ def analyze(work, name):
     return report
 
 
+def check_exact_pcm(work):
+    def decode(name):
+        return media(work, 'ffmpeg', '-i', f'/lab/{name}', '-map', '0:a:0',
+                     '-c:a', 'pcm_s16le', '-f', 's16le', 'pipe:1', readonly=True)
+
+    plan = json.loads((work/'identifiable.plan.json').read_text())
+    start, end, total = plan_frames(plan)
+    original = decode('identifiable.mp4')
+    if len(original) != total*BYTES_PER_FRAME or len(set(stereo_samples(original))) != total:
+        raise ValueError('lossless source does not carry a distinct stereo identity per sample')
+    ref = decode('identifiable-reference.mkv')
+    output_index, source_index = start-1, end-1
+    out, marked = (i*BYTES_PER_FRAME for i in (output_index, source_index))
+    replaced = ref[:out] + original[marked:marked+BYTES_PER_FRAME] + ref[out+BYTES_PER_FRAME:]
+    cases = [('exact reference', ref, True, None, 0),
+             ('one marked substitution', replaced, False, output_index, 0),
+             ('one sample short', ref[:-BYTES_PER_FRAME], False, None, -1)]
+    passed = True
+    for label, pcm, exact, index, delta in cases:
+        report = compare_cut(plan, original, pcm)
+        witness = marked_witness(original, pcm, source_index)
+        ok = (report['exact'] == exact and report['delta'] == delta
+              and report['unequalFrames'] == int(index is not None)
+              and report['firstUnequal'] == report['lastUnequal'] == witness == index)
+        passed &= ok
+        identity = f'; marked source {source_index} at output {witness}' if witness is not None else ''
+        print(f'{"OK" if ok else "MISMATCH"}: {label}: {"PASS" if report["exact"] else "FAIL"}; '
+              f'{summary(report)}{identity}', flush=True)
+    return passed
+
+
 def run(work):
-    subprocess.check_output([sys.executable, str(HERE/'hard-fixture.py'), str(work)])
+    subprocess.check_output([sys.executable, str(HERE/'hard-fixture.py'), '--identifiable', str(work)])
     plan = json.loads((work/'plan.json').read_text())
     cut, = plan['cuts']
     start, end = cut['startFrame'], cut['endFrame']
@@ -65,7 +98,8 @@ def run(work):
         if not ok:
             print(json.dumps(report), file=sys.stderr)
         passed &= ok
-    print('\nColumns: verdict; marked/missing frames; leak ms; 440/660 Hz loss ms.')
+    print('\nColumns: verdict; marked/missing frames; leak ms; 440/660 Hz loss ms.', flush=True)
+    passed &= check_exact_pcm(work)
     print(f'{"PASS" if passed else "FAIL"}: hard fixture kit self-test')
     return 0 if passed else 1
 

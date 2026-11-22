@@ -10,6 +10,8 @@ import sys
 import time
 
 import join_lab as j
+from exact_audio import kept_pcm, marked_witness, summary
+from hard_fixture_lab import FPS, IDENTIFIABLE_CUT, write_identifiable_movie
 
 
 def emit(test, **metrics):
@@ -104,34 +106,65 @@ def joint(w):
         out,ids=barcode_capture(w,inp,label,*opts)
         if ref is None:ref=ideal(out)
         want=list(range(500)) if label=='control' else [*range(137),*range(263,500)]
+        audio = {} if label == 'control' else j.diff(ref, out)
+        tones = j.scorer(w, out)
         emit('joint-'+label,frames=len(ids),marked=sum(i is not None and 137<=i<263 for i in ids),
-             exactPictures=ids==want,tonesMs=j.scorer(w,out),**({} if label=='control' else j.diff(ref,out)))
+             exactPictures=ids==want,tonesMs=tones,**audio)
+        if label == 'EDL' and not (audio['exact'] and ids == want and tones['880'] == 0):
+            raise RuntimeError('Joint AAC EDL result differs from the research result')
 
 
 def identities(w):
-    # Each adjacent pair of random stereo frames identifies a source position with overwhelming probability;
-    # the explicit marked witness below also checks uniqueness of its actual byte sequence in the whole source.
-    raw=random.Random(3736549).randbytes(j.D*4);(w/'id.raw').write_bytes(raw);src='id.mp4'
-    j.ff(w,'-i','source.mp4','-f','s16le','-ar','48000','-ac','2','-i','id.raw','-map','0:v','-map','1:a',
-         '-c:v','copy','-c:a','flac','-strict','-2','-movflags','+faststart',src)
-    assert j.play(w,src,av=True)==raw
-    a,b=11520,21120
-    rng=random.Random(75); many=[];i=0
-    while i<499:
-        z=min(i+rng.randrange(3,9),500);many.append((i*1920,z*1920));i=z+rng.randrange(1,6)
-    for label,pairs in [('single',[(0,a),(b,j.D)]),('many',many)]:
-        want=b''.join(raw[k*4:z*4] for k,z in pairs); ids=[i for k,z in pairs for i in range(k//1920,z//1920)]
-        def body(e):
-            return ''.join(f'{src},{j.seconds(k+e if k else 0)},{j.seconds(z+e-(k+e if k else 0))}\n' for k,z in pairs)
-        base=body(0); split=split_video(src,base)+'!delay_open,media_type=audio,codec=flac,samplerate=48000\n'
-        for candidate,manifest in [('stock',base),('split-quarter',split+body(.25))]:
-            out,seen=barcode_capture(w,j.edl(w,manifest),label)
-            record={'rangeCount':len(pairs),'wantedPictures':len(ids),'observedPictures':len(seen),'picturesExact':seen==ids,
-                    'wrongPictureIDs':sorted(set(i for i in seen if i is not None)-set(ids)),'missingPictureIDs':sorted(set(ids)-set(seen))}
-            if label=='single':
-                witness=raw[(b-1)*4:(b+3)*4];assert raw.count(witness)==1
-                byte=out.find(witness); record['markedSourceSample']=b-1;record['markedSequenceAtOutputSample']=byte//4 if byte>=0 else None
-            emit('source-ids-'+label+'-'+candidate,**record,**j.diff(want,out,pairs[0][1]))
+    source = write_identifiable_movie(w, j.D)
+    src = 'identifiable.mp4'
+    raw, control_ids = barcode_capture(w, src, 'identifiable-control')
+    if raw != source or control_ids != list(range(500)):
+        raise RuntimeError('Invalid joint FLAC control: did not reproduce all source samples and pictures')
+    scale = j.RATE//FPS
+    a, b = (i*scale for i in IDENTIFIABLE_CUT)
+    rng = random.Random(75)
+    many = []
+    i = 0
+    while i < 499:
+        z = min(i+rng.randrange(3,9),500)
+        many.append((i*scale, z*scale))
+        i = z+rng.randrange(1,6)
+    for label,pairs in [('single', [(0,a),(b,j.D)]), ('many', many)]:
+        want = kept_pcm(raw, pairs)
+        ids = [i for k,z in pairs for i in range(k//scale,z//scale)]
+
+        def body(offset):
+            starts = ((k+offset if k else 0, z+offset) for k,z in pairs)
+            return ''.join(f'{src},{j.seconds(k)},{j.seconds(z-k)}\n' for k,z in starts)
+
+        base = body(0)
+        # Experimental FLAC-only EDL: bias nonzero source boundaries without moving
+        # the integer frame/sample grid the cut asks for. Never use this for AAC.
+        split = (split_video(src,body(-.25))
+                 + '!delay_open,media_type=audio,codec=flac,samplerate=48000\n' + body(.25))
+        for candidate,manifest in [('stock', base), ('split-quarter', split)]:
+            out,seen = barcode_capture(w,j.edl(w,manifest),label)
+            audio = j.diff(want,out,pairs[0][1])
+            passed = seen == ids and audio['exact']
+            record = dict(verdict='PASS' if passed else 'FAIL', rangeCount=len(pairs),
+                          wantedPictures=len(ids), observedPictures=len(seen), picturesExact=seen==ids,
+                          wrongPictureIDs=sorted(set(i for i in seen if i is not None)-set(ids)),
+                          missingPictureIDs=sorted(set(ids)-set(seen)))
+            leak = ''
+            if label == 'single':
+                witness = marked_witness(raw, out, b-1)
+                record.update(markedSourceSample=b-1, markedSampleAtOutput=witness)
+                if witness is not None:
+                    leak = f'; marked source {b-1} at output {witness}'
+            emit('source-ids-'+label+'-'+candidate,**record,**audio)
+            print(f'{record["verdict"]}: FLAC {label} {candidate}: {len(seen)}/{len(ids)} pictures '
+                  f'({"exact" if seen == ids else "not exact"}); {summary(audio)}{leak}', file=sys.stderr, flush=True)
+            if label == 'single' and candidate == 'stock' and not (
+                    seen == ids and audio['unequalFrames'] == 1 and audio['firstUnequal'] == a-1
+                    and witness == a-1 and audio['delta'] == -1):
+                raise RuntimeError('Stock FLAC negative control differs from the research result')
+            if candidate == 'split-quarter' and not passed:
+                raise RuntimeError(f'Split FLAC {label} control differs from the research result')
     # A small offset in *milliseconds* keeps some marked samples and discards winners, even if a tone scorer misses them.
     base=j.segments(src,a,b);part=split_video(src,base)+'!delay_open,media_type=audio,codec=flac,samplerate=48000\n'
     for shift in (-48,48):

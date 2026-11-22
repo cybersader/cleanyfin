@@ -3,7 +3,6 @@
 import argparse
 import hashlib
 import json
-import math
 import os
 from pathlib import Path
 import subprocess
@@ -13,9 +12,12 @@ import wave
 
 HERE = Path(__file__).resolve().parent
 LAB = HERE.parents[1]
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(LAB))
+from exact_audio import RATE, compare
+
 MPV = 'cleanyfin-edl-lab:mpv'
 MEDIA = 'jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db'
-RATE = 48000
 A, B, D = 263040, 504960, 960000  # stereo frame indices, not interleaved channel values
 
 
@@ -56,29 +58,7 @@ def edl(w, body):
 
 
 def diff(expected, actual, join=A):
-    if sys.byteorder != 'little':
-        raise RuntimeError('little-endian host required')
-    assert not (len(expected)%4 or len(actual)%4)
-    x = memoryview(expected).cast('h'); y = memoryview(actual).cast('h')
-    counts = [0,0]; peak = [0,0]; energy = [0,0]; runs = []; nruns = 0; last = -2
-    for n in range(min(len(x), len(y))//2):
-        i = 2*n; dl = x[i]-y[i]; dr = x[i+1]-y[i+1]
-        if not (dl or dr):
-            continue
-        side = int(n >= join); counts[side] += 1; energy[side] += dl*dl + dr*dr
-        peak[side] = max(peak[side],abs(dl),abs(dr))
-        if n != last+1:
-            nruns += 1
-            if nruns <= 16:
-                runs.append([n,n])
-        elif nruns <= 16:
-            runs[-1][1] = n
-        last = n
-    return dict(pre=counts[0], post=counts[1], delta=(len(actual)-len(expected))//4,
-                expectedFrames=len(expected)//4, actualFrames=len(actual)//4, peakLRmax=peak,
-                rmsOverUnequal=[round(math.sqrt(e/(2*c)),4) if c else 0 for e,c in zip(energy,counts)],
-                runCount=nruns, firstRunsInclusive=runs, lastUnequal=None if last<0 else last,
-                expectedSHA256=hashlib.sha256(expected).hexdigest(), actualSHA256=hashlib.sha256(actual).hexdigest())
+    return compare(expected, actual, join)
 
 
 def scorer(w, pcm):
@@ -120,7 +100,7 @@ def tests(w, codec, sc=False):
         def test(name, body=None, opts=(), a=A,b=B, score=False):
             inputname=edl(w,body) if body is not None else src
             out=play(w,inputname,*opts,av=av)
-            row=dict(codec=codec, av=av, test=name, controlFrames=len(raw)//4,
+            row=dict(codec=codec, av=av, diagnostic=not av, test=name, controlFrames=len(raw)//4,
                      **diff(raw[:a*4]+raw[4*b:4*D],out,a))
             if sc and score: row['tonesMs']=scorer(w,out)
             print(json.dumps(row,separators=(',',':')),flush=True)
@@ -132,7 +112,7 @@ def tests(w, codec, sc=False):
             opt='--ad-lavc-o=cons_noisegen=1'
             configured=play(w,src,opt,av=av)
             out=play(w,edl(w,base),opt,av=av)
-            row=dict(test='deterministic-dolby',codec=codec,av=av,
+            row=dict(test='deterministic-dolby',codec=codec,av=av,diagnostic=not av,
                      controlChangedVsStock=diff(raw,configured),
                      **diff(configured[:4*A]+configured[4*B:4*D],out))
             if sc: row['tonesMs']=scorer(w,out)
@@ -151,7 +131,6 @@ def tests(w, codec, sc=False):
 
 
 def main():
-    sys.dont_write_bytecode=True
     sys.path.insert(0,str(HERE))  # -I excludes even this trusted script's directory
     import controls
     p=argparse.ArgumentParser(description=__doc__)
