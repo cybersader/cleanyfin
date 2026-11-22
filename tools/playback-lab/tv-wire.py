@@ -116,6 +116,9 @@ def route(first, ids):
         source = ids.get(match[1].replace('-', '').lower())
         if source:
             return {'route':source, 'queryPresent':bool(query)}
+    if verb == b'POST':
+        event=re.search(r'/Sessions/Playing(?:/(Progress|Stopped))?$',path)
+        if event:return {'route':'presentation-event','event':(event[1] or 'Started').lower()}
     return None
 
 
@@ -131,6 +134,14 @@ def observe(left, right, ids):
     def request_finish(meta, body):
         facts, encoding = meta
         dto = payload(body,encoding)
+        if facts['route']=='presentation-event':
+            item,position,paused=(dto.get(k) for k in ('itemid','positionticks','ispaused'))
+            known=ids.get(item.replace('-','').lower()) if isinstance(item,str) else None
+            if known:
+                facts.update(item=known,positionTicks=position if type(position) is int and 0<=position<=200_000_000 else None,
+                             isPaused=paused if type(paused) is bool else None)
+            sent.append((False,facts if known else None))
+            return
         p = {k.lower():v for k,v in (dto.get('deviceprofile') or {}).items()}
         direct=[{k.lower():v for k,v in profile.items()} for profile in p.get('directplayprofiles') or []]
         video={fmt for r in direct if str(r.get('type')).lower()=='video' for fmt in (r.get('container') or '').split(',')}
@@ -155,6 +166,9 @@ def observe(left, right, ids):
 
     def response_finish(meta, body):
         facts, encoding = meta
+        if facts['route']=='presentation-event':
+            print(json.dumps(facts),flush=True)
+            return
         dto = payload(body,encoding)
         facts['jsonObserved']=bool(dto)
         facts['error'] = terse(dto.get('errorcode'))

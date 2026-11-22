@@ -16,6 +16,22 @@ def samples(raw):
     return out
 
 
+def parse_latency(raw):
+    """Parse the Android latency dump; only completed actual-present fences count."""
+    rows=raw.decode('ascii').splitlines()
+    if not rows or not rows[0].strip().isdecimal():
+        raise ValueError('No SurfaceFlinger latency data for named layer')
+    period=int(rows[0]); actual=[]
+    for line in rows[1:]:
+        if not line.strip():continue
+        fields=line.split()
+        if len(fields)!=3 or not all(x.isdecimal() for x in fields):
+            raise ValueError('Unrecognized SurfaceFlinger latency row')
+        t=int(fields[1])
+        if 0<t<2**63-1:actual.append(t)
+    return period,set(actual)
+
+
 def picture(video,scorer):
     raw=memoryview(scorer.media(video,'ffmpeg','-i','/lab','-map','0:v:0','-vf',
         f'scale={scorer.SCAN_WIDTH}:{scorer.SCAN_HEIGHT}:flags=area,format=gray,settb=1/25,setpts=N',
@@ -48,8 +64,16 @@ def picture(video,scorer):
                     'lowerMs':ms(times[end-1]-times[first]),
                     'upperMs':ms(times[next_first]-times[first-1])}
         out['maxWitnessIntervalMs']=round(max(t2-t1 for (_,t1),(_,t2) in zip(groups,groups[1:]))*1000,2)
-        inside=[t for t in times if groups[0][1]<=t<=groups[-1][1]]
-        out['maxCaptureGapMs']=round(max(b-a for a,b in zip(inside,inside[1:]))*1000,2)
+        first,last=next(i for i,n in enumerate(ids) if n is not None),max(i for i,n in enumerate(ids) if n is not None)
+        gaps=sorted(((times[i+1]-times[i],i) for i in range(first,last)),reverse=True)
+        out['maxCaptureGapMs']=round(gaps[0][0]*1000,2)
+        out['largestCaptureGaps']=[{'ms':round(delta*1000,2),'before':ids[i],'after':ids[i+1],
+                                   'fromS':times[i],'toS':times[i+1]} for delta,i in gaps[:5]]
+        neighbours={i for i,n in enumerate(ids) if n is not None and (132<=n<=137 or 262<=n<=267)}
+        out['joinWindow']=[{'frame':ids[i],'ptsS':times[i]} for i in sorted(neighbours)]
+        if neighbours:
+            window=range(min(neighbours),max(neighbours))
+            out['joinMaxCaptureGapMs']=round(max((times[i+1]-times[i] for i in window),default=0)*1000,2)
     return out
 
 

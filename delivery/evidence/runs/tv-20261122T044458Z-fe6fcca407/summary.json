@@ -1,0 +1,3591 @@
+{
+  "startedUtc": "20261122T044458Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "milestone": "warmControl",
+    "verifiedSettings": {
+      "backend": "MPV",
+      "mpvOptions": [
+        "hwdec=no",
+        "vo=gpu",
+        "gpu-context=android",
+        "opengl-es=yes",
+        "msg-level=all=v"
+      ],
+      "verification": "MPV-only preferences visible and saved mpv.conf reopened"
+    },
+    "sessionIdentity": {
+      "client": "Wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "deviceIdSha256": "e370c69d61b23ceccaa13051fc1f6f5a9bf7174a97128ea4c454cb574a75798c",
+      "exactDeviceEnrollment": true,
+      "labTuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "1",
+        "appId": "Wholphin",
+        "appVersion": "1.1.2-0-gc530f5c5",
+        "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+        "backend": "mpv",
+        "deviceMode": "Google TV API 36 x86_64 emulator 1280x720, 1536 MiB, llvmpipe with 2 requested llvmpipe workers, software video vo-gpu Android GLES, stereo PCM",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "e86214175b0f499dca6a3e62689f8f019c66364a0a92477551ebfd0ca162aa7f",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+          "durationMs": 20000
+        }
+      }
+    },
+    "recordings": {
+      "control": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "aac"
+        ],
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 22.28,
+        "audioBytes": 4919040,
+        "audioDurationS": 25.62,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "repeatControl": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 0,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "aac"
+        ],
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 22.03,
+        "audioBytes": 4872960,
+        "audioDurationS": 25.38,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "filtered": {
+        "speed": 1,
+        "fixtureDurationS": 14.96,
+        "wallCeilingS": 28.96,
+        "endSignal": "Wholphin video surface left foreground",
+        "audioUnderruns": 0,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "aac"
+        ],
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 16.73,
+        "audioBytes": 3851520,
+        "audioDurationS": 20.06,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "pointer",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "pointer",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mp4",
+              "protocol": "Http",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": false,
+              "remote": true
+            }
+          }
+        ],
+        "grantRouteDeltas": [
+          1,
+          1,
+          1
+        ],
+        "serverLoggedRefusalCodes": []
+      },
+      "losslessControl": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 0,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch s16",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "flac"
+        ],
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 21.68,
+        "audioBytes": 4819200,
+        "audioDurationS": 25.1,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": []
+      },
+      "losslessRepeat": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch s16",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "flac"
+        ],
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 21.73,
+        "audioBytes": 4819200,
+        "audioDurationS": 25.1,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": []
+      },
+      "controlDisplay": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "presentationTiming": {
+          "probe": "SurfaceFlinger --latency; actual-present fences, no picture identities",
+          "failedPolls": 0,
+          "layers": [
+            {
+              "periodNs": 16666666,
+              "polls": 16,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{6db9530 SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity]#343 parentId=342 relativeParentId=335 z=-2}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            },
+            {
+              "periodNs": 16666666,
+              "polls": 16,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{6db9530 SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity](BLAST)#344 parentId=343}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            },
+            {
+              "periodNs": 16666666,
+              "polls": 16,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{Background for 6db9530 SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity]#345 parentId=343 relativeParentId=335 z=-2147483648}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            }
+          ]
+        },
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "aac"
+        ],
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 21.68,
+        "videoBytes": 399693,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "original",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "original",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mov",
+              "protocol": "File",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": true,
+              "remote": false
+            }
+          }
+        ]
+      },
+      "filteredDisplay": {
+        "speed": 1,
+        "fixtureDurationS": 14.96,
+        "wallCeilingS": 28.96,
+        "endSignal": "Wholphin video surface left foreground",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "presentationTiming": {
+          "probe": "SurfaceFlinger --latency; actual-present fences, no picture identities",
+          "failedPolls": 0,
+          "layers": [
+            {
+              "periodNs": 16666666,
+              "polls": 12,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{4f62841 SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity]#362 parentId=361 relativeParentId=354 z=-2}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            },
+            {
+              "periodNs": 16666666,
+              "polls": 12,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{4f62841 SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity](BLAST)#363 parentId=362}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            },
+            {
+              "periodNs": 16666666,
+              "polls": 12,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{Background for 4f62841 SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity]#364 parentId=362 relativeParentId=354 z=-2147483648}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            }
+          ]
+        },
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "libmpvAO": "audiotrack 48000Hz stereo 2ch float",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "aac"
+        ],
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 17.63,
+        "videoBytes": 181169,
+        "runtimeVerified": true,
+        "observedPlaybackInfo": [
+          {
+            "route": "pointer",
+            "queryPresent": false,
+            "profile": "mpv",
+            "containerConditions": 0,
+            "codecConditions": 0,
+            "transcodeProfiles": 1,
+            "videoMp4": true,
+            "videoMov": true,
+            "audioStreamIndex": 1,
+            "subtitleStreamIndex": null,
+            "maxAudioChannels": null,
+            "maxStreamingBitrate": 104857600,
+            "enableDirectPlay": true,
+            "enableDirectStream": true,
+            "enableTranscoding": true,
+            "selectedSource": "pointer",
+            "status": 200,
+            "reason": null,
+            "jsonObserved": true,
+            "error": null,
+            "sourceCount": 1,
+            "media": {
+              "container": "mp4",
+              "protocol": "Http",
+              "directPlay": true,
+              "transcodeUrl": false,
+              "transcode": false,
+              "remote": true
+            }
+          }
+        ],
+        "grantRouteDeltas": [
+          1,
+          1,
+          1
+        ],
+        "serverLoggedRefusalCodes": []
+      },
+      "warmControl": {
+        "speed": 1
+      }
+    },
+    "audioLevels": {
+      "androidMusicVolumeBefore": 3,
+      "androidMusicVolumeAfter": 3,
+      "androidMusicVolumeMax": 15,
+      "androidMusicVolumeAfterKeys": 15,
+      "privateQemuStreamVolume": {
+        "front-left": "100%",
+        "front-right": "100%"
+      }
+    },
+    "controlSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 1229760,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        8608,
+        8608
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              1455,
+              2880
+            ],
+            [
+              2885,
+              3725
+            ],
+            [
+              3730,
+              6705
+            ],
+            [
+              6710,
+              6955
+            ],
+            [
+              13375,
+              13380
+            ],
+            [
+              17705,
+              17710
+            ],
+            [
+              19520,
+              19525
+            ]
+          ],
+          "880": [
+            [
+              6955,
+              6990
+            ],
+            [
+              6995,
+              7355
+            ],
+            [
+              7360,
+              7720
+            ],
+            [
+              7725,
+              8095
+            ],
+            [
+              8100,
+              8290
+            ],
+            [
+              8295,
+              8575
+            ],
+            [
+              8580,
+              9790
+            ],
+            [
+              9795,
+              12010
+            ],
+            [
+              13375,
+              13380
+            ],
+            [
+              17705,
+              17710
+            ],
+            [
+              19520,
+              19525
+            ]
+          ],
+          "660": [
+            [
+              1670,
+              1675
+            ],
+            [
+              1760,
+              1765
+            ],
+            [
+              2045,
+              2050
+            ],
+            [
+              2515,
+              2520
+            ],
+            [
+              2605,
+              2610
+            ],
+            [
+              2880,
+              2885
+            ],
+            [
+              2970,
+              2975
+            ],
+            [
+              3165,
+              3170
+            ],
+            [
+              3245,
+              3250
+            ],
+            [
+              3440,
+              3445
+            ],
+            [
+              3530,
+              3535
+            ],
+            [
+              3725,
+              3730
+            ],
+            [
+              3815,
+              3820
+            ],
+            [
+              4010,
+              4015
+            ],
+            [
+              4650,
+              4655
+            ],
+            [
+              4925,
+              4930
+            ],
+            [
+              5015,
+              5020
+            ],
+            [
+              5210,
+              5215
+            ],
+            [
+              5300,
+              5305
+            ],
+            [
+              5780,
+              5785
+            ],
+            [
+              5860,
+              5865
+            ],
+            [
+              6055,
+              6060
+            ],
+            [
+              6420,
+              6425
+            ],
+            [
+              6705,
+              6710
+            ],
+            [
+              6795,
+              6800
+            ],
+            [
+              6990,
+              6995
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7720,
+              7725
+            ],
+            [
+              8095,
+              8100
+            ],
+            [
+              8290,
+              8295
+            ],
+            [
+              8380,
+              8385
+            ],
+            [
+              8575,
+              8580
+            ],
+            [
+              9790,
+              9795
+            ],
+            [
+              12010,
+              17705
+            ],
+            [
+              17710,
+              21495
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              1455,
+              2880
+            ],
+            [
+              2885,
+              3725
+            ],
+            [
+              3730,
+              6705
+            ],
+            [
+              6710,
+              6955
+            ],
+            [
+              13375,
+              13380
+            ],
+            [
+              17705,
+              17710
+            ],
+            [
+              19520,
+              19525
+            ]
+          ],
+          "880": [
+            [
+              6955,
+              6990
+            ],
+            [
+              6995,
+              7355
+            ],
+            [
+              7360,
+              7720
+            ],
+            [
+              7725,
+              8095
+            ],
+            [
+              8100,
+              8290
+            ],
+            [
+              8295,
+              8575
+            ],
+            [
+              8580,
+              9790
+            ],
+            [
+              9795,
+              12010
+            ],
+            [
+              13375,
+              13380
+            ],
+            [
+              17705,
+              17710
+            ],
+            [
+              19520,
+              19525
+            ]
+          ],
+          "660": [
+            [
+              1670,
+              1675
+            ],
+            [
+              1760,
+              1765
+            ],
+            [
+              2045,
+              2050
+            ],
+            [
+              2515,
+              2520
+            ],
+            [
+              2605,
+              2610
+            ],
+            [
+              2880,
+              2885
+            ],
+            [
+              2970,
+              2975
+            ],
+            [
+              3165,
+              3170
+            ],
+            [
+              3245,
+              3250
+            ],
+            [
+              3440,
+              3445
+            ],
+            [
+              3530,
+              3535
+            ],
+            [
+              3725,
+              3730
+            ],
+            [
+              3815,
+              3820
+            ],
+            [
+              4010,
+              4015
+            ],
+            [
+              4650,
+              4655
+            ],
+            [
+              4925,
+              4930
+            ],
+            [
+              5015,
+              5020
+            ],
+            [
+              5210,
+              5215
+            ],
+            [
+              5300,
+              5305
+            ],
+            [
+              5780,
+              5785
+            ],
+            [
+              5860,
+              5865
+            ],
+            [
+              6055,
+              6060
+            ],
+            [
+              6420,
+              6425
+            ],
+            [
+              6705,
+              6710
+            ],
+            [
+              6795,
+              6800
+            ],
+            [
+              6990,
+              6995
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7720,
+              7725
+            ],
+            [
+              8095,
+              8100
+            ],
+            [
+              8290,
+              8295
+            ],
+            [
+              8380,
+              8385
+            ],
+            [
+              8575,
+              8580
+            ],
+            [
+              9790,
+              9795
+            ],
+            [
+              12010,
+              17705
+            ],
+            [
+              17710,
+              21495
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 5500,
+          "880": 5035,
+          "660": 9645
+        },
+        {
+          "440": 5500,
+          "880": 5035,
+          "660": 9645
+        }
+      ]
+    },
+    "repeatControlSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 1218240,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        8608,
+        8608
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              1080,
+              6580
+            ],
+            [
+              12120,
+              12125
+            ]
+          ],
+          "880": [
+            [
+              6580,
+              6970
+            ],
+            [
+              6975,
+              7255
+            ],
+            [
+              7260,
+              7630
+            ],
+            [
+              7635,
+              7825
+            ],
+            [
+              7830,
+              8120
+            ],
+            [
+              8125,
+              8315
+            ],
+            [
+              8320,
+              9645
+            ],
+            [
+              9650,
+              10110
+            ],
+            [
+              10115,
+              11640
+            ],
+            [
+              12120,
+              12125
+            ]
+          ],
+          "660": [
+            [
+              1125,
+              1130
+            ],
+            [
+              1330,
+              1335
+            ],
+            [
+              1525,
+              1530
+            ],
+            [
+              2025,
+              2030
+            ],
+            [
+              2505,
+              2510
+            ],
+            [
+              2700,
+              2705
+            ],
+            [
+              2895,
+              2900
+            ],
+            [
+              3385,
+              3390
+            ],
+            [
+              3590,
+              3595
+            ],
+            [
+              3785,
+              3790
+            ],
+            [
+              4070,
+              4075
+            ],
+            [
+              4160,
+              4165
+            ],
+            [
+              4355,
+              4360
+            ],
+            [
+              4435,
+              4440
+            ],
+            [
+              4630,
+              4635
+            ],
+            [
+              4720,
+              4725
+            ],
+            [
+              4925,
+              4930
+            ],
+            [
+              5200,
+              5205
+            ],
+            [
+              5405,
+              5410
+            ],
+            [
+              5600,
+              5605
+            ],
+            [
+              6000,
+              6005
+            ],
+            [
+              6205,
+              6210
+            ],
+            [
+              6295,
+              6300
+            ],
+            [
+              6580,
+              6585
+            ],
+            [
+              6970,
+              6975
+            ],
+            [
+              7060,
+              7065
+            ],
+            [
+              7255,
+              7260
+            ],
+            [
+              7630,
+              7635
+            ],
+            [
+              7825,
+              7830
+            ],
+            [
+              8120,
+              8125
+            ],
+            [
+              8315,
+              8320
+            ],
+            [
+              8405,
+              8410
+            ],
+            [
+              8600,
+              8605
+            ],
+            [
+              9645,
+              9650
+            ],
+            [
+              10110,
+              10115
+            ],
+            [
+              11245,
+              11250
+            ],
+            [
+              11635,
+              21120
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              1080,
+              6580
+            ],
+            [
+              12120,
+              12125
+            ]
+          ],
+          "880": [
+            [
+              6580,
+              6970
+            ],
+            [
+              6975,
+              7255
+            ],
+            [
+              7260,
+              7630
+            ],
+            [
+              7635,
+              7825
+            ],
+            [
+              7830,
+              8120
+            ],
+            [
+              8125,
+              8315
+            ],
+            [
+              8320,
+              9645
+            ],
+            [
+              9650,
+              10110
+            ],
+            [
+              10115,
+              11640
+            ],
+            [
+              12120,
+              12125
+            ]
+          ],
+          "660": [
+            [
+              1125,
+              1130
+            ],
+            [
+              1330,
+              1335
+            ],
+            [
+              1525,
+              1530
+            ],
+            [
+              2025,
+              2030
+            ],
+            [
+              2505,
+              2510
+            ],
+            [
+              2700,
+              2705
+            ],
+            [
+              2895,
+              2900
+            ],
+            [
+              3385,
+              3390
+            ],
+            [
+              3590,
+              3595
+            ],
+            [
+              3785,
+              3790
+            ],
+            [
+              4070,
+              4075
+            ],
+            [
+              4160,
+              4165
+            ],
+            [
+              4355,
+              4360
+            ],
+            [
+              4435,
+              4440
+            ],
+            [
+              4630,
+              4635
+            ],
+            [
+              4720,
+              4725
+            ],
+            [
+              4925,
+              4930
+            ],
+            [
+              5200,
+              5205
+            ],
+            [
+              5405,
+              5410
+            ],
+            [
+              5600,
+              5605
+            ],
+            [
+              6000,
+              6005
+            ],
+            [
+              6205,
+              6210
+            ],
+            [
+              6295,
+              6300
+            ],
+            [
+              6580,
+              6585
+            ],
+            [
+              6970,
+              6975
+            ],
+            [
+              7060,
+              7065
+            ],
+            [
+              7255,
+              7260
+            ],
+            [
+              7630,
+              7635
+            ],
+            [
+              7825,
+              7830
+            ],
+            [
+              8120,
+              8125
+            ],
+            [
+              8315,
+              8320
+            ],
+            [
+              8405,
+              8410
+            ],
+            [
+              8600,
+              8605
+            ],
+            [
+              9645,
+              9650
+            ],
+            [
+              10110,
+              10115
+            ],
+            [
+              11245,
+              11250
+            ],
+            [
+              11635,
+              21120
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 5505,
+          "880": 5025,
+          "660": 9665
+        },
+        {
+          "440": 5505,
+          "880": 5025,
+          "660": 9665
+        }
+      ]
+    },
+    "waveform": {
+      "sampleRateHz": 48000,
+      "cutSourceFrames": [
+        263040,
+        504960
+      ],
+      "renders": {
+        "control": {
+          "captureFrames": 1229760,
+          "firstNonzeroFrame": 28464,
+          "afterLastNonzeroFrame": 1031624,
+          "nonzeroSpanFrames": 1003160,
+          "expectedFrames": 960000,
+          "nonzeroSpanDeltaFrames": 43160,
+          "frozenOriginSample": 69457,
+          "signalSpanAt512LSBFrames": 961798,
+          "signalSpanDeltaFrames": 1798,
+          "beforeSignalPeakLSB": 2,
+          "onsetAlignment": {
+            "correlation": 0.880259211745,
+            "competingCorrelation": 0.877248472595
+          },
+          "againstDecodedAtNonzeroSpan": {
+            "exact": false,
+            "unequalFrames": 959832,
+            "firstUnequal": 0,
+            "lastUnequal": 959999,
+            "pre": 262989,
+            "post": 696843,
+            "delta": 43160,
+            "expectedFrames": 960000,
+            "actualFrames": 1003160,
+            "peakLRmax": [
+              16388,
+              16561
+            ],
+            "rmsOverUnequal": [
+              7805.2812,
+              8866.5912
+            ],
+            "runCount": 169,
+            "firstRunsInclusive": [
+              [
+                0,
+                708
+              ],
+              [
+                710,
+                8999
+              ],
+              [
+                9001,
+                14399
+              ],
+              [
+                14401,
+                23999
+              ],
+              [
+                24001,
+                24599
+              ],
+              [
+                24601,
+                34799
+              ],
+              [
+                34801,
+                57300
+              ],
+              [
+                57302,
+                59045
+              ],
+              [
+                59047,
+                60027
+              ],
+              [
+                60029,
+                61353
+              ],
+              [
+                61355,
+                73387
+              ],
+              [
+                73389,
+                77604
+              ],
+              [
+                77606,
+                82421
+              ],
+              [
+                82423,
+                96889
+              ],
+              [
+                96891,
+                103506
+              ],
+              [
+                103508,
+                105306
+              ]
+            ],
+            "expectedSHA256": "4f052b6542e373667046cf6b92e583b6924c4ba4cf260c6990fc4e648d45dc9c",
+            "actualSHA256": "b8cabc400886d042ac8380e99a8d792b497b1f0b340f4a579c803f28a67889de"
+          },
+          "probes": {
+            "early": {
+              "sourceFrame": 4800,
+              "expectedCaptureFrame": 74257,
+              "observedOffsetSamples": -621,
+              "correlation": 0.999999999985,
+              "competingCorrelation": 0.999999748558,
+              "gainLR": [
+                0.9999999952406871,
+                0.9999999952406871
+              ],
+              "residualRmsLSB": [
+                0.03124998784143772,
+                0.03124998784143772
+              ]
+            },
+            "beforeJoin": {
+              "sourceFrame": 258240,
+              "expectedCaptureFrame": 327697,
+              "observedOffsetSamples": 1283,
+              "correlation": 1.0,
+              "competingCorrelation": 0.999999502813,
+              "gainLR": [
+                1.0,
+                1.0
+              ],
+              "residualRmsLSB": [
+                0.0,
+                0.0
+              ]
+            },
+            "cutStartTransition": {
+              "sourceFrame": 262016,
+              "expectedCaptureFrame": 331473,
+              "observedOffsetSamples": 1317,
+              "correlation": 1.0,
+              "competingCorrelation": 0.982693723552,
+              "gainLR": [
+                1.0,
+                1.0
+              ],
+              "residualRmsLSB": [
+                0.0,
+                0.0
+              ]
+            },
+            "cutEndTransition": {
+              "sourceFrame": 503936,
+              "expectedCaptureFrame": 573393,
+              "observedOffsetSamples": 2009,
+              "correlation": 1.0,
+              "competingCorrelation": 0.978454502778,
+              "gainLR": [
+                1.0,
+                1.0
+              ],
+              "residualRmsLSB": [
+                0.0,
+                0.0
+              ]
+            },
+            "afterJoin": {
+              "sourceFrame": 509760,
+              "expectedCaptureFrame": 579217,
+              "observedOffsetSamples": 2009,
+              "correlation": 1.0,
+              "competingCorrelation": 0.999999840453,
+              "gainLR": [
+                1.0,
+                1.0
+              ],
+              "residualRmsLSB": [
+                0.0,
+                0.0
+              ]
+            },
+            "late": {
+              "sourceFrame": 948000,
+              "expectedCaptureFrame": 1017457,
+              "observedOffsetSamples": -1833,
+              "correlation": 0.999999860132,
+              "competingCorrelation": 0.999999744339,
+              "gainLR": [
+                0.9994790675980872,
+                0.9994790675980872
+              ],
+              "residualRmsLSB": [
+                3.062417724075467,
+                3.062417724075467
+              ]
+            }
+          }
+        },
+        "repeatControl": {
+          "captureFrames": 1218240,
+          "firstNonzeroFrame": 30508,
+          "afterLastNonzeroFrame": 1013754,
+          "nonzeroSpanFrames": 983246,
+          "expectedFrames": 960000,
+          "nonzeroSpanDeltaFrames": 23246,
+          "frozenOriginSample": 51961,
+          "signalSpanAt512LSBFrames": 961860,
+          "signalSpanDeltaFrames": 1860,
+          "beforeSignalPeakLSB": 2,
+          "onsetAlignment": {
+            "correlation": 0.999903003229,
+            "competingCorrelation": 0.99329187248
+          },
+          "againstDecodedAtNonzeroSpan": {
+            "exact": false,
+            "unequalFrames": 959825,
+            "firstUnequal": 0,
+            "lastUnequal": 959999,
+            "pre": 263002,
+            "post": 696823,
+            "delta": 23246,
+            "expectedFrames": 960000,
+            "actualFrames": 983246,
+            "peakLRmax": [
+              16398,
+              16348
+            ],
+            "rmsOverUnequal": [
+              8016.9462,
+              8484.9824
+            ],
+            "runCount": 176,
+            "firstRunsInclusive": [
+              [
+                0,
+                708
+              ],
+              [
+                710,
+                8999
+              ],
+              [
+                9001,
+                14399
+              ],
+              [
+                14401,
+                44165
+              ],
+              [
+                44167,
+                50782
+              ],
+              [
+                50784,
+                56199
+              ],
+              [
+                56201,
+                73067
+              ],
+              [
+                73069,
+                79084
+              ],
+              [
+                79086,
+                95952
+              ],
+              [
+                95954,
+                111603
+              ],
+              [
+                111605,
+                118837
+              ],
+              [
+                118839,
+                121837
+              ],
+              [
+                121839,
+                130871
+              ],
+              [
+                130873,
+                134488
+              ],
+              [
+                134490,
+                145322
+              ],
+              [
+                145324,
+                160373
+              ]
+            ],
+            "expectedSHA256": "4f052b6542e373667046cf6b92e583b6924c4ba4cf260c6990fc4e648d45dc9c",
+            "actualSHA256": "338b645ffa18e24187bc04deb0a4df16d757a0e3403fdc32bbc55ecb81e47112"
+          },
+          "probes": {
+            "early": {
+              "sourceFrame": 4800,
+              "expectedCaptureFrame": 56761,
+              "observedOffsetSamples": -1057,
+              "correlation": 0.999999999985,
+              "competingCorrelation": 0.999999673987,
+              "gainLR": [
+                0.9999999952406871,
+                0.9999999952406871
+              ],
+              "residualRmsLSB": [
+                0.03124998784143772,
+                0.03124998784143772
+              ]
+            },
+            "beforeJoin": {
+              "sourceFrame": 258240,
+              "expectedCaptureFrame": 310201,
+              "observedOffsetSamples": 2013,
+              "correlation": 0.999999610296,
+              "competingCorrelation": 0.999999502813,
+              "gainLR": [
+                1.000381430256516,
+                1.000381430256516
+              ],
+              "residualRmsLSB": [
+                5.127228661000247,
+                5.127228661000247
+              ]
+            },
+            "cutStartTransition": {
+              "sourceFrame": 262016,
+              "expectedCaptureFrame": 313977,
+              "observedOffsetSamples": 1014,
+              "correlation": 0.696151511775,
+              "competingCorrelation": 0.686414248373,
+              "gainLR": [
+                0.6932219730082465,
+                0.6932217499586811
+              ],
+              "residualRmsLSB": [
+                4117.711423426634,
+                4117.712669291448
+              ]
+            },
+            "cutEndTransition": {
+              "sourceFrame": 503936,
+              "expectedCaptureFrame": 555897,
+              "observedOffsetSamples": 1697,
+              "correlation": 1.0,
+              "competingCorrelation": 0.978454502778,
+              "gainLR": [
+                1.0,
+                1.0
+              ],
+              "residualRmsLSB": [
+                0.0,
+                0.0
+              ]
+            },
+            "afterJoin": {
+              "sourceFrame": 509760,
+              "expectedCaptureFrame": 561721,
+              "observedOffsetSamples": 1697,
+              "correlation": 1.0,
+              "competingCorrelation": 0.999999840453,
+              "gainLR": [
+                1.0,
+                1.0
+              ],
+              "residualRmsLSB": [
+                0.0,
+                0.0
+              ]
+            },
+            "late": {
+              "sourceFrame": 948000,
+              "expectedCaptureFrame": 999961,
+              "observedOffsetSamples": 1793,
+              "correlation": 0.999999999993,
+              "competingCorrelation": 0.999999744339,
+              "gainLR": [
+                0.9999999757902719,
+                0.9999999757902719
+              ],
+              "residualRmsLSB": [
+                0.02209664181716197,
+                0.02209664181716197
+              ]
+            }
+          }
+        },
+        "filtered": {
+          "captureFrames": 962880,
+          "firstNonzeroFrame": 30814,
+          "afterLastNonzeroFrame": 769776,
+          "nonzeroSpanFrames": 738962,
+          "expectedFrames": 718080,
+          "nonzeroSpanDeltaFrames": 20882,
+          "frozenOriginSample": 50417,
+          "signalSpanAt512LSBFrames": 719786,
+          "signalSpanDeltaFrames": 1706,
+          "beforeSignalPeakLSB": 2,
+          "onsetAlignment": {
+            "correlation": 0.912501789594,
+            "competingCorrelation": 0.909113649219
+          },
+          "againstDecodedAtNonzeroSpan": {
+            "exact": false,
+            "unequalFrames": 717975,
+            "firstUnequal": 0,
+            "lastUnequal": 718079,
+            "pre": 262997,
+            "post": 454978,
+            "delta": 20882,
+            "expectedFrames": 718080,
+            "actualFrames": 738962,
+            "peakLRmax": [
+              16391,
+              16399
+            ],
+            "rmsOverUnequal": [
+              8056.0277,
+              7253.9479
+            ],
+            "runCount": 106,
+            "firstRunsInclusive": [
+              [
+                0,
+                708
+              ],
+              [
+                710,
+                8999
+              ],
+              [
+                9001,
+                14399
+              ],
+              [
+                14401,
+                25391
+              ],
+              [
+                25393,
+                27682
+              ],
+              [
+                27684,
+                28009
+              ],
+              [
+                28011,
+                28118
+              ],
+              [
+                28120,
+                49694
+              ],
+              [
+                49696,
+                61145
+              ],
+              [
+                61147,
+                78596
+              ],
+              [
+                78598,
+                83413
+              ],
+              [
+                83415,
+                91247
+              ],
+              [
+                91249,
+                93517
+              ],
+              [
+                93519,
+                93681
+              ],
+              [
+                93683,
+                93736
+              ],
+              [
+                93738,
+                94281
+              ]
+            ],
+            "expectedSHA256": "11103dc7ee694762b44d2b044e1cf3aa808d97d4a75ae0367cd458b3de138fed",
+            "actualSHA256": "4df20fb940d8588ccec4a875b6ba1756881a0c4c6e7c926636e62e96d0e41f98"
+          },
+          "probes": {
+            "early": {
+              "sourceFrame": 4800,
+              "expectedCaptureFrame": 55217,
+              "observedOffsetSamples": 1017,
+              "correlation": 0.999999748558,
+              "competingCorrelation": 0.999986895761,
+              "gainLR": [
+                0.999562176975974,
+                0.999562176975974
+              ],
+              "residualRmsLSB": [
+                4.105633271240794,
+                4.105633271240794
+              ]
+            },
+            "beforeJoin": {
+              "sourceFrame": 258240,
+              "expectedCaptureFrame": 308657,
+              "observedOffsetSamples": 1721,
+              "correlation": 0.999999610296,
+              "competingCorrelation": 0.999999502813,
+              "gainLR": [
+                1.000381430256516,
+                1.000381430256516
+              ],
+              "residualRmsLSB": [
+                5.127228661000247,
+                5.127228661000247
+              ]
+            },
+            "cutStartTransition": {
+              "sourceFrame": 262016,
+              "expectedCaptureFrame": 312433,
+              "observedOffsetSamples": 303,
+              "correlation": 0.848556390339,
+              "competingCorrelation": 0.841271108683,
+              "gainLR": [
+                0.8410654124066831,
+                0.8410656639207406
+              ],
+              "residualRmsLSB": [
+                3023.762152953897,
+                3023.759827232729
+              ]
+            },
+            "cutEndTransition": {
+              "sourceFrame": 262016,
+              "expectedCaptureFrame": 312433,
+              "observedOffsetSamples": 303,
+              "correlation": 0.848556390339,
+              "competingCorrelation": 0.841271108683,
+              "gainLR": [
+                0.8410654124066831,
+                0.8410656639207406
+              ],
+              "residualRmsLSB": [
+                3023.762152953897,
+                3023.759827232729
+              ]
+            },
+            "afterJoin": {
+              "sourceFrame": 509760,
+              "expectedCaptureFrame": 318257,
+              "observedOffsetSamples": -1845,
+              "correlation": 0.999999840453,
+              "competingCorrelation": 0.999999720914,
+              "gainLR": [
+                0.999857003389885,
+                0.999857003389885
+              ],
+              "residualRmsLSB": [
+                3.265451562245561,
+                3.265451562245561
+              ]
+            },
+            "late": {
+              "sourceFrame": 948000,
+              "expectedCaptureFrame": 756497,
+              "observedOffsetSamples": 1247,
+              "correlation": 0.999999999993,
+              "competingCorrelation": 0.999999744339,
+              "gainLR": [
+                0.9999999757902719,
+                0.9999999757902719
+              ],
+              "residualRmsLSB": [
+                0.02209664181716197,
+                0.02209664181716197
+              ]
+            }
+          }
+        }
+      },
+      "repeatability": {
+        "prefix": {
+          "comparedSampleFrames": 263040,
+          "differentSampleFrames": 262966,
+          "differentSamplesLR": [
+            262966,
+            262966
+          ],
+          "firstDifferentFrame": 0,
+          "lastDifferentFrame": 263039,
+          "peakErrorLSB": [
+            15248,
+            15248
+          ],
+          "errorEnergyLSB2": [
+            22788855314253,
+            22788855525257
+          ],
+          "errorRmsLSB": [
+            9307.871041743816,
+            9307.871084835011
+          ],
+          "referenceRmsLSB": [
+            5765.582688122723,
+            5765.582659154233
+          ]
+        },
+        "suffix": {
+          "comparedSampleFrames": 455040,
+          "differentSampleFrames": 454947,
+          "differentSamplesLR": [
+            454947,
+            454947
+          ],
+          "firstDifferentFrame": 263040,
+          "lastDifferentFrame": 718079,
+          "peakErrorLSB": [
+            16329,
+            16329
+          ],
+          "errorEnergyLSB2": [
+            27945848995432,
+            27945848930344
+          ],
+          "errorRmsLSB": [
+            7836.7116384557185,
+            7836.711629329571
+          ],
+          "referenceRmsLSB": [
+            5789.826834647318,
+            5789.826834647318
+          ]
+        },
+        "joinBefore20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 960,
+          "differentSamplesLR": [
+            960,
+            960
+          ],
+          "firstDifferentFrame": 262080,
+          "lastDifferentFrame": 263039,
+          "peakErrorLSB": [
+            15248,
+            15248
+          ],
+          "errorEnergyLSB2": [
+            109739352683,
+            109739352683
+          ],
+          "errorRmsLSB": [
+            10691.67085686135,
+            10691.67085686135
+          ],
+          "referenceRmsLSB": [
+            5749.171805211019,
+            5749.171805211019
+          ]
+        },
+        "joinAfter20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 960,
+          "differentSamplesLR": [
+            960,
+            960
+          ],
+          "firstDifferentFrame": 263040,
+          "lastDifferentFrame": 263999,
+          "peakErrorLSB": [
+            12628,
+            12628
+          ],
+          "errorEnergyLSB2": [
+            76048705795,
+            76048705795
+          ],
+          "errorRmsLSB": [
+            8900.415825667455,
+            8900.415825667455
+          ],
+          "referenceRmsLSB": [
+            5784.99432259877,
+            5784.99432259877
+          ]
+        }
+      },
+      "uncutBitExact": false,
+      "controlVsFiltered": {
+        "prefix": {
+          "comparedSampleFrames": 263040,
+          "differentSampleFrames": 262996,
+          "differentSamplesLR": [
+            262996,
+            262994
+          ],
+          "firstDifferentFrame": 0,
+          "lastDifferentFrame": 263039,
+          "peakErrorLSB": [
+            15445,
+            15445
+          ],
+          "errorEnergyLSB2": [
+            14326226284805,
+            14326226637259
+          ],
+          "errorRmsLSB": [
+            7379.9769498990245,
+            7379.977040680166
+          ],
+          "referenceRmsLSB": [
+            5765.582688122723,
+            5765.582659154233
+          ],
+          "withinFloor": false,
+          "floorBelowSignal": false
+        },
+        "suffix": {
+          "comparedSampleFrames": 455040,
+          "differentSampleFrames": 454979,
+          "differentSamplesLR": [
+            454979,
+            454979
+          ],
+          "firstDifferentFrame": 263040,
+          "lastDifferentFrame": 718079,
+          "peakErrorLSB": [
+            16379,
+            16379
+          ],
+          "errorEnergyLSB2": [
+            39411425389903,
+            39411425089823
+          ],
+          "errorRmsLSB": [
+            9306.497901741037,
+            9306.497866311034
+          ],
+          "referenceRmsLSB": [
+            5789.826834647318,
+            5789.826834647318
+          ],
+          "withinFloor": false,
+          "floorBelowSignal": false
+        },
+        "joinBefore20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 960,
+          "differentSamplesLR": [
+            960,
+            960
+          ],
+          "firstDifferentFrame": 262080,
+          "lastDifferentFrame": 263039,
+          "peakErrorLSB": [
+            13161,
+            13161
+          ],
+          "errorEnergyLSB2": [
+            83115301949,
+            83115301949
+          ],
+          "errorRmsLSB": [
+            9304.753598575748,
+            9304.753598575748
+          ],
+          "referenceRmsLSB": [
+            5749.171805211019,
+            5749.171805211019
+          ],
+          "withinFloor": true,
+          "floorBelowSignal": false
+        },
+        "joinAfter20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 960,
+          "differentSamplesLR": [
+            960,
+            960
+          ],
+          "firstDifferentFrame": 263040,
+          "lastDifferentFrame": 263999,
+          "peakErrorLSB": [
+            16379,
+            16379
+          ],
+          "errorEnergyLSB2": [
+            64973430735,
+            64973430735
+          ],
+          "errorRmsLSB": [
+            8226.825451875407,
+            8226.825451875407
+          ],
+          "referenceRmsLSB": [
+            5784.99432259877,
+            5784.99432259877
+          ],
+          "withinFloor": false,
+          "floorBelowSignal": false
+        }
+      }
+    },
+    "filteredSound": {
+      "rateHz": 48000,
+      "channels": 2,
+      "sampleFormat": "signed 16-bit little endian",
+      "frames": 962880,
+      "preRollPeakLSB": 0,
+      "preRollRmsLSB": 0.0,
+      "capturePeakLSB": [
+        8608,
+        8608
+      ],
+      "toneRangesMs": [
+        {
+          "440": [
+            [
+              1040,
+              1530
+            ],
+            [
+              1535,
+              3255
+            ],
+            [
+              3260,
+              6540
+            ],
+            [
+              6555,
+              6560
+            ],
+            [
+              6645,
+              6650
+            ],
+            [
+              6840,
+              6845
+            ],
+            [
+              6955,
+              6960
+            ],
+            [
+              7070,
+              7075
+            ],
+            [
+              7160,
+              7165
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7445,
+              7450
+            ],
+            [
+              7550,
+              7555
+            ],
+            [
+              7640,
+              7645
+            ],
+            [
+              8765,
+              8770
+            ],
+            [
+              8855,
+              8860
+            ],
+            [
+              9515,
+              9520
+            ]
+          ],
+          "880": [
+            [
+              6555,
+              6560
+            ],
+            [
+              6645,
+              6650
+            ],
+            [
+              6840,
+              6845
+            ],
+            [
+              6955,
+              6960
+            ],
+            [
+              7070,
+              7075
+            ],
+            [
+              7160,
+              7165
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7445,
+              7450
+            ],
+            [
+              7550,
+              7555
+            ],
+            [
+              7640,
+              7645
+            ],
+            [
+              8765,
+              8770
+            ],
+            [
+              8855,
+              8860
+            ],
+            [
+              9515,
+              9520
+            ]
+          ],
+          "660": [
+            [
+              1050,
+              1055
+            ],
+            [
+              1255,
+              1260
+            ],
+            [
+              1530,
+              1535
+            ],
+            [
+              1815,
+              1820
+            ],
+            [
+              2020,
+              2025
+            ],
+            [
+              2295,
+              2300
+            ],
+            [
+              2685,
+              2690
+            ],
+            [
+              2970,
+              2975
+            ],
+            [
+              3060,
+              3065
+            ],
+            [
+              3255,
+              3260
+            ],
+            [
+              3460,
+              3465
+            ],
+            [
+              3655,
+              3660
+            ],
+            [
+              3860,
+              3865
+            ],
+            [
+              4055,
+              4060
+            ],
+            [
+              4145,
+              4150
+            ],
+            [
+              4420,
+              4425
+            ],
+            [
+              4535,
+              4540
+            ],
+            [
+              5060,
+              5065
+            ],
+            [
+              5355,
+              5360
+            ],
+            [
+              5550,
+              5555
+            ],
+            [
+              5745,
+              5750
+            ],
+            [
+              6040,
+              6045
+            ],
+            [
+              6440,
+              6445
+            ],
+            [
+              6540,
+              6555
+            ],
+            [
+              6560,
+              6645
+            ],
+            [
+              6650,
+              6840
+            ],
+            [
+              6845,
+              6955
+            ],
+            [
+              6960,
+              7070
+            ],
+            [
+              7075,
+              7160
+            ],
+            [
+              7165,
+              7355
+            ],
+            [
+              7360,
+              7640
+            ],
+            [
+              7645,
+              8765
+            ],
+            [
+              8770,
+              8855
+            ],
+            [
+              8860,
+              9515
+            ],
+            [
+              9525,
+              16035
+            ]
+          ]
+        },
+        {
+          "440": [
+            [
+              1040,
+              1530
+            ],
+            [
+              1535,
+              3255
+            ],
+            [
+              3260,
+              6540
+            ],
+            [
+              6555,
+              6560
+            ],
+            [
+              6645,
+              6650
+            ],
+            [
+              6840,
+              6845
+            ],
+            [
+              6955,
+              6960
+            ],
+            [
+              7070,
+              7075
+            ],
+            [
+              7160,
+              7165
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7445,
+              7450
+            ],
+            [
+              7550,
+              7555
+            ],
+            [
+              7640,
+              7645
+            ],
+            [
+              8765,
+              8770
+            ],
+            [
+              8855,
+              8860
+            ],
+            [
+              9515,
+              9520
+            ]
+          ],
+          "880": [
+            [
+              6555,
+              6560
+            ],
+            [
+              6645,
+              6650
+            ],
+            [
+              6840,
+              6845
+            ],
+            [
+              6955,
+              6960
+            ],
+            [
+              7070,
+              7075
+            ],
+            [
+              7160,
+              7165
+            ],
+            [
+              7355,
+              7360
+            ],
+            [
+              7445,
+              7450
+            ],
+            [
+              7550,
+              7555
+            ],
+            [
+              7640,
+              7645
+            ],
+            [
+              8765,
+              8770
+            ],
+            [
+              8855,
+              8860
+            ],
+            [
+              9515,
+              9520
+            ]
+          ],
+          "660": [
+            [
+              1050,
+              1055
+            ],
+            [
+              1255,
+              1260
+            ],
+            [
+              1530,
+              1535
+            ],
+            [
+              1815,
+              1820
+            ],
+            [
+              2020,
+              2025
+            ],
+            [
+              2295,
+              2300
+            ],
+            [
+              2685,
+              2690
+            ],
+            [
+              2970,
+              2975
+            ],
+            [
+              3060,
+              3065
+            ],
+            [
+              3255,
+              3260
+            ],
+            [
+              3460,
+              3465
+            ],
+            [
+              3655,
+              3660
+            ],
+            [
+              3860,
+              3865
+            ],
+            [
+              4055,
+              4060
+            ],
+            [
+              4145,
+              4150
+            ],
+            [
+              4420,
+              4425
+            ],
+            [
+              4535,
+              4540
+            ],
+            [
+              5060,
+              5065
+            ],
+            [
+              5355,
+              5360
+            ],
+            [
+              5550,
+              5555
+            ],
+            [
+              5745,
+              5750
+            ],
+            [
+              6040,
+              6045
+            ],
+            [
+              6440,
+              6445
+            ],
+            [
+              6540,
+              6555
+            ],
+            [
+              6560,
+              6645
+            ],
+            [
+              6650,
+              6840
+            ],
+            [
+              6845,
+              6955
+            ],
+            [
+              6960,
+              7070
+            ],
+            [
+              7075,
+              7160
+            ],
+            [
+              7165,
+              7355
+            ],
+            [
+              7360,
+              7640
+            ],
+            [
+              7645,
+              8765
+            ],
+            [
+              8770,
+              8855
+            ],
+            [
+              8860,
+              9515
+            ],
+            [
+              9525,
+              16035
+            ]
+          ]
+        }
+      ],
+      "tones": [
+        {
+          "440": 5555,
+          "880": 65,
+          "660": 9550
+        },
+        {
+          "440": 5555,
+          "880": 65,
+          "660": 9550
+        }
+      ]
+    },
+    "lossless": {
+      "fixtureSha256": "99c876c82b5707985f8a9ba0cab671eecc0293fea7bbf2e371b84211373a008c",
+      "scope": "ordinary Jellyfin source only; filtered plugin admission requires AAC"
+    },
+    "losslessWaveform": {
+      "sampleRateHz": 48000,
+      "cutSourceFrames": [
+        11520,
+        21120
+      ],
+      "renders": {
+        "control": {
+          "captureFrames": 1204800,
+          "firstNonzeroFrame": 31574,
+          "afterLastNonzeroFrame": 1144344,
+          "nonzeroSpanFrames": 1112770,
+          "expectedFrames": 960000,
+          "nonzeroSpanDeltaFrames": 152770,
+          "frozenOriginSample": 48574,
+          "signalSpanAt512LSBFrames": 958040,
+          "signalSpanDeltaFrames": -1960,
+          "beforeSignalPeakLSB": 2,
+          "onsetAlignment": {
+            "correlation": 0.804423432573,
+            "competingCorrelation": 0.21216498755
+          },
+          "againstDecodedAtNonzeroSpan": {
+            "exact": false,
+            "unequalFrames": 960000,
+            "firstUnequal": 0,
+            "lastUnequal": 959999,
+            "pre": 11520,
+            "post": 948480,
+            "delta": 152770,
+            "expectedFrames": 960000,
+            "actualFrames": 1112770,
+            "peakLRmax": [
+              32767,
+              65535
+            ],
+            "rmsOverUnequal": [
+              19017.2361,
+              26357.9425
+            ],
+            "runCount": 1,
+            "firstRunsInclusive": [
+              [
+                0,
+                959999
+              ]
+            ],
+            "expectedSHA256": "199694fcc1bedfd7096f1c4c2fdef1f51eeac3a9ad43dcbc445f3c5d8f6cf231",
+            "actualSHA256": "c91c3d2efff2c6d07867c47a978c6ad80d090b27d7dba4450cdf65f47562c082"
+          },
+          "probes": {
+            "early": {
+              "sourceFrame": 4800,
+              "expectedCaptureFrame": 53374,
+              "observedOffsetSamples": 34,
+              "correlation": 0.596798479808,
+              "competingCorrelation": 0.396235040367,
+              "gainLR": [
+                0.6031475676108681,
+                0.5808277223617416
+              ],
+              "residualRmsLSB": [
+                15007.080613244818,
+                15034.871608681682
+              ]
+            },
+            "beforeJoin": {
+              "sourceFrame": 6720,
+              "expectedCaptureFrame": 55294,
+              "observedOffsetSamples": 68,
+              "correlation": 0.999999924637,
+              "competingCorrelation": 0.050865998701,
+              "gainLR": [
+                1.0000488943125752,
+                1.0000225775141431
+              ],
+              "residualRmsLSB": [
+                9.216844783966843,
+                4.727636693235441
+              ]
+            },
+            "cutStartTransition": {
+              "sourceFrame": 10496,
+              "expectedCaptureFrame": 59070,
+              "observedOffsetSamples": 102,
+              "correlation": 0.999999928715,
+              "competingCorrelation": 0.055791453272,
+              "gainLR": [
+                1.0000323392029118,
+                1.00002352102495
+              ],
+              "residualRmsLSB": [
+                7.727567662115817,
+                6.6629100324591715
+              ]
+            },
+            "cutEndTransition": {
+              "sourceFrame": 20096,
+              "expectedCaptureFrame": 68670,
+              "observedOffsetSamples": 170,
+              "correlation": 0.738829355532,
+              "competingCorrelation": 0.289496047206,
+              "gainLR": [
+                0.7371548948166451,
+                0.729123443866123
+              ],
+              "residualRmsLSB": [
+                12508.328437203165,
+                12857.546843517337
+              ]
+            },
+            "afterJoin": {
+              "sourceFrame": 25920,
+              "expectedCaptureFrame": 74494,
+              "observedOffsetSamples": 204,
+              "correlation": 0.999999845896,
+              "competingCorrelation": 0.053694551516,
+              "gainLR": [
+                1.0000671756692152,
+                1.0000554810869287
+              ],
+              "residualRmsLSB": [
+                11.578952124324616,
+                9.353058889854832
+              ]
+            },
+            "late": {
+              "sourceFrame": 948000,
+              "expectedCaptureFrame": 996574,
+              "observedOffsetSamples": -2028,
+              "correlation": 0.999999874684,
+              "competingCorrelation": 0.055189657911,
+              "gainLR": [
+                1.0000436981804197,
+                1.0000593556123665
+              ],
+              "residualRmsLSB": [
+                8.526048031469221,
+                10.429853212158571
+              ]
+            }
+          }
+        },
+        "repeatControl": {
+          "captureFrames": 1204800,
+          "firstNonzeroFrame": 26906,
+          "afterLastNonzeroFrame": 1143502,
+          "nonzeroSpanFrames": 1116596,
+          "expectedFrames": 960000,
+          "nonzeroSpanDeltaFrames": 156596,
+          "frozenOriginSample": 45659,
+          "signalSpanAt512LSBFrames": 959114,
+          "signalSpanDeltaFrames": -886,
+          "beforeSignalPeakLSB": 2,
+          "onsetAlignment": {
+            "correlation": 0.046163177331,
+            "competingCorrelation": 0.045330737531
+          },
+          "againstDecodedAtNonzeroSpan": {
+            "exact": false,
+            "unequalFrames": 960000,
+            "firstUnequal": 0,
+            "lastUnequal": 959999,
+            "pre": 11520,
+            "post": 948480,
+            "delta": 156596,
+            "expectedFrames": 960000,
+            "actualFrames": 1116596,
+            "peakLRmax": [
+              32767,
+              65532
+            ],
+            "rmsOverUnequal": [
+              19017.2339,
+              26144.1643
+            ],
+            "runCount": 1,
+            "firstRunsInclusive": [
+              [
+                0,
+                959999
+              ]
+            ],
+            "expectedSHA256": "199694fcc1bedfd7096f1c4c2fdef1f51eeac3a9ad43dcbc445f3c5d8f6cf231",
+            "actualSHA256": "dbfe6c6a2e9d5b894324645199b436d014f1a29a6b1d1f88b59c64dd36bbe810"
+          },
+          "probes": {
+            "early": {
+              "sourceFrame": 4800,
+              "expectedCaptureFrame": 50459,
+              "observedOffsetSamples": -723,
+              "correlation": 0.565700681003,
+              "competingCorrelation": 0.056828254912,
+              "gainLR": [
+                0.4058273723553044,
+                0.4157820179189288
+              ],
+              "residualRmsLSB": [
+                11312.595855891084,
+                11277.226013835316
+              ]
+            },
+            "beforeJoin": {
+              "sourceFrame": 6720,
+              "expectedCaptureFrame": 52379,
+              "observedOffsetSamples": -723,
+              "correlation": 0.63448902551,
+              "competingCorrelation": 0.191960487238,
+              "gainLR": [
+                0.3997869581411748,
+                0.4054050250467537
+              ],
+              "residualRmsLSB": [
+                9258.56522159079,
+                9256.681373666863
+              ]
+            },
+            "cutStartTransition": {
+              "sourceFrame": 10496,
+              "expectedCaptureFrame": 56155,
+              "observedOffsetSamples": -1253,
+              "correlation": 0.533172359713,
+              "competingCorrelation": 0.056551566461,
+              "gainLR": [
+                0.28788848087177693,
+                0.2805496528010071
+              ],
+              "residualRmsLSB": [
+                8729.322554053346,
+                8508.115201313674
+              ]
+            },
+            "cutEndTransition": {
+              "sourceFrame": 20096,
+              "expectedCaptureFrame": 65755,
+              "observedOffsetSamples": -735,
+              "correlation": 0.999999910113,
+              "competingCorrelation": 0.051752692928,
+              "gainLR": [
+                1.0000228920546446,
+                1.00004726149067
+              ],
+              "residualRmsLSB": [
+                6.1372932191797585,
+                9.572351252817699
+              ]
+            },
+            "afterJoin": {
+              "sourceFrame": 25920,
+              "expectedCaptureFrame": 71579,
+              "observedOffsetSamples": -1019,
+              "correlation": 0.774457463061,
+              "competingCorrelation": 0.129485439259,
+              "gainLR": [
+                0.71855347435821,
+                0.6814588136878063
+              ],
+              "residualRmsLSB": [
+                10486.013541397744,
+                11173.985368170792
+              ]
+            },
+            "late": {
+              "sourceFrame": 948000,
+              "expectedCaptureFrame": 993659,
+              "observedOffsetSamples": -561,
+              "correlation": 0.913778756325,
+              "competingCorrelation": 0.099029413719,
+              "gainLR": [
+                0.9211710137863077,
+                0.8908848282331355
+              ],
+              "residualRmsLSB": [
+                7007.16439403242,
+                8260.692556619928
+              ]
+            }
+          }
+        }
+      },
+      "repeatability": {
+        "prefix": {
+          "comparedSampleFrames": 11520,
+          "differentSampleFrames": 11520,
+          "differentSamplesLR": [
+            11520,
+            11520
+          ],
+          "firstDifferentFrame": 0,
+          "lastDifferentFrame": 11519,
+          "peakErrorLSB": [
+            65085,
+            64803
+          ],
+          "errorEnergyLSB2": [
+            6147692641760,
+            6180567860786
+          ],
+          "errorRmsLSB": [
+            23100.94965911094,
+            23162.634280330472
+          ],
+          "referenceRmsLSB": [
+            18984.081863596475,
+            18864.92918227976
+          ]
+        },
+        "suffix": {
+          "comparedSampleFrames": 938880,
+          "differentSampleFrames": 933830,
+          "differentSamplesLR": [
+            933758,
+            933752
+          ],
+          "firstDifferentFrame": 11520,
+          "lastDifferentFrame": 949906,
+          "peakErrorLSB": [
+            65535,
+            65535
+          ],
+          "errorEnergyLSB2": [
+            628997418212801,
+            627860786895296
+          ],
+          "errorRmsLSB": [
+            25883.284591390715,
+            25859.887790549463
+          ],
+          "referenceRmsLSB": [
+            18406.223459017358,
+            18377.934333134115
+          ]
+        },
+        "joinBefore20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 960,
+          "differentSamplesLR": [
+            960,
+            960
+          ],
+          "firstDifferentFrame": 10560,
+          "lastDifferentFrame": 11519,
+          "peakErrorLSB": [
+            64968,
+            64404
+          ],
+          "errorEnergyLSB2": [
+            646663956729,
+            618786843862
+          ],
+          "errorRmsLSB": [
+            25953.964788821282,
+            25388.375864220157
+          ],
+          "referenceRmsLSB": [
+            19155.6354360364,
+            18502.334154607357
+          ]
+        },
+        "joinAfter20ms": {
+          "comparedSampleFrames": 960,
+          "differentSampleFrames": 960,
+          "differentSamplesLR": [
+            960,
+            960
+          ],
+          "firstDifferentFrame": 11520,
+          "lastDifferentFrame": 12479,
+          "peakErrorLSB": [
+            64013,
+            62875
+          ],
+          "errorEnergyLSB2": [
+            699739994360,
+            646165867200
+          ],
+          "errorRmsLSB": [
+            26998.07080993628,
+            25943.967410556157
+          ],
+          "referenceRmsLSB": [
+            18910.712244541013,
+            19111.10470367403
+          ]
+        }
+      },
+      "uncutBitExact": false
+    },
+    "controlDisplayPicture": {
+      "captured": 561,
+      "readable": 495,
+      "interiorUnreadable": 0,
+      "distinct": 490,
+      "marked": 125,
+      "missingKept": [
+        3,
+        19,
+        27,
+        63,
+        85,
+        104,
+        368,
+        443,
+        499
+      ],
+      "missingMarked": [
+        156
+      ],
+      "outOfOrder": 0,
+      "duplicates": 5,
+      "controlComplete": false,
+      "filteredComplete": false,
+      "joinAdjacent": false,
+      "first": 0,
+      "last": 498,
+      "captureSpanS": 23.4059,
+      "witnessSpanS": 20.0048,
+      "joinTiming": {
+        "136-137": {
+          "observedMs": 42.09,
+          "lowerMs": 0.0,
+          "upperMs": 80.46
+        },
+        "262-263": {
+          "observedMs": 38.6,
+          "lowerMs": 0.0,
+          "upperMs": 79.4
+        }
+      },
+      "maxWitnessIntervalMs": 108.61,
+      "maxCaptureGapMs": 68.31,
+      "largestCaptureGaps": [
+        {
+          "ms": 68.31,
+          "before": 303,
+          "after": 304,
+          "fromS": 14.813944,
+          "toS": 14.882256
+        },
+        {
+          "ms": 65.38,
+          "before": 79,
+          "after": 80,
+          "fromS": 5.888067,
+          "toS": 5.953444
+        },
+        {
+          "ms": 60.77,
+          "before": 94,
+          "after": 95,
+          "fromS": 6.486556,
+          "toS": 6.547322
+        },
+        {
+          "ms": 60.11,
+          "before": 147,
+          "after": 148,
+          "fromS": 8.6022,
+          "toS": 8.662311
+        },
+        {
+          "ms": 59.7,
+          "before": 106,
+          "after": 107,
+          "fromS": 6.952111,
+          "toS": 7.011811
+        }
+      ],
+      "joinWindow": [
+        {
+          "frame": 132,
+          "ptsS": 8.030356
+        },
+        {
+          "frame": 133,
+          "ptsS": 8.071678
+        },
+        {
+          "frame": 134,
+          "ptsS": 8.110333
+        },
+        {
+          "frame": 135,
+          "ptsS": 8.148989
+        },
+        {
+          "frame": 136,
+          "ptsS": 8.187356
+        },
+        {
+          "frame": 137,
+          "ptsS": 8.229444
+        },
+        {
+          "frame": 262,
+          "ptsS": 13.1916
+        },
+        {
+          "frame": 263,
+          "ptsS": 13.2302
+        },
+        {
+          "frame": 264,
+          "ptsS": 13.2688
+        },
+        {
+          "frame": 265,
+          "ptsS": 13.309678
+        },
+        {
+          "frame": 266,
+          "ptsS": 13.348344
+        },
+        {
+          "frame": 267,
+          "ptsS": 13.386556
+        }
+      ],
+      "joinMaxCaptureGapMs": 60.11
+    },
+    "filteredDisplayPicture": {
+      "captured": 448,
+      "readable": 365,
+      "interiorUnreadable": 0,
+      "distinct": 362,
+      "marked": 0,
+      "missingKept": [
+        0,
+        3,
+        5,
+        290,
+        320,
+        343,
+        362,
+        378,
+        398,
+        413,
+        474,
+        499
+      ],
+      "missingMarked": [
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255,
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262
+      ],
+      "outOfOrder": 0,
+      "duplicates": 3,
+      "controlComplete": false,
+      "filteredComplete": false,
+      "joinAdjacent": true,
+      "first": 1,
+      "last": 498,
+      "captureSpanS": 19.9625,
+      "witnessSpanS": 14.8511,
+      "joinTiming": {
+        "136-263": {
+          "observedMs": 44.5,
+          "lowerMs": 0.0,
+          "upperMs": 83.99
+        }
+      },
+      "maxWitnessIntervalMs": 84.62,
+      "maxCaptureGapMs": 62.5,
+      "largestCaptureGaps": [
+        {
+          "ms": 62.5,
+          "before": 272,
+          "after": 273,
+          "fromS": 8.792233,
+          "toS": 8.854733
+        },
+        {
+          "ms": 61.1,
+          "before": 53,
+          "after": 54,
+          "fromS": 5.057178,
+          "toS": 5.118278
+        },
+        {
+          "ms": 59.16,
+          "before": 359,
+          "after": 360,
+          "fromS": 12.286956,
+          "toS": 12.346111
+        },
+        {
+          "ms": 56.3,
+          "before": 394,
+          "after": 395,
+          "fromS": 13.6866,
+          "toS": 13.7429
+        },
+        {
+          "ms": 56.19,
+          "before": 287,
+          "after": 288,
+          "fromS": 9.421222,
+          "toS": 9.477411
+        }
+      ],
+      "joinWindow": [
+        {
+          "frame": 132,
+          "ptsS": 8.246044
+        },
+        {
+          "frame": 133,
+          "ptsS": 8.287033
+        },
+        {
+          "frame": 134,
+          "ptsS": 8.325411
+        },
+        {
+          "frame": 135,
+          "ptsS": 8.365744
+        },
+        {
+          "frame": 136,
+          "ptsS": 8.405233
+        },
+        {
+          "frame": 263,
+          "ptsS": 8.449733
+        },
+        {
+          "frame": 264,
+          "ptsS": 8.489167
+        },
+        {
+          "frame": 265,
+          "ptsS": 8.519656
+        },
+        {
+          "frame": 266,
+          "ptsS": 8.566222
+        },
+        {
+          "frame": 267,
+          "ptsS": 8.604856
+        }
+      ],
+      "joinMaxCaptureGapMs": 46.57
+    }
+  },
+  "hostBeforeRun": {
+    "load1": 5.04,
+    "cpus": 8.0,
+    "availableGiB": 16.13,
+    "ioFull10sPct": 1.8,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.04,
+    "busy": false
+  },
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "emulatorVersion": "37.2.12",
+  "declaredGpu": "host",
+  "llvmpipeThreadsRequested": 2,
+  "guestRamMiB": 1536,
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "audioInputFormat": "s16le 2ch 48000Hz",
+  "guestKernelMemTotalKiB": 1502720,
+  "pluginBuild": "e86214175b0f499dca6a3e62689f8f019c66364a0a92477551ebfd0ca162aa7f",
+  "fixtureSha256": "c389aa672ebd63dcf1cb77fbaa2ea9946cd3ff4e8430b6ce5b8710d1669502c8",
+  "splitCapture": true,
+  "scratchPeakBytesObserved": 1361539072,
+  "hostWorstObservedIo": {
+    "load1": 25.41,
+    "cpus": 8.0,
+    "availableGiB": 11.8,
+    "ioFull10sPct": 50.46,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": true
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 0.73,
+    "scopeIOFull10sPct": 3.32
+  },
+  "hostAfterRun": {
+    "load1": 41.37,
+    "cpus": 8.0,
+    "availableGiB": 14.47,
+    "ioFull10sPct": 30.17,
+    "scopeMemoryFull10sPct": 0.26,
+    "scopeIOFull10sPct": 1.57,
+    "busy": true
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 482.6,
+  "blocker": "Host too busy; timed out at warmControl (1m load 41.37/8 CPUs, 14.47 GiB available, I/O full PSI 30.17%, run scope memory/I/O PSI 0.26%/1.57%)",
+  "claims": [
+    "PASS filtered handoff \u2014 Pointer POST / list GET / original range GET: [1, 1, 1]; 1x",
+    "FAIL picture control \u2014 490/500, 125/126 marked at 1x (68.31 ms max gap); unseen 3,19,27,63,85,104,156,368,443,499",
+    "not-measured marked picture \u2014 Uncut display did not witness all 500 in order on a verified tap",
+    "not-measured kept picture at join \u2014 Uncut display did not witness all 500 in order on a verified tap",
+    "not-measured real-speed join \u2014 -80.46\u201383.99 ms extra hold vs uncut; 40 ms stall threshold; sampled 362/374 kept, 0 marked at 1x",
+    "FAIL sound control \u2014 880 Hz L/R 5035/5035 and 5025/5025 ms (expected 5040); 48 kHz stereo, pre-roll 0/0 LSB RMS, peak 8608/8608 LSB; 5 ms at 0.10 FS",
+    "not-measured marked sound \u2014 Two uncut controls did not calibrate the known marked tone; filtered detector 65/65 ms L/R, not a leak count",
+    "not-measured kept tones \u2014 Uncut 440/660 Hz L/R 5500/5500, 9645/9645 ms; repeat 5505/5505, 9665/9665 ms (expected 5480, 9480)",
+    "not-measured kept PCM at join \u2014 Fixed origin; before 960/960, 9304.75/9304.75 vs 10691.7/10691.7 LSB RMS floor; after 960/960, 8226.83/8226.83 vs 8900.42/8900.42 LSB RMS floor; span at 512 LSB 719786/718080 samples; constant delay not established",
+    "FAIL lossless control \u2014 FLAC verified in libmpv; expected 960000 samples; 1112770 span, 960000 differing; repeat 1116596 span, 960000 differing; bit-exact False",
+    "not-measured lossless filtered PCM \u2014 Pinned plugin accepts AAC only; FLAC control was not a filtered projection",
+    "not-measured seek forward/back \u2014 Host too busy; timed out at warmControl (1m load 41.37/8 CPUs, 14.47 GiB available, I/O full PSI 30.17%, run scope memory/I/O PSI 0.26%/1.57%)",
+    "not-measured persisted resume \u2014 Host too busy; timed out at warmControl (1m load 41.37/8 CPUs, 14.47 GiB available, I/O full PSI 30.17%, run scope memory/I/O PSI 0.26%/1.57%)"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261122T044458Z-fe6fcca407",
+  "candidateWritten": true
+}
