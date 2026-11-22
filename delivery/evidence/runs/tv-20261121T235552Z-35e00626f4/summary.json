@@ -1,0 +1,32 @@
+{
+  "startedUtc": "20261121T235552Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {},
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "emulatorVersion": "37.2.12",
+  "declaredGpu": "host",
+  "scratchPeakBytesObserved": 88002560,
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 189.8,
+  "blocker": "Run interrupted",
+  "claims": [
+    "not-measured filtered handoff \u2014 Run interrupted",
+    "not-measured picture control \u2014 Run interrupted",
+    "not-measured marked picture \u2014 Run interrupted",
+    "not-measured kept picture at join \u2014 Run interrupted",
+    "not-measured real-speed join \u2014 Run interrupted",
+    "not-measured sound control \u2014 Run interrupted",
+    "not-measured marked sound \u2014 Run interrupted",
+    "not-measured kept tones \u2014 Run interrupted",
+    "not-measured kept PCM at join \u2014 Run interrupted",
+    "not-measured seek forward/back \u2014 Run interrupted",
+    "not-measured persisted resume \u2014 Run interrupted"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261121T235552Z-35e00626f4",
+  "candidateWritten": false
+}
