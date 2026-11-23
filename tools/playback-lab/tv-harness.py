@@ -108,19 +108,21 @@ def run(*args, timeout=30, **kwargs):
                   stderr=sp.PIPE, **kwargs).stdout
 
 
-def release(work):
-    folder = work/'release'
+def release(work, abi='x86_64'):
+    from tv_device import ASSETS
+    name, digest, size, lib = ASSETS[abi]
+    folder = work/('release-'+abi)
     folder.mkdir()
     row, = [a for a in json.loads(run('gh', 'release', 'view', TAG, '-R', REPO,
-                                   '--json', 'assets'))['assets'] if a['name'] == APK]
-    if row['digest'] != 'sha256:'+DIGEST or row['size'] != 53836582:
-        raise RuntimeError('Official release metadata differs from pinned x86_64 build')
-    run('gh', 'release', 'download', TAG, '-R', REPO, '-p', APK, '-D', folder, timeout=120)
-    file = folder/APK
-    if hashlib.sha256(file.read_bytes()).hexdigest() != DIGEST:
+                                   '--json', 'assets'))['assets'] if a['name'] == name]
+    if row['digest'] != 'sha256:'+digest or row['size'] != size:
+        raise RuntimeError(f'Official release metadata differs from pinned {abi} build')
+    run('gh', 'release', 'download', TAG, '-R', REPO, '-p', name, '-D', folder, timeout=120)
+    file = folder/name
+    if hashlib.sha256(file.read_bytes()).hexdigest() != digest:
         raise RuntimeError('APK differs from published SHA-256')
     with zipfile.ZipFile(file) as z:
-        z.getinfo('lib/x86_64/libmpv.so')
+        z.getinfo(lib)
     return file
 
 
@@ -199,6 +201,46 @@ class TV:
 
     def spawn(self, cmd, label):
         return self.stack.enter_context(owned(cmd, self.env, self.work/(label+'.log')))
+
+    public_origin_host = 'http://10.0.2.2:18096'
+    app_digest = DIGEST
+    ui_scale = (1, 1)
+    no_test_packages = False
+    expected_route = [{'sink':'fixture','mute':False,'corked':False}]
+
+    def alive(self):
+        return self.emu.poll() is None
+
+    def clear_log(self):
+        self.adb('logcat','-c')  # Only this private guest, before each playback.
+
+    def device_mode(self):
+        return f'Google TV API 36 x86_64 emulator 1280x720, {self.ram_mib} MiB, {self.graphicsClass}, software video vo-gpu Android GLES, stereo PCM'
+
+    def audio_route(self):
+        return audio_route(self)
+
+    def configure_audio(self):
+        return configure_audio(self)
+
+    def begin_capture(self, s, label, limit, info, *, sound, display):
+        audio=self.work/(label+'.pcm') if sound else None
+        video=None
+        if sound:
+            mon=s.enter_context(audio.open('wb')); err=s.enter_context((self.work/(label+'-audio.log')).open('wb'))
+            proc=sp.Popen(self.prefix+['parec','--device=fixture.monitor','--format=s16le','--rate=48000','--channels=2','--raw','--latency-msec=20'],env=self.env,stdout=mon,stderr=err)
+            def stop():
+                proc.terminate()
+                try: proc.wait(timeout=5)
+                except sp.TimeoutExpired:proc.kill();proc.wait(timeout=5)
+            s.callback(stop)
+            eventually(lambda:audio.stat().st_size>=38400,12,'Private monitor did not yield 200 ms of PCM')
+        if display:
+            video=capture_display(self,s,label,limit,info)
+        return video,audio
+
+    def audio_route_ok(self, info):
+        return info.get('activeQemuAudioRoute')==self.expected_route
 
     def call(self, *args, **kw):
         return run(*self.prefix, *args, env=self.env, **kw)
@@ -281,9 +323,9 @@ def setup_lab(work,tv,stack):
             run('docker','rm','-f',lab.cid,timeout=30)
     stack.callback(cleanup)
     lab.setup()
-    lab.wholphin['tuple'].update(appBuild=DIGEST,deviceMode=f'Google TV API 36 x86_64 emulator 1280x720, {tv.ram_mib} MiB, {tv.graphicsClass}, software video vo-gpu Android GLES, stereo PCM')
+    lab.wholphin['tuple'].update(appBuild=tv.app_digest,deviceMode=tv.device_mode())
     lab.wholphin['status']='experimental'
-    lab.public_origin='http://10.0.2.2:18096'+kit.BASE
+    lab.public_origin=tv.public_origin_host+kit.BASE
     lab.setup_pointer()
     cfg=lab.api('/System/Configuration',user=lab.admin)
     resume_settings=dict(MinResumeDurationSeconds=1,MinResumePct=1,MaxResumePct=95)
@@ -327,6 +369,8 @@ APP='com.github.damontecres.wholphin'
 INPUT='org.cleanyfin.fixture'
 
 def install_input(tv):
+    if tv.no_test_packages:
+        raise RuntimeError('Wholphin did not expose Save for the verified mpv.conf text; device mode installs no helper package')
     root=tv.work/'input'; root.mkdir(exist_ok=True)
     apk=root/'input.apk'; android=tv.sdk/'platforms/android-36/android.jar'; tools=tv.sdk/'build-tools/36.0.0'
     if not apk.exists():
@@ -343,6 +387,7 @@ def install_input(tv):
 class Screen:
     def __init__(self,tv):
         self.tv=tv
+        self.sx,self.sy=tv.ui_scale
 
     def tree(self):
         import xml.etree.ElementTree as ET
@@ -479,7 +524,7 @@ class Screen:
                 l,t,r,b=map(int,re.findall(r'\d+',node.get('bounds','')))
                 # The gear is the only far-left, unlabeled button in the
                 # bottom control row of the fixed 1280x720 lab display.
-                if 0<=l<160 and 520<t<b<=720 and 0<r-l<180 and not (node.get('text') or node.get('content-desc')):
+                if 0<=l<160*self.sx and 520*self.sy<t<b<=720*self.sy and 0<r-l<180*self.sx and not (node.get('text') or node.get('content-desc')):
                     buttons.append((l,t,r,b))
             return max(buttons,key=lambda bounds:(bounds[1],-bounds[0]),default=None)
         def focus_gear():
@@ -492,7 +537,7 @@ class Screen:
             l,t,r,b=target
             x,y,w,h=map(int,re.findall(r'\d+',f.get('bounds','')))
             fx,fy=(x+w)//2,(y+h)//2
-            if l<=fx<=r and t<=fy<=b and w-x<180:
+            if l<=fx<=r and t<=fy<=b and w-x<180*self.sx:
                 self.key('DPAD_CENTER');return True
             direction=('DOWN' if fy<t else 'UP' if fy>b else 'LEFT' if fx>r else 'RIGHT')
             self.key('DPAD_'+direction);return False
@@ -663,23 +708,12 @@ def observe_presentations(tv, stop, receipt):
 
 
 def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
-    audio=tv.work/(label+'.pcm') if sound else None
-    video=None
     duration=14.96 if item==lab.pointer else 20
     limit=duration/speed+MEDIA_MARGIN_SECONDS
     info.update(speed=speed,fixtureDurationS=duration,wallCeilingS=limit,endSignal='fixture duration plus startup margin (no end signal)')
     with ExitStack() as s:
-        if sound:
-            mon=s.enter_context(audio.open('wb')); err=s.enter_context((tv.work/(label+'-audio.log')).open('wb'))
-            proc=sp.Popen(tv.prefix+['parec','--device=fixture.monitor','--format=s16le','--rate=48000','--channels=2','--raw','--latency-msec=20'],env=tv.env,stdout=mon,stderr=err)
-            def stop():
-                proc.terminate()
-                try: proc.wait(timeout=5)
-                except sp.TimeoutExpired:proc.kill();proc.wait(timeout=5)
-            s.callback(stop)
-            eventually(lambda:audio.stat().st_size>=38400,12,'Private monitor did not yield 200 ms of PCM')
+        video,audio=tv.begin_capture(s,label,limit,info,sound=sound,display=display)
         if display:
-            video=capture_display(tv,s,label,limit,info)
             # An opened MP4 only certifies that the recorder created its file.
             # Allow composition/encoding before playing; trim by barcode later.
             time.sleep(DISPLAY_PREROLL_SECONDS)
@@ -694,14 +728,14 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
                 if observer.is_alive():timeline['incomplete']='SurfaceFlinger timing read did not finish'
             s.callback(end_observation)
         if begin is None:
-            tv.adb('logcat','-c')  # Only this private guest, before each playback.
+            tv.clear_log()
         launch=time.monotonic(); pid=''; saw_session=False; saw_surface=False
         with take_deadline(limit) as expired:
             try:
                 if begin is None:play(tv,lab,item)
                 else:begin()  # Player already paused at the first witnessed frame.
                 while True:
-                    if tv.emu.poll() is not None:raise RuntimeError('Owned Android emulator exited during capture')
+                    if not tv.alive():raise RuntimeError('TV device left during capture')
                     try:
                         if not pid:
                             pid=tv.adb('shell','pidof',APP,timeout=2).decode().strip()
@@ -716,7 +750,7 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
                             method=sess.get('PlayState',{}).get('PlayMethod')
                             if method:info['playMethod']=method
                             if not info.get('activeQemuAudioRoute'):
-                                info['activeQemuAudioRoute']=audio_route(tv)
+                                info['activeQemuAudioRoute']=tv.audio_route()
                         elif saw_session:
                             info['endSignal']='Jellyfin session no longer reports the item';break
                         if info.get('libmpvVO'):
@@ -741,8 +775,9 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
             except (sp.CalledProcessError,sp.TimeoutExpired):pass
     if video is not None:info['videoBytes']=video.stat().st_size if video.is_file() else 0
     if audio is not None:
-        info['audioBytes']=audio.stat().st_size
+        info['audioBytes']=audio.stat().st_size if audio.is_file() else 0
         info['audioDurationS']=round(info['audioBytes']/192000,3)
+    info['audioRouteVerified']=bool(sound and tv.audio_route_ok(info))
     info['runtimeVerified']=bool(info.get('libmpvAO') and info.get('libmpvVO') and info.get('playMethod')=='DirectPlay')
     print(f"{label}: {speed:g}x, {info['endSignal']}, watched {info['watchedS']:g}s; DirectPlay and libmpv AO/VO verified: {info['runtimeVerified']}",file=sys.stderr,flush=True)
     return video,audio
@@ -802,7 +837,7 @@ def shown_frame(tv,scorer):
 
 
 def prepare_at_zero(tv,lab,ui,item,scorer,info,speed):
-    tv.adb('logcat','-c')
+    tv.clear_log()
     play(tv,lab,item)
     eventually(lambda:now(lab,item),15,'Paused start: no native playback session')
     def command(op):
@@ -827,7 +862,7 @@ def measure(tv,lab,ui,out,split):
     from exact_audio import plan_frames
     from hard_fixture_lab import IDENTIFIABLE_CUT, HZ, FPS
     scorer=module('analyze-capture'); takes=out['recordings']={}
-    out['audioLevels']=configure_audio(tv)
+    out['audioLevels']=tv.configure_audio()
     print('Private audio setup:',json.dumps(out['audioLevels']),file=sys.stderr,flush=True)
     def score(key,scorer_fn,*args):
         try:out[key]=scorer_fn(*args)
@@ -978,7 +1013,7 @@ def controls(tv,lab,ui,out):
     def ticks():
         return lab.api('/Users/'+lab.viewer+'/Items/'+lab.pointer,user=lab.one).get('UserData',{}).get('PlaybackPositionTicks',0)
     receipt['bookmarkBeforeTicks']=ticks()
-    tv.adb('logcat','-c')
+    tv.clear_log()
     play(tv,lab,lab.pointer)
     if not witness(lambda:now(lab,lab.pointer),20,'Control playback did not start'):return
     def shown():return shown_frame(tv,scorer)
@@ -1059,7 +1094,7 @@ def controls(tv,lab,ui,out):
     if not nodes:return
     n=nodes[0];label=n.get('content-desc') or n.get('text')
     before=handoff(lab)[0]
-    tv.adb('logcat','-c')
+    tv.clear_log()
     info=receipt['resumeTake']={}
     try:video,_=record(tv,lab,lab.pointer,'resume',1,info,lambda:ui.activate(label),sound=False)
     except RuntimeError as exc:
@@ -1074,6 +1109,369 @@ def controls(tv,lab,ui,out):
     receipt['expectedResumeFrame']=tick//400000+(126 if tick>=54800000 else 0)
     receipt['resumePicture']={key:pic.get(key) for key in ('first','last','maxCaptureGapMs','interiorUnreadable')}
     print('Resume observation:',json.dumps({k:receipt[k] for k in ('bookmarkTicks','expectedResumeFrame','resumePicture')}),file=sys.stderr,flush=True)
+
+
+# ---------------------------------------------------------------------------
+# Device mode: the owner's Google TV box over wireless debugging, its HDMI
+# output captured through a USB adapter on this PC. The dry run drives the
+# harness's own emulator over adb TCP and feeds recorded files as capture.
+
+STORE_SIZE = '320x180'
+STORE_FILTER = f"scale={STORE_SIZE.replace('x',':')}:flags=area,format=gray"
+LAB_PORT = 18096
+
+
+def pcm_arrival(audio, info, fmt, fmt_ok):
+    """Verify the format actually arriving, not the one requested."""
+    from tv_device import iec61937
+    from array import array
+    raw=audio.read_bytes() if audio.is_file() else b''
+    vals=array('h',raw[:len(raw)//2*2]) if raw else array('h')
+    if sys.byteorder!='little':vals.byteswap()
+    peak=max(map(abs,vals),default=0)
+    bitstream=iec61937(raw)
+    info['arrivingAudio']=dict(format=fmt,formatOk=fmt_ok,bytes=len(raw),peakLSB=peak,iec61937Bitstream=bitstream,
+                               ok=bool(fmt_ok and raw and not len(raw)%4 and peak>0 and not bitstream))
+    if bitstream:print('Captured audio is an undecoded bitstream; the box must output decoded PCM',file=sys.stderr,flush=True)
+
+
+class AdapterCapture:
+    """Video from the adapter's UVC node through the pinned FFmpeg container (only that node
+    passed in); audio from the adapter's own ALSA capture device at 48 kHz stereo, opened as
+    `hw:` so nothing resamples it. The desktop's default sink and source are never touched."""
+    def __init__(self,work,adapter,mode,reason):
+        from tv_device import FFMPEG_PIXFMT
+        self.work,self.adapter,self.mode,self.reason=work,adapter,mode,reason
+        self.pixfmt=FFMPEG_PIXFMT.get(mode['fourcc'],mode['fourcc'])
+        self.label=f"{adapter['model']} {mode['fourcc']} 1920x1080@60"
+
+    def begin(self,s,label,limit,info,*,sound,display):
+        from hard_fixture_lab import IMAGE
+        video=audio=None
+        node=self.adapter['video']
+        if display:
+            video=self.work/(label+'.mkv'); name='cleanyfin-hdmi-'+os.urandom(4).hex()
+            cmd=['docker','run','--rm','--name',name,'--network','none','--user',f'{os.getuid()}:{os.getgid()}',
+                 '--group-add',str(os.stat(node).st_gid),'--device',f'{node}:{node}','-v',f'{self.work}:/lab:Z',
+                 '--entrypoint','/usr/lib/jellyfin-ffmpeg/ffmpeg',IMAGE,'-hide_banner','-loglevel','error','-nostdin',
+                 '-f','v4l2','-input_format',self.pixfmt,'-video_size','1920x1080','-framerate','60','-i',node,
+                 '-t',str(math.ceil(limit+8)),'-map','0:v:0','-vf',STORE_FILTER,'-fps_mode','passthrough',
+                 '-c:v','ffv1','/lab/'+video.name]
+            proc=s.enter_context(owned(cmd,os.environ,self.work/(label+'-hdmi-video.log')))
+            def stop_video():
+                try:run('docker','stop','-t','6',name,timeout=15)
+                except (sp.CalledProcessError,sp.TimeoutExpired):pass
+            s.callback(stop_video)
+            def started():
+                if proc.poll() is not None:raise RuntimeError('HDMI video capture exited (adapter busy or mode refused)')
+                return video.is_file() and video.stat().st_size>0
+            eventually(started,15,'HDMI video capture did not start')
+            info['displayTap']=f'HDMI adapter {self.label} via pinned FFmpeg v4l2 -> stored {STORE_SIZE} gray FFV1'
+        if sound:
+            audio=self.work/(label+'.pcm')
+            s.callback(lambda:pcm_arrival(audio,info,'s16le 48000 Hz 2 ch from adapter hw: device (no resampling)',True))
+            cmd=['arecord','-q','-D',f"hw:CARD={self.adapter['cardId']},DEV=0",'-f','S16_LE','-r','48000','-c','2','-t','raw',str(audio)]
+            proc=s.enter_context(owned(cmd,os.environ,self.work/(label+'-hdmi-audio.log')))
+            def started():
+                if proc.poll() is not None:raise RuntimeError('Adapter audio capture refused 48 kHz stereo 16-bit or is busy')
+                return audio.is_file() and audio.stat().st_size>=38400
+            eventually(started,10,'Adapter audio capture did not yield 200 ms')
+        return video,audio
+
+
+class FileCapture:
+    """Dry run: recorded video/audio files stand in for the adapter, through the same
+    normalisation, arriving-format check and scoring."""
+    def __init__(self,work,mapping):
+        self.work,self.mapping=work,mapping
+        self.label='recorded capture files (dry run)'
+        (work/'feed').mkdir(exist_ok=True)
+
+    def begin(self,s,label,limit,info,*,sound,display):
+        from tv_device import pick_capture, arriving_audio
+        from hard_fixture_lab import media
+        src=pick_capture(self.mapping,label)
+        if src is None:raise RuntimeError(f'No --capture-file for take {label}')
+        feed=self.work/'feed'/(label+src.suffix)
+        if not feed.exists():shutil.copyfile(src,feed)
+        video=self.work/(label+'.mkv') if display else None
+        audio=self.work/(label+'.pcm') if sound else None
+        def finish():
+            if display:
+                media(self.work,'ffmpeg','-i','/lab/feed/'+feed.name,'-map','0:v:0','-vf',STORE_FILTER,'-fps_mode','passthrough','-c:v','ffv1','-y','/lab/'+video.name)
+            if sound:
+                streams=json.loads(media(self.work,'ffprobe','-select_streams','a:0','-show_entries','stream=codec_name,sample_rate,channels','-of','json','/lab/feed/'+feed.name,readonly=True)).get('streams',[])
+                ok,fmt=arriving_audio(streams[0] if streams else {})
+                if ok:media(self.work,'ffmpeg','-i','/lab/feed/'+feed.name,'-map','0:a:0','-c:a','copy','-f','s16le','-y','/lab/'+audio.name)
+                else:audio.write_bytes(b'')
+                pcm_arrival(audio,info,fmt,ok)
+        s.callback(finish)
+        if display:info['displayTap']=f'recorded capture file (dry run) -> stored {STORE_SIZE} gray FFV1'
+        info['captureFile']=src.name
+        return video,audio
+
+
+class DeviceTV:
+    """The box (or the dry-run emulator) reached only through adb at the given address."""
+    public_origin_host=f'http://127.0.0.1:{LAB_PORT}'  # device loopback, carried by adb reverse
+    no_test_packages=True
+    app_digest=DIGEST
+
+    def __init__(self,work,sdk,stack,*,prefix,env,port,capture,emulator=None):
+        self.work,self.sdk,self.stack,self.prefix,self.env,self.port=work,sdk,stack,list(prefix),env,port
+        self.capture,self.emulator,self.serial,self.found=capture,emulator,None,{}
+        self.ui_scale=(1,1); self.misses=0
+
+    def spawn(self,cmd,label):
+        return self.stack.enter_context(owned(cmd,self.env,self.work/(label+'.log')))
+
+    def call(self,*args,**kw):
+        return run(*self.prefix,*args,env=self.env,**kw)
+
+    def adb_args(self,*args):
+        target=['-s',self.serial] if self.serial else []
+        return [*self.prefix,str(self.sdk/'platform-tools/adb'),'-P',str(self.port),*target,*map(str,args)]
+
+    def adb(self,*args,**kw):
+        return run(*self.adb_args(*args),env=self.env,**kw)
+
+    def start_server(self):
+        self.spawn(self.prefix+[self.sdk/'platform-tools/adb','-L',f'tcp:localhost:{self.port}','server','nodaemon'],'adb')
+        eventually(lambda:self.adb('version',timeout=3) and self.adb('devices',timeout=3) is not None,10,'Private adb server unavailable')
+
+    def pair(self,address,code):
+        # The code goes to adb on stdin: not in argv, logs or the summary.
+        out=run(*self.adb_args('pair',address),env=self.env,input=(code+'\n').encode(),timeout=30)
+        if b'Successfully paired' not in out:raise RuntimeError('Wireless debugging pairing was not accepted')
+
+    def connect(self,address):
+        out=self.adb('connect',address,timeout=20)
+        if b'connected to' not in out:raise RuntimeError('Could not connect to the box at the debugging address')
+        self.serial=address
+        eventually(lambda:self.adb('get-state',timeout=4).strip()==b'device',20,'Box did not become ready over wireless debugging')
+        size=re.findall(rb'(\d+)x(\d+)',self.adb('shell','wm','size',timeout=8))
+        if size:
+            w,h=map(int,size[-1]);self.ui_scale=(w/1280,h/720);self.found['uiSize']=f'{w}x{h}'
+
+    def alive(self):
+        if self.emulator is not None and self.emulator.emu.poll() is not None:return False
+        try:ok=self.adb('get-state',timeout=4).strip()==b'device'
+        except (sp.CalledProcessError,sp.TimeoutExpired):ok=False
+        self.misses=0 if ok else self.misses+1
+        return self.misses<3  # Tolerate a brief Wi-Fi hiccup, not a lost box.
+
+    def clear_log(self):
+        pass  # Never clear the family box's logs; each take reads only its fresh Wholphin pid.
+
+    def device_mode(self):
+        from tv_device import register_label
+        f=self.found
+        if self.emulator is not None:
+            return register_label(f"DRY RUN Google TV API 36 x86_64 emulator over adb TCP, capture {self.capture.label}")
+        return register_label(f"{f.get('manufacturer')} {f.get('model')}, Android {f.get('android')} build {f.get('build')}, "
+                              f"HDMI capture {self.capture.label}, software video vo-gpu Android GLES, decoded stereo PCM")
+
+    def audio_route(self):
+        return [{'capture':self.capture.label}]
+
+    def audio_route_ok(self,info):
+        return bool(info.get('arrivingAudio',{}).get('ok'))
+
+    def configure_audio(self):
+        from tv_device import parse_volume,MUSIC_STREAM
+        cmd=['shell','cmd','media_session','volume','--stream',str(MUSIC_STREAM)]
+        before=parse_volume(self.adb(*cmd,'--get').decode(errors='replace'))
+        result={'androidMusicVolumeBefore':before and before['value']}
+        if before:
+            self.adb(*cmd,'--set',str(before['max']))
+            after=parse_volume(self.adb(*cmd,'--get').decode(errors='replace'))
+            result.update(androidMusicVolumeAfter=after and after['value'],androidMusicVolumeMax=before['max'])
+            if not after or after['value']!=before['max']:
+                # No volume keys: on a real box they can reach a TV over HDMI-CEC.
+                # HDMI output is often fixed-volume; the capture's gain is measured instead.
+                result['volumeLimit']='box kept its volume; output gain is measured from the capture, not assumed'
+        else:result['androidMusicVolumeReadback']='unavailable; not assuming unity'
+        return result
+
+    def begin_capture(self,s,label,limit,info,*,sound,display):
+        return self.capture.begin(s,label,limit,info,sound=sound,display=display)
+
+
+class DeviceScreen(Screen):
+    """Pause/play through Android's own media-session command; no helper package on the box."""
+    def input_result(self,op,value='0'):
+        from tv_device import media_state
+        if op in ('pause','play'):
+            try:self.tv.adb('shell','cmd','media_session','dispatch',op,timeout=6)
+            except (sp.CalledProcessError,sp.TimeoutExpired):return 'unavailable'
+            return 'applied'
+        if op=='state':
+            try:state=media_state(self.tv.adb('shell','dumpsys','media_session',timeout=6).decode(errors='replace'))
+            except (sp.CalledProcessError,sp.TimeoutExpired):return 'no-result'
+            return f'{state}:' if state is not None else 'no-result'
+        return 'unsupported'
+
+
+def adapter_capture(work,opts,summary):
+    import tv_device as dev
+    src=run('pactl','get-default-source').decode().strip()
+    card=dev.default_source_card(src,run('pactl','-f','json','list','sources').decode())
+    found=dev.discover(extra_ids=opts.capture_usb or (),default_source_card=card)
+    summary['captureDiscovery']=found
+    for r in found['refused']:print('Not using',r['device'],'-',r['reason'],file=sys.stderr,flush=True)
+    if len(found['adapters'])!=1:
+        raise RuntimeError(f"Need exactly one HDMI capture adapter; found {len(found['adapters'])}")
+    adapter=found['adapters'][0]
+    modes=list_modes(adapter['video'])
+    mode,reason=dev.choose_mode(modes)
+    summary['captureMode']=dict(adapter=adapter['device'],chosen=mode,reason=reason,listed=len(modes))
+    print('Capture adapter:',adapter['device'],'| video',adapter['video'],'| audio card',adapter['cardId'],'|',reason,file=sys.stderr,flush=True)
+    if mode is None:raise RuntimeError('Capture adapter lists no 1920x1080 mode')
+    return AdapterCapture(work,adapter,mode,reason)
+
+
+def list_modes(node):
+    """Formats from v4l2-ctl if installed, else from the pinned FFmpeg with only that node."""
+    import tv_device as dev
+    if shutil.which('v4l2-ctl'):
+        return dev.parse_v4l2_ctl(run('v4l2-ctl','-d',node,'--list-formats-ext',timeout=10).decode(errors='replace'))
+    from hard_fixture_lab import IMAGE
+    p=sp.run(['docker','run','--rm','--network','none','--user',f'{os.getuid()}:{os.getgid()}','--group-add',str(os.stat(node).st_gid),
+              '--device',f'{node}:{node}','--entrypoint','/usr/lib/jellyfin-ffmpeg/ffmpeg',IMAGE,'-hide_banner',
+              '-f','v4l2','-list_formats','all','-i',node],stdout=sp.PIPE,stderr=sp.STDOUT,timeout=30)
+    return dev.parse_ffmpeg_formats(p.stdout.decode(errors='replace'))
+
+
+def free_port():
+    with socket.socket() as sock:
+        sock.bind(('127.0.0.1',0));return sock.getsockname()[1]
+
+
+def device_session(opts,work,sdk,stack,summary,history):
+    """Connect, verify identity, record the manifest, register the restore, then make the
+    budgeted changes. Returns the DeviceTV ready for setup_lab."""
+    import getpass
+    import tv_device as dev
+    if opts.capture_file:capture=FileCapture(work,dev.capture_files(opts.capture_file))
+    else:capture=adapter_capture(work,opts,summary)
+    if opts.dry_run_emulator:
+        emu=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads);emu.host_history=history
+        emu.boot();summary['graphicsAdapter']=emu.graphicsAdapter
+        tv=DeviceTV(work,sdk,stack,prefix=emu.prefix,env=emu.env,port=5037,capture=capture,emulator=emu)
+        tv.connect('127.0.0.1:5581')  # the emulator's adb port, as a TCP device: same path as the box
+    else:
+        pair,code,address=dev.connection(os.environ,input,getpass.getpass)
+        for key in [k for k in os.environ if k.startswith('CLEANYFIN_TV_')]:os.environ.pop(key)  # this run only
+        home=work/'home';home.mkdir(mode=0o700)
+        env=dict(dev.env_without_secrets(os.environ),HOME=str(home),ANDROID_USER_HOME=str(home/'.android'),
+                 ADB_MDNS='0',ADB_MDNS_AUTO_CONNECT='0',ADB_MDNS_OPENSCREEN='0',ADB_LOCAL_TRANSPORT_MAX_PORT='0')  # no discovery
+        tv=DeviceTV(work,sdk,stack,prefix=(),env=env,port=free_port(),capture=capture)
+        tv.start_server();tv.pair(pair,code);del code
+        tv.connect(address)
+        def disconnect():
+            try:tv.adb('disconnect',address,timeout=8)
+            except (sp.CalledProcessError,sp.TimeoutExpired):pass
+        stack.callback(disconnect)
+    tv.host_history=history
+    text=lambda *a:tv.adb(*a,timeout=30).decode(errors='replace')
+    props=dev.parse_getprop(text('shell','getprop'))
+    ok,found,why=dev.identity(props,text('shell','pm','list','features'),dev.parse_packages(text('shell','pm','list','packages')),
+                              emulator=opts.dry_run_emulator,expect_model=opts.expect_model)
+    tv.found.update(found);summary['device']={k:v for k,v in tv.found.items()}
+    print('Connected device:',json.dumps(summary['device']),file=sys.stderr,flush=True)
+    if not ok:raise RuntimeError('Refusing device: '+why)
+    before=dev.manifest(text);(work/'manifest-before.json').write_text(json.dumps(before,indent=1))
+    summary['manifestBefore']=manifest_digest(before)
+    if before['wholphinVersion'] is not None:
+        # Its server list and settings live in app-private storage that cannot be
+        # backed up or restored without root; never edit the family's copy.
+        raise RuntimeError(f"Wholphin {before['wholphinVersion']} is already on the box; refusing to change the family's copy")
+    state={'installed':False}
+    stack.callback(lambda:finish_device(tv,before,state,opts,summary,text))
+    print('Change budget: install Wholphin 1.1.2 (absent now), HDMI audio = PCM, music volume = max'
+          +('' if opts.frame_rate_match=='leave' else ', match content frame rate = '+opts.frame_rate_match)
+          +', a lab server inside Wholphin only. Everything is put back at the end.',file=sys.stderr,flush=True)
+    tv.adb('shell','settings','put','global','encoded_surround_output','1')  # Never: decoded PCM only
+    if opts.frame_rate_match!='leave':
+        tv.adb('shell','settings','put','secure','match_content_frame_rate',{'never':'0','seamless':'1','always':'2'}[opts.frame_rate_match])
+    apk=release(work,found['abi']);tv.app_digest=dev.ASSETS[found['abi']][1]
+    state['installed']=True
+    tv.adb('install','--no-streaming',apk,timeout=240)
+    tv.adb('reverse',f'tcp:{LAB_PORT}',f'tcp:{LAB_PORT}',timeout=10);state['reverse']=True
+    summary['androidFingerprint']=found['build']
+    return tv
+
+
+def manifest_digest(m):
+    # The family's app list stays in private scratch; the summary keeps only a digest.
+    names='\n'.join(f'{k} {v}' for k,v in sorted(m['packages'].items())).encode()
+    return dict(packageCount=len(m['packages']),packageListSha256=hashlib.sha256(names).hexdigest(),
+                settings=m['settings'],musicVolume=m['musicVolume'],wholphinVersion=m['wholphinVersion'])
+
+
+def finish_device(tv,before,state,opts,summary,text):
+    import tv_device as dev
+    log=summary['restoreSteps']=[]
+    def step(label,*args,timeout=30):
+        try:tv.adb(*args,timeout=timeout);log.append(label)
+        except (sp.CalledProcessError,sp.TimeoutExpired):log.append('FAILED: '+label)
+    if state.get('reverse'):step('removed adb reverse port','reverse','--remove',f'tcp:{LAB_PORT}')
+    if state['installed']:
+        step('stopped Wholphin','shell','am','force-stop',dev.APP)
+        # The harness installed it: its data holds only the lab server entry,
+        # the lab viewer sign-in, the MPV backend and the test mpv.conf.
+        step('cleared Wholphin data (lab server entry, backend, mpv.conf)','shell','pm','clear',dev.APP)
+    try:now=dev.manifest(text)
+    except (sp.CalledProcessError,sp.TimeoutExpired):
+        summary['restored']=False;print(LOST_BOX,file=sys.stderr,flush=True);return
+    for cmd in dev.restore_plan(before,now):step('restored: '+' '.join(cmd[1:]),*cmd)
+    keep=True
+    if state['installed'] and dev.APP in now['packages']:
+        choice=opts.after
+        if choice is None and sys.stdin.isatty():
+            answer=input('Keep Wholphin on the box for the family to use? [K]eep / [u]ninstall: ').strip().lower()
+            choice='uninstall' if answer.startswith('u') else 'keep'
+        choice=choice or 'keep'
+        if choice=='uninstall':step('uninstalled Wholphin','uninstall',dev.APP,timeout=60);keep=False
+        else:log.append('kept Wholphin (data cleared) at the family\'s choice')
+    after=dev.manifest(text)
+    summary['manifestAfter']=manifest_digest(after)
+    summary['manifestDiff']=dev.diff(before,after)
+    summary['unexpectedResidue']=dev.accepted_residue(before,after,kept_wholphin=state['installed'] and keep)
+    summary['restored']=not summary['unexpectedResidue'] and not any(x.startswith('FAILED') for x in log)
+    print('Box before/after:',('no differences' if not summary['manifestDiff'] else '; '.join(summary['manifestDiff'])),
+          '| put back:',summary['restored'],file=sys.stderr,flush=True)
+    if not opts.dry_run_emulator:print(REMINDER,file=sys.stderr,flush=True)
+
+
+REMINDER=('Now on the TV box: Settings > System > Developer options > turn Wireless debugging OFF '
+          '(and Developer options off if you like). Then plug the box back into the living-room TV.')
+LOST_BOX=('Lost the connection to the box before everything was put back. On the box: Settings > Apps > Wholphin > '
+          'Uninstall (or Clear data to keep it), and Settings > Display & Sound > Audio > Audio format back to Automatic.')
+
+
+def preflight(opts):
+    """Read-only: list candidate capture devices and already-connected adb devices."""
+    import tv_device as dev
+    src=run('pactl','get-default-source').decode().strip();sink=run('pactl','get-default-sink').decode().strip()
+    card=dev.default_source_card(src,run('pactl','-f','json','list','sources').decode())
+    found=dev.discover(extra_ids=opts.capture_usb or (),default_source_card=card)
+    print('Desktop default sink:',sink);print('Desktop default source:',src,'(never used)')
+    for a in found['adapters']:
+        print('Capture adapter:',a['device'],'video',a['video'],'audio card',a['cardId'])
+        try:
+            mode,reason=dev.choose_mode(list_modes(a['video']));print('  would capture:',mode and f"{mode['fourcc']} {mode['width']}x{mode['height']} {mode['fps'] or 'rates unlisted'}",'-',reason)
+        except (sp.CalledProcessError,sp.TimeoutExpired,OSError) as exc:print('  formats unavailable:',type(exc).__name__)
+    if not found['adapters']:print('Capture adapter: none found')
+    for r in found['refused']:print('Not a capture adapter:',r['device'],'-',r['reason'])
+    with socket.socket() as sock:
+        sock.settimeout(.5)
+        running=sock.connect_ex(('127.0.0.1',5037))==0
+    sdk=Path(os.environ.get('ANDROID_HOME') or Path.home()/'Android/Sdk')
+    if running:print('adb devices (existing server, not started by this check):\n'+run(sdk/'platform-tools/adb','devices','-l').decode().strip())
+    else:print('adb: no server running, so no connected devices (this check does not start one)')
+    print('Preflight changed nothing.')
+    return 0
 
 
 CLAIMS=('filtered handoff','picture control','marked picture','kept picture at join','real-speed join','sound control','marked sound','kept tones','kept PCM at join','lossless control','lossless filtered PCM','seek forward/back','persisted resume')
@@ -1094,8 +1492,11 @@ def picture_resolved(pic,speed):
 
 
 def live_pcm(take):
-    return (take.get('runtimeVerified') and not take.get('captureDeadline') and
-            take.get('activeQemuAudioRoute')==[{'sink':'fixture','mute':False,'corked':False}])
+    # The emulator checks its private QEMU sink route; the device mode checks
+    # the adapter's arriving format (48 kHz stereo, decoded, not bitstream).
+    route=(take['audioRouteVerified'] if 'audioRouteVerified' in take else
+           take.get('activeQemuAudioRoute')==TV.expected_route)
+    return bool(take.get('runtimeVerified') and not take.get('captureDeadline') and route)
 
 
 def compact_frames(frames):
@@ -1233,6 +1634,21 @@ def verdicts(raw,reason):
     return out
 
 
+def calibration(raw):
+    """Is the capture path exact? Reported before any filtered comparison is trusted."""
+    takes=raw.get('recordings',{})
+    def exact(key):
+        w=raw.get(key,{})
+        if not w.get('renders'):return None
+        probes=[p for r in w['renders'].values() for p in r.get('probes',{}).values()]
+        return dict(bitExact=w.get('uncutBitExact'),constantDelay=bool(probes) and all(p.get('observedOffsetSamples')==0 for p in probes))
+    seen=[raw.get(k+'Picture',{}) for k in ('control','repeatControl','controlDisplay','warmControl')]
+    return dict(pictureAll500InOrder=any(p.get('controlComplete') for p in seen),
+                pictureMarkedSeen=max((p.get('marked',0) for p in seen),default=0),
+                arrivingAudio={k:v['arrivingAudio'] for k,v in takes.items() if 'arrivingAudio' in v},
+                aac=exact('waveform'),flac=exact('losslessWaveform'))
+
+
 def allocated(root):
     total=0
     for path,dirs,files in os.walk(root):
@@ -1254,7 +1670,19 @@ def main():
     parser.add_argument('--llvmpipe-threads',type=int,choices=(2,4),help='bound software raster workers in the owned emulator only')
     parser.add_argument('--ram-mib',type=int,choices=(1536,1792,2048),default=2048,help='guest RAM; part of the measured device mode')
     parser.add_argument('--split-capture',action='store_true',help='diagnostic: use separate 1x audio and display takes, without changing player outputs')
+    box=parser.add_argument_group('real TV box (HDMI capture adapter on this PC)')
+    box.add_argument('--device',action='store_true',help='measure the Google TV box over wireless debugging; pairing details are prompted or read from CLEANYFIN_TV_PAIR, CLEANYFIN_TV_CODE, CLEANYFIN_TV_CONNECT for this run only')
+    box.add_argument('--preflight',action='store_true',help='list capture adapters and connected adb devices; change nothing')
+    box.add_argument('--capture-usb',action='append',metavar='VID:PID',help='accept this USB id as the HDMI capture adapter')
+    box.add_argument('--capture-file',action='append',metavar='[TAKE=]PATH',help='dry run: score recorded files instead of the adapter (no candidate row)')
+    box.add_argument('--dry-run-emulator',action='store_true',help='dry run: drive the harness emulator through the device path over adb TCP')
+    box.add_argument('--expect-model',help='refuse unless ro.product.model equals this')
+    box.add_argument('--frame-rate-match',choices=('leave','never','seamless','always'),default='never',help='box "match content frame rate" for the run (default never: a constant 60 Hz signal for the adapter; restored afterwards)')
+    box.add_argument('--after',choices=('keep','uninstall'),help='Wholphin at the end, if the harness installed it (default: ask; keep)')
     opts=parser.parse_args()
+    if opts.preflight:return preflight(opts)
+    if (opts.capture_file or opts.dry_run_emulator) and not opts.device:parser.error('--capture-file and --dry-run-emulator need --device')
+    if opts.dry_run_emulator and not opts.capture_file:parser.error('--dry-run-emulator has no HDMI adapter; give --capture-file')
     try:import numpy  # Fail before starting services if PCM analysis cannot run.
     except ImportError:parser.error('NumPy is required for rendered PCM clock and gain analysis')
     if not __debug__:parser.error('Python assertions are required')
@@ -1263,6 +1691,10 @@ def main():
     work=Path(tempfile.mkdtemp(prefix='cleanyfin-tv-'));sdk=Path(os.environ.get('ANDROID_HOME') or Path.home()/'Android/Sdk').resolve()
     output=HERE.parents[1]/'delivery/evidence/runs'/('tv-'+stamp+'-'+uid)
     summary={'startedUtc':stamp,'recording':'Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz'}
+    if opts.device:
+        summary.update(mode='device',dryRun=bool(opts.capture_file or opts.dry_run_emulator),
+                       recording=('DRY RUN: recorded files through the device capture path' if opts.capture_file else
+                                  'Synthetic fixture only; box HDMI output via USB capture adapter: UVC video stored 320x180 gray FFV1, UAC s16le stereo 48000 Hz'))
     from collections import deque
     raw=summary['observations']={};row=None;error=None;peak=0;over=threading.Event();done=threading.Event()
     history=deque(maxlen=5);worst_io=host_health()
@@ -1285,7 +1717,7 @@ def main():
     resource.setrlimit(resource.RLIMIT_CORE,(0,0));watcher=threading.Thread(target=budget,daemon=True);watcher.start()
     try:
         summary['hostBeforeRun']=wait_for_host()
-        signal.alarm(1200)
+        if not opts.device:signal.alarm(1200)
         with ExitStack() as stack, redirect_stdout(sys.stderr):
             # Every Docker child, including fixture-generator subprocesses, gets
             # an ownership label so an interrupted image build is collected too.
@@ -1299,32 +1731,43 @@ def main():
                 ids=run(docker,'ps','-aq','--filter','label='+label).decode().split()
                 if ids:run(docker,'rm','-fv',*ids)
             stack.callback(sweep)
-            if not (sdk/'emulator/emulator').is_file():raise RuntimeError('Android emulator SDK unavailable')
-            check=run(sdk/'emulator/emulator','-accel-check').decode()
-            if 'KVM' not in check or 'usable' not in check:raise RuntimeError('KVM not usable')
-            raw['milestone']='official Wholphin release verification'
-            apk=release(work);summary['apkSha256']=DIGEST
-            summary['emulatorVersion']=(sdk/'emulator/source.properties').read_text().split('Pkg.Revision=')[-1].splitlines()[0].strip()
+            emulated=not opts.device or opts.dry_run_emulator
+            if emulated and not (sdk/'emulator/emulator').is_file():raise RuntimeError('Android emulator SDK unavailable')
+            if emulated:
+                check=run(sdk/'emulator/emulator','-accel-check').decode()
+                if 'KVM' not in check or 'usable' not in check:raise RuntimeError('KVM not usable')
+                summary['emulatorVersion']=(sdk/'emulator/source.properties').read_text().split('Pkg.Revision=')[-1].splitlines()[0].strip()
             def host_audio():
-                return (run('pactl','get-default-sink').decode().strip(),sorted(line.split('\t')[1] for line in run('pactl','list','short','sinks').decode().splitlines()))
+                listed=lambda kind:sorted(line.split('\t')[1] for line in run('pactl','list','short',kind).decode().splitlines())
+                return (run('pactl','get-default-sink').decode().strip(),listed('sinks'),run('pactl','get-default-source').decode().strip(),listed('sources'))
             before=host_audio()
-            raw['milestone']='private emulator and audio boot'
-            tv=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads)
-            summary.update(declaredGpu=opts.gpu,llvmpipeThreadsRequested=opts.llvmpipe_threads,guestRamMiB=opts.ram_mib);tv.host_history=history
-            tv.boot();summary['graphicsAdapter']=tv.graphicsAdapter
-            print('Emulator graphics:',tv.graphicsAdapter or opts.gpu+' requested; renderer not reported',file=sys.stderr,flush=True)
-            tv.adb('install','--no-streaming',apk,timeout=75)
-            summary['androidFingerprint']=tv.adb('shell','getprop','ro.build.fingerprint').decode().strip();summary['audioInputFormat']=tv.call('pactl','list','short','sink-inputs').decode().strip().split('\t')[-1]
-            mem=re.search(rb'^MemTotal:\s+(\d+) kB',tv.adb('shell','cat','/proc/meminfo'),re.M)
-            if mem:summary['guestKernelMemTotalKiB']=int(mem[1])
+            if opts.device:
+                raw['milestone']='box connection, identity and change manifest'
+                tv=device_session(opts,work,sdk,stack,summary,history)
+                stack.callback(signal.alarm,0)  # never interrupt the restore
+                signal.alarm(1200)
+                summary['apkSha256']=tv.app_digest
+            else:
+                raw['milestone']='official Wholphin release verification'
+                apk=release(work);summary['apkSha256']=DIGEST
+                raw['milestone']='private emulator and audio boot'
+                tv=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads)
+                summary.update(declaredGpu=opts.gpu,llvmpipeThreadsRequested=opts.llvmpipe_threads,guestRamMiB=opts.ram_mib);tv.host_history=history
+                tv.boot();summary['graphicsAdapter']=tv.graphicsAdapter
+                print('Emulator graphics:',tv.graphicsAdapter or opts.gpu+' requested; renderer not reported',file=sys.stderr,flush=True)
+                tv.adb('install','--no-streaming',apk,timeout=75)
+                summary['androidFingerprint']=tv.adb('shell','getprop','ro.build.fingerprint').decode().strip();summary['audioInputFormat']=tv.call('pactl','list','short','sink-inputs').decode().strip().split('\t')[-1]
+                mem=re.search(rb'^MemTotal:\s+(\d+) kB',tv.adb('shell','cat','/proc/meminfo'),re.M)
+                if mem:summary['guestKernelMemTotalKiB']=int(mem[1])
             raw['milestone']='disposable Jellyfin build and setup'
             lab=setup_lab(work,tv,stack);summary['pluginBuild']=lab.plugin_build;summary['fixtureSha256']=hashlib.sha256(lab.original).hexdigest()
             row=lab.stub_register()['rows'][0];row['controls']=[];row['status']='experimental'
             raw['milestone']='Wholphin login, enrollment and MPV settings'
-            ui=Screen(tv);ui.setup(lab);raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
+            ui=(DeviceScreen if opts.device else Screen)(tv);ui.setup(lab);raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
             print('Disposable TV enrollment:',json.dumps(lab.tv_identity),file=sys.stderr,flush=True)
-            raw['milestone']='separate stock transport test input install'
-            install_input(tv)
+            if not opts.device:
+                raw['milestone']='separate stock transport test input install'
+                install_input(tv)
             summary['splitCapture']=opts.split_capture
             measure(tv,lab,ui,raw,opts.split_capture)
     except (Exception,KeyboardInterrupt) as exc:
@@ -1336,21 +1779,27 @@ def main():
         summary['hostWorstObservedIo']=worst_io;summary['hostWorstScopedFullPsi']=worst_scoped;summary['hostAfterRun']=host_health()
         if 'before' in locals():
             after=host_audio();summary['defaultSinkUnchanged']=before[0]==after[0];summary['hostSinkListUnchanged']=before[1]==after[1]
-        if 'tv' in locals():summary['privateNamespaceExited']=tv.ns.poll() is not None
-        if 'tv' in locals() and hasattr(tv,'emu'):summary['emulatorExited']=tv.emu.poll() is not None
+            summary['defaultSourceUnchanged']=before[2]==after[2];summary['hostSourceListUnchanged']=before[3]==after[3]
+        emu=tv.emulator if 'tv' in locals() and isinstance(tv,DeviceTV) else tv if 'tv' in locals() else None
+        if emu is not None:summary['privateNamespaceExited']=emu.ns.poll() is not None
+        if emu is not None and hasattr(emu,'emu'):summary['emulatorExited']=emu.emu.poll() is not None
         if 'label' in locals():summary['ownedContainersRemaining']=len(run(docker,'ps','-aq','--filter','label='+label).split())
         if opts.keep:summary['privateScratch']=str(work)
         else:shutil.rmtree(work)
         summary['scratchRemoved']=not work.exists()
     summary.update(elapsedSeconds=round(time.monotonic()-start,1),blocker=error);claims=verdicts(raw,error)
+    if opts.device:summary['calibration']=calibration(raw)
     summary['claims']=[status+' '+name+' — '+limit for name,(status,limit) in claims.items()]
     # Never turn the supplemental quarter-speed or FLAC observation into a
     # verdict about the candidate's 1x AAC tuple.
     if 'verifiedSettings' not in raw or not has_routes(raw.get('recordings',{}).get('filtered',{})):row=None
+    if summary.get('dryRun'):row=None  # Recorded files are not the box's output: never candidate evidence.
     output.mkdir(parents=True,exist_ok=False);summary['evidenceDirectory']=str(output.relative_to(HERE.parents[1]));summary['candidateWritten']=row is not None
     if row is not None:
         normal_claims=verdicts({k:v for k,v in raw.items() if k not in ('slowControlPicture','slowFilteredPicture')},error)
-        row.update(date=stamp[:4]+'-'+stamp[4:6]+'-'+stamp[6:8],evidenceRef=summary['evidenceDirectory']+'/summary.json',observation='Synthetic emulator, verified MPV settings and 1x AAC takes only. Supplemental quarter-speed/FLAC takes are not candidate evidence. Split taps still play both tracks. Never grants eligibility.')
+        row.update(date=stamp[:4]+'-'+stamp[4:6]+'-'+stamp[6:8],evidenceRef=summary['evidenceDirectory']+'/summary.json',observation=(
+            'Physical box HDMI output through a USB capture adapter; verified MPV settings and 1x AAC takes only. FLAC and quarter-speed takes are not candidate evidence. Never grants eligibility.'
+            if opts.device else 'Synthetic emulator, verified MPV settings and 1x AAC takes only. Supplemental quarter-speed/FLAC takes are not candidate evidence. Split taps still play both tracks. Never grants eligibility.'))
         if normal_claims['filtered handoff'][0]=='PASS':row['controls'].append('straight-play')
         if normal_claims['seek forward/back'][0]=='PASS':row['controls']+=['seek-forward','seek-back']
         if normal_claims['persisted resume'][0]=='PASS':row['controls'].append('resume')
@@ -1362,7 +1811,10 @@ def main():
     else:
         if 'verifiedSettings' not in raw:print('Effective backend and mpv options: not verified; no playback evidence')
         print('\n'.join(summary['claims']));print('Run',summary['evidenceDirectory'],f"({summary['elapsedSeconds']} s, {peak} scratch bytes observed)")
-        if 'before' in locals():print('Cleanup:',{k:summary.get(k) for k in ('emulatorExited','ownedContainersRemaining','privateNamespaceExited','hostSinkListUnchanged','defaultSinkUnchanged','scratchRemoved')})
+        if 'before' in locals():print('Cleanup:',{k:summary.get(k) for k in ('emulatorExited','ownedContainersRemaining','privateNamespaceExited','hostSinkListUnchanged','defaultSinkUnchanged','hostSourceListUnchanged','defaultSourceUnchanged','scratchRemoved') if k in summary})
+        if opts.device:
+            print('Box put back:',summary.get('restored'),'| before/after differences:',summary.get('manifestDiff'))
+            if summary.get('calibration'):print('HDMI path calibration:',json.dumps(summary['calibration']))
         if error:print('Stopped:',error)
         if opts.keep:print('Private retained data:',work)
     return 0 if all(v[0]=='PASS' for v in claims.values()) and not error else 1
