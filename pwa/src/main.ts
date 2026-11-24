@@ -1,4 +1,8 @@
 import './style.css';
+import {
+  QUICK_CATEGORIES, allCaptures, estimate, exportJson, newCaptureRef, pointCapture, saveCapture, spanCapture,
+  type CaptureV1, type Estimate, type QuickCategory, type SessionReport,
+} from './capture';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const el = document.getElementById(id);
@@ -29,8 +33,10 @@ interface NowPlaying {
 }
 
 interface JfSession {
+  UserId?: string;
+  LastPlaybackCheckIn?: string;
   NowPlayingItem?: { Id: string; Name: string; RunTimeTicks?: number };
-  PlayState?: { PositionTicks?: number };
+  PlayState?: { PositionTicks?: number; IsPaused?: boolean; MediaSourceId?: string };
 }
 
 const state: {
@@ -40,7 +46,112 @@ const state: {
   posMs: number;
   inMs: number | null;
   outMs: number | null;
-} = { timer: undefined, item: null, fp: null, posMs: 0, inMs: null, outMs: null };
+  report: SessionReport | null;
+  spanStart: Estimate | null;
+  spanCategory: QuickCategory | undefined;
+} = {
+  timer: undefined, item: null, fp: null, posMs: 0, inMs: null, outMs: null,
+  report: null, spanStart: null, spanCategory: undefined,
+};
+
+// ---- Mark while watching (capture-v1, stored on this phone) ----
+
+const serverRefEl = $<HTMLInputElement>('serverRef');
+const captureNowEl = $<HTMLParagraphElement>('captureNow');
+const captureStatusEl = $<HTMLParagraphElement>('captureStatus');
+const captureListEl = $<HTMLOListElement>('captureList');
+const captureCountEl = $<HTMLSpanElement>('captureCount');
+const markBtn = $<HTMLButtonElement>('markBtn');
+const spanBtn = $<HTMLButtonElement>('spanBtn');
+const catBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('button.cat'));
+
+const fmt = (ms: number): string => {
+  const s = Math.floor(ms / 1000);
+  const hh = Math.floor(s / 3600);
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  return hh > 0 ? `${hh}:${mm}:${ss}` : `${mm}:${ss}`;
+};
+const label = (c?: QuickCategory): string => QUICK_CATEGORIES.find((q) => q.id === c)?.label ?? 'no category';
+
+function setCaptureEnabled(enabled: boolean): void {
+  for (const b of [markBtn, spanBtn, ...catBtns]) b.disabled = !enabled;
+}
+
+async function refreshCaptures(): Promise<void> {
+  const captures = await allCaptures();
+  captureCountEl.textContent = String(captures.length);
+  captureListEl.replaceChildren(
+    ...captures.slice(-5).reverse().map((c) => {
+      const li = document.createElement('li');
+      const when = c.kind === 'span' ? `${fmt(c.atMs)}–${fmt(c.endAtMs ?? c.atMs)}` : `≈${fmt(c.atMs)}`;
+      li.textContent = `${when} · ${label(c.category)} · look within ${Math.round((c.window.beforeMs + c.window.afterMs) / 1000)} s`;
+      return li;
+    }),
+  );
+}
+
+async function record(capture: CaptureV1): Promise<void> {
+  try {
+    await saveCapture(capture);
+    captureStatusEl.textContent = `Saved ${capture.kind === 'span' ? 'span' : 'moment'} at ${fmt(capture.atMs)} (${label(capture.category)}).`;
+    await refreshCaptures();
+  } catch (err) {
+    captureStatusEl.textContent = `Not saved: ${(err as Error).message}`;
+  }
+}
+
+markBtn.addEventListener('click', () => {
+  if (!state.report) return;
+  const now = Date.now();
+  void record(pointCapture(state.report, now, newCaptureRef(now)));
+});
+
+for (const b of catBtns) {
+  b.addEventListener('click', () => {
+    if (!state.report) return;
+    const category = b.dataset.cat as QuickCategory;
+    if (state.spanStart) {
+      // While a span is open, a category names the span instead of saving a separate moment.
+      state.spanCategory = category;
+      captureStatusEl.textContent = `Span started at ${fmt(state.spanStart.atMs)} · ${label(category)}. Tap End when it is over.`;
+      return;
+    }
+    const now = Date.now();
+    void record(pointCapture(state.report, now, newCaptureRef(now), category));
+  });
+}
+
+spanBtn.addEventListener('click', () => {
+  if (!state.report) return;
+  const now = Date.now();
+  if (!state.spanStart) {
+    state.spanStart = estimate(state.report, now);
+    state.spanCategory = undefined;
+    spanBtn.textContent = 'End';
+    spanBtn.classList.add('open');
+    captureStatusEl.textContent = `Span started at ${fmt(state.spanStart.atMs)}. Tap a category if you like, then End.`;
+    return;
+  }
+  const capture = spanCapture(state.spanStart, state.report, now, newCaptureRef(now), state.spanCategory);
+  state.spanStart = null;
+  state.spanCategory = undefined;
+  spanBtn.textContent = 'Start';
+  spanBtn.classList.remove('open');
+  void record(capture);
+});
+
+$<HTMLButtonElement>('exportBtn').addEventListener('click', async () => {
+  const captures = await allCaptures();
+  const blob = new Blob([exportJson(captures)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cleanyfin-captures-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+void refreshCaptures();
 
 function setStatus(msg: string, ok = true): void {
   statusEl.textContent = msg;
@@ -59,9 +170,26 @@ async function poll(): Promise<void> {
     const active = sessions.find((s) => s.NowPlayingItem);
     if (!active?.NowPlayingItem) {
       nowPlayingEl.textContent = '— nothing playing on any session —';
+      captureNowEl.textContent = 'Nothing is playing. Start a movie on the TV.';
       state.item = null;
+      state.report = null;
+      setCaptureEnabled(false);
       return;
     }
+    const polledAt = Date.now();
+    const checkIn = active.LastPlaybackCheckIn ? Date.parse(active.LastPlaybackCheckIn) : NaN;
+    state.report = {
+      serverRef: serverRefEl.value || 'home',
+      userId: active.UserId ?? 'unknown',
+      itemId: active.NowPlayingItem.Id,
+      mediaSourceId: active.PlayState?.MediaSourceId ?? active.NowPlayingItem.Id,
+      positionMs: Math.round((active.PlayState?.PositionTicks ?? 0) / TICKS_PER_MS),
+      // Position is as old as the TV app's last report, not as old as this poll.
+      reportedAtMs: Number.isFinite(checkIn) && checkIn <= polledAt ? checkIn : polledAt,
+      paused: active.PlayState?.IsPaused ?? false,
+    };
+    captureNowEl.textContent = `${active.NowPlayingItem.Name} · ${fmt(state.report.positionMs)}${state.report.paused ? ' · paused' : ''}`;
+    setCaptureEnabled(true);
     const npi = active.NowPlayingItem;
     state.item = {
       id: npi.Id,
