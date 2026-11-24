@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cleanyfin · review marks</title>
+  <link rel="stylesheet" href="assets/marking.css" />
+</head>
+<body class="desk">
+  <header class="bar">
+    <h1>Cleanyfin <small>· review marks</small></h1>
+    <span id="who" class="who" data-needs-login hidden></span>
+    <button id="signOutBtn" class="secondary small" data-needs-login hidden>Sign out</button>
+  </header>
+
+  <form id="login" class="card narrow" hidden>
+    <h2>Sign in with your Jellyfin account</h2>
+    <label>Name <input id="username" autocomplete="username" required /></label>
+    <label>Password <input id="password" type="password" autocomplete="current-password" /></label>
+    <button type="submit">Sign in</button>
+    <p id="loginStatus" class="status" aria-live="polite"></p>
+  </form>
+
+  <div class="review" data-needs-login hidden>
+    <aside class="side">
+      <label>Title <select id="itemSelect"><option value="">Choose a title…</option></select></label>
+      <h2>Captures <span id="captureCount" class="count"></span></h2>
+      <ol id="captures" class="list"></ol>
+      <h2>Marks <span id="markCount" class="count"></span></h2>
+      <ol id="marks" class="list"></ol>
+    </aside>
+
+    <section class="stage">
+      <div class="player">
+        <video id="video" preload="auto" playsinline muted></video>
+      </div>
+      <div class="readout">
+        <span id="frameReadout" class="mono" data-frame="" data-ms="">–</span>
+        <span id="timing" class="timing"></span>
+      </div>
+      <div class="transport">
+        <button id="backFrame" title="Previous frame (,)">‹ frame</button>
+        <button id="fwdFrame" title="Next frame (.)">frame ›</button>
+        <button id="back100" title="Back 100 ms ([)">−100 ms</button>
+        <button id="fwd100" title="Forward 100 ms (])">+100 ms</button>
+        <button id="playBtn" title="Play / pause (space)">Play</button>
+        <form id="goForm" class="go"><input id="goTo" placeholder="mm:ss.mmm or #frame" aria-label="Go to time or frame" /></form>
+      </div>
+      <p class="keys">Keys: <kbd>,</kbd>/<kbd>.</kbd> frame · <kbd>[</kbd>/<kbd>]</kbd> 100 ms · <kbd>I</kbd>/<kbd>O</kbd> first / last affected frame · <kbd>1</kbd>–<kbd>9</kbd> category · <kbd>S</kbd> severity · <kbd>Enter</kbd> propose · <kbd>A</kbd> accept</p>
+    </section>
+
+    <section class="editor card">
+      <h2>Mark <span id="markTitle" class="mono"></span></h2>
+      <div class="bounds">
+        <button id="setIn">Set start (I)</button><span id="inMs" class="mono">–</span>
+        <button id="setOut">Set end (O)</button><span id="outMs" class="mono">–</span>
+      </div>
+      <label>Category <select id="category"></select></label>
+      <label>Household label (optional) <input id="subcategory" placeholder="household:jump-scare" /></label>
+      <label>Severity <select id="severity">
+        <option value="0">0 · none</option><option value="1">1 · mild</option>
+        <option value="2" selected>2 · strong</option><option value="3">3 · extreme</option></select></label>
+      <label>Action <select id="action">
+        <option value="skip" selected>skip</option><option value="cut">cut</option>
+        <option value="mute">mute</option><option value="mark">mark only</option></select></label>
+      <div class="row">
+        <button id="proposeBtn">Propose (Enter)</button>
+        <button id="acceptBtn" class="accept">Accept (A)</button>
+        <button id="rejectBtn" class="secondary">Reject</button>
+      </div>
+      <div class="row">
+        <button id="publishBtn" class="publish">Publish accepted marks</button>
+      </div>
+      <p id="editStatus" class="status" aria-live="polite"></p>
+    </section>
+  </div>
+  <script type="module" src="assets/review.js"></script>
+</body>
+</html>

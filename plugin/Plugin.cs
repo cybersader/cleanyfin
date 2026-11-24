@@ -19,10 +19,13 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         : base(applicationPaths, xmlSerializer)
     {
         ShelfRoot=System.IO.Path.Combine(applicationPaths.PluginConfigurationsPath,"cleanyfin-shelves-v1");
+        ConfigurationsPath=applicationPaths.PluginConfigurationsPath;
         Instance = this;
     }
 
     internal string ShelfRoot { get; }
+    // Household marking data lives beside the shelves, outside the versioned install folder, so upgrades keep it.
+    internal string ConfigurationsPath { get; }
     internal bool IsShelfPath(string? path) => path?.StartsWith(System.IO.Path.Combine(ShelfRoot,"shelves")+"/",StringComparison.Ordinal)==true;
 
     /// <summary>Gets the current plugin instance.</summary>

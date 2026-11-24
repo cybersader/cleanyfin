@@ -14,3 +14,4 @@ owner: "cybersader"
 artifacts:
   - "Jellyfin.Plugin.Cleanyfin.dll"
   - "Cleanyfin.Delivery.dll"
+  - "Cleanyfin.Marking.dll"

@@ -37,6 +37,7 @@
   <ItemGroup>
     <AssemblyMetadata Include="CleanyfinLabServerVersion" Value="$(JellyfinLabServerVersion)" />
     <ProjectReference Include="../delivery/Cleanyfin.Delivery/Cleanyfin.Delivery.csproj" />
+    <ProjectReference Include="../delivery/Cleanyfin.Marking/Cleanyfin.Marking.csproj" />
     <!-- Provided by the Jellyfin server at runtime; referenced here to compile. -->
     <PackageReference Include="Jellyfin.Controller" Version="$(JellyfinControllerVersion)" />
   </ItemGroup>
@@ -44,6 +45,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Configuration/configPage.html" />
     <EmbeddedResource Include="../delivery/evidence/register-v1.json" LogicalName="Cleanyfin.Evidence.Register.v1" />
+    <EmbeddedResource Include="../delivery/evidence/review-timing-v1.json" LogicalName="Cleanyfin.Review.Timing.v1" />
+    <EmbeddedResource Include="Marking/Web/*" LogicalName="Cleanyfin.Marking.Web.%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

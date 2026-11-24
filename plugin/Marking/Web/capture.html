@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>Cleanyfin · mark while watching</title>
+  <link rel="stylesheet" href="assets/marking.css" />
+</head>
+<body class="phone">
+  <main>
+    <h1>Cleanyfin <small>· mark while watching</small></h1>
+
+    <form id="login" class="card" hidden>
+      <h2>Sign in with your Jellyfin account</h2>
+      <label>Name <input id="username" autocomplete="username" required /></label>
+      <label>Password <input id="password" type="password" autocomplete="current-password" /></label>
+      <button type="submit">Sign in</button>
+      <p id="loginStatus" class="status" aria-live="polite"></p>
+    </form>
+
+    <section class="card capture" data-needs-login hidden aria-labelledby="captureTitle">
+      <h2 id="captureTitle">Mark while watching</h2>
+      <p id="captureNow" class="now">Looking for what you are watching…</p>
+      <button id="markBtn" class="mark" disabled>Mark</button>
+      <div class="quick" role="group" aria-label="Mark with a category">
+        <button class="cat" data-cat="language" disabled>Language</button>
+        <button class="cat" data-cat="violence" disabled>Violence</button>
+        <button class="cat" data-cat="sex_nudity" disabled>Sex / Nudity</button>
+        <button class="cat" data-cat="other" disabled>Other</button>
+      </div>
+      <button id="spanBtn" class="span" disabled>Start</button>
+      <p id="captureStatus" class="status" aria-live="polite"></p>
+      <p class="hint">Rough is fine. Each press is sent to your household server and the TV keeps playing. Exact start and end are set later at review, and nothing is filtered until a reviewer approves it.</p>
+      <ol id="captureList" class="captures"></ol>
+      <p id="queueStatus" class="queue" aria-live="polite"></p>
+      <div class="row">
+        <button id="exportBtn" class="secondary" hidden>Export unsent (<span id="queueCount">0</span>)</button>
+        <button id="signOutBtn" class="secondary">Sign out <span id="whoami"></span></button>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="assets/capture.js"></script>
+</body>
+</html>

@@ -8,12 +8,14 @@ on:
     paths:
       - 'plugin/**'
       - 'delivery/Cleanyfin.Delivery/**'
+      - 'delivery/Cleanyfin.Marking/**'
       - 'delivery/evidence/**'
       - '.github/workflows/plugin-ci.yml'
   pull_request:
     paths:
       - 'plugin/**'
       - 'delivery/Cleanyfin.Delivery/**'
+      - 'delivery/Cleanyfin.Marking/**'
       - 'delivery/evidence/**'
       - '.github/workflows/plugin-ci.yml'
 
