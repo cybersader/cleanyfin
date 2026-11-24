@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-IMAGE = 'jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db'
+from hard_fixture_lab import IMAGE  # one pinned media image; see JELLYFIN there
 FPS, HZ, SIDE = 25, 48000, 64
 
 

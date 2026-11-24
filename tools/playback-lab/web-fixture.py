@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from shutil import copyfile
 
-IMAGE = 'jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db'
+from hard_fixture_lab import IMAGE  # one pinned media image; see JELLYFIN there
 if len(sys.argv) != 2:
     sys.exit('usage: python3 tools/playback-lab/web-fixture.py NEW_OUTPUT_DIRECTORY')
 out = Path(sys.argv[1]).resolve()
