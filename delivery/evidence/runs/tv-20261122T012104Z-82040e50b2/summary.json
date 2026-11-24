@@ -1,0 +1,67 @@
+{
+  "startedUtc": "20261122T012104Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "milestone": "private emulator and audio boot"
+  },
+  "hostBeforeRun": {
+    "load1": 2.68,
+    "cpus": 8.0,
+    "availableGiB": 18.03,
+    "ioFull10sPct": 0.0,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "emulatorVersion": "37.2.12",
+  "declaredGpu": "host",
+  "hostSurfacelessEgl": true,
+  "guestRamMiB": 1536,
+  "scratchPeakBytesObserved": 615337984,
+  "hostWorstObservedIo": {
+    "load1": 2.62,
+    "cpus": 8.0,
+    "availableGiB": 17.64,
+    "ioFull10sPct": 0.18,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.36,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 0.99,
+    "scopeIOFull10sPct": 0.36
+  },
+  "hostAfterRun": {
+    "load1": 2.46,
+    "cpus": 8.0,
+    "availableGiB": 18.23,
+    "ioFull10sPct": 0.06,
+    "scopeMemoryFull10sPct": 0.99,
+    "scopeIOFull10sPct": 0.13,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 26.9,
+  "blocker": "Emulator exited before Android boot completed",
+  "claims": [
+    "not-measured filtered handoff \u2014 Emulator exited before Android boot completed",
+    "not-measured picture control \u2014 Emulator exited before Android boot completed",
+    "not-measured marked picture \u2014 Emulator exited before Android boot completed",
+    "not-measured kept picture at join \u2014 Emulator exited before Android boot completed",
+    "not-measured real-speed join \u2014 Emulator exited before Android boot completed",
+    "not-measured sound control \u2014 Emulator exited before Android boot completed",
+    "not-measured marked sound \u2014 Emulator exited before Android boot completed",
+    "not-measured kept tones \u2014 Emulator exited before Android boot completed",
+    "not-measured kept PCM at join \u2014 Emulator exited before Android boot completed",
+    "not-measured seek forward/back \u2014 Emulator exited before Android boot completed",
+    "not-measured persisted resume \u2014 Emulator exited before Android boot completed"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261122T012104Z-82040e50b2",
+  "candidateWritten": false
+}

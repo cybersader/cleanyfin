@@ -1,0 +1,46 @@
+{
+  "tuple": {
+    "adapterId": "mpv-edl",
+    "adapterRevision": "1",
+    "appId": "Wholphin",
+    "appVersion": "1.1.2-0-gc530f5c5",
+    "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+    "backend": "mpv",
+    "deviceMode": "Google TV API 36 x86_64 emulator 1280x720, host, software video vo-gpu Android GLES, stereo PCM",
+    "jellyfinVersion": "10.11.11",
+    "pluginBuild": "8adb7723167d0258bb9bc6948b24334912849ab5a55b500215ba89453c0191e1",
+    "source": {
+      "container": "mp4",
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+      "durationMs": 20000
+    }
+  },
+  "actions": [
+    "cut"
+  ],
+  "controls": [],
+  "results": {
+    "markedPicture": {
+      "outcome": "not-measured",
+      "limit": "Uncut display did not witness all 500 in order on a verified tap"
+    },
+    "markedSound": {
+      "outcome": "not-measured",
+      "limit": "Uncut rendered control failed stereo tone calibration"
+    },
+    "keptPictureAtJoin": {
+      "outcome": "not-measured",
+      "limit": "Uncut display did not witness all 500 in order on a verified tap"
+    },
+    "keptSoundAtJoin": {
+      "outcome": "not-measured",
+      "limit": "Uncut rendered control failed stereo tone calibration"
+    }
+  },
+  "evidenceRef": "delivery/evidence/runs/tv-20261121T235909Z-bbec281ae8/summary.json",
+  "date": "2026-11-21",
+  "status": "experimental",
+  "observation": "Synthetic emulator only. See control calibration, route receipts and limits. Never grants production eligibility."
+}

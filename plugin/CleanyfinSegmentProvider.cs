@@ -42,7 +42,7 @@ public class CleanyfinSegmentProvider : IMediaSegmentProvider
     public string Name => "Cleanyfin";
 
     /// <inheritdoc />
-    public ValueTask<bool> Supports(BaseItem item) => ValueTask.FromResult(item is Video);
+    public ValueTask<bool> Supports(BaseItem item) => ValueTask.FromResult(item is Video && Plugin.Instance?.IsShelfPath(item.Path)!=true);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<MediaSegmentDto>> GetMediaSegments(
@@ -55,6 +55,7 @@ public class CleanyfinSegmentProvider : IMediaSegmentProvider
         // (decision R04). Same scheme the PWA resolves via /Cleanyfin/Fingerprint,
         // so a mark submitted from the PWA lines up with what we query here.
         var item = _libraryManager.GetItemById(request.ItemId);
+        if(Plugin.Instance?.IsShelfPath(item?.Path)==true)return Array.Empty<MediaSegmentDto>();
         var fp = Moviehash.Fingerprint(item?.Path, request.ItemId);
         var url = $"{apiBase}/api/v1/segments?fp={Uri.EscapeDataString(fp)}";
 

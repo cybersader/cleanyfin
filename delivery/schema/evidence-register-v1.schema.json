@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cybersader.github.io/cleanyfin/schema/v1/evidence-register.schema.json",
+  "title": "Cleanyfin evidence register v1",
+  "description": "One exact tuple per row. The strict reader also rejects duplicate JSON keys and repeated tuples even when other row fields differ; null is an exact missing value, never a wildcard.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registerVersion",
+    "rows"
+  ],
+  "properties": {
+    "registerVersion": {
+      "const": 1
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9:_.-]*$(?![\\s\\S])"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 :.,/_-]*[A-Za-z0-9:.,/_-])?$(?![\\s\\S])"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "allOf": [
+        {
+          "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]+$(?![\\s\\S])"
+        },
+        {
+          "pattern": "\\S"
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "container",
+        "videoCodec",
+        "audioCodec",
+        "trackLayout",
+        "durationMs"
+      ],
+      "properties": {
+        "container": {
+          "$ref": "#/$defs/token"
+        },
+        "videoCodec": {
+          "$ref": "#/$defs/token"
+        },
+        "audioCodec": {
+          "$ref": "#/$defs/token"
+        },
+        "trackLayout": {
+          "$ref": "#/$defs/label"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "tuple": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapterId",
+        "adapterRevision",
+        "appId",
+        "appVersion",
+        "appBuild",
+        "backend",
+        "deviceMode",
+        "jellyfinVersion",
+        "pluginBuild",
+        "source"
+      ],
+      "properties": {
+        "adapterId": {
+          "$ref": "#/$defs/token"
+        },
+        "adapterRevision": {
+          "$ref": "#/$defs/token"
+        },
+        "appId": {
+          "$ref": "#/$defs/label"
+        },
+        "appVersion": {
+          "$ref": "#/$defs/token"
+        },
+        "appBuild": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "backend": {
+          "$ref": "#/$defs/token"
+        },
+        "deviceMode": {
+          "$ref": "#/$defs/label"
+        },
+        "jellyfinVersion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/token"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pluginBuild": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "limit"
+      ],
+      "properties": {
+        "outcome": {
+          "enum": [
+            "pass",
+            "fail",
+            "not-measured"
+          ]
+        },
+        "limit": {
+          "$ref": "#/$defs/note"
+        }
+      }
+    },
+    "results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "markedPicture",
+        "markedSound",
+        "keptPictureAtJoin",
+        "keptSoundAtJoin"
+      ],
+      "properties": {
+        "markedPicture": {
+          "$ref": "#/$defs/result"
+        },
+        "markedSound": {
+          "$ref": "#/$defs/result"
+        },
+        "keptPictureAtJoin": {
+          "$ref": "#/$defs/result"
+        },
+        "keptSoundAtJoin": {
+          "$ref": "#/$defs/result"
+        }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tuple",
+        "actions",
+        "controls",
+        "results",
+        "evidenceRef",
+        "date",
+        "status",
+        "observation"
+      ],
+      "properties": {
+        "tuple": {
+          "$ref": "#/$defs/tuple"
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "const": "cut"
+          }
+        },
+        "controls": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "straight-play",
+              "seek-forward",
+              "seek-back",
+              "resume",
+              "restart"
+            ]
+          }
+        },
+        "results": {
+          "$ref": "#/$defs/results"
+        },
+        "evidenceRef": {
+          "type": "string",
+          "maxLength": 256,
+          "pattern": "^(?:[A-Za-z0-9][A-Za-z0-9_.-]*/)*[A-Za-z0-9][A-Za-z0-9_.-]*\\.[A-Za-z0-9]+$(?![\\s\\S])"
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$(?![\\s\\S])"
+        },
+        "status": {
+          "enum": [
+            "eligible",
+            "experimental",
+            "refused"
+          ]
+        },
+        "observation": {
+          "$ref": "#/$defs/note"
+        }
+      },
+      "if": {
+        "properties": {
+          "status": {
+            "const": "eligible"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "tuple": {
+            "properties": {
+              "jellyfinVersion": {
+                "$ref": "#/$defs/token"
+              },
+              "pluginBuild": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          },
+          "controls": {
+            "minItems": 5
+          },
+          "results": {
+            "properties": {
+              "markedPicture": {
+                "properties": {
+                  "outcome": {
+                    "const": "pass"
+                  }
+                }
+              },
+              "markedSound": {
+                "properties": {
+                  "outcome": {
+                    "const": "pass"
+                  }
+                }
+              },
+              "keptPictureAtJoin": {
+                "properties": {
+                  "outcome": {
+                    "const": "pass"
+                  }
+                }
+              },
+              "keptSoundAtJoin": {
+                "properties": {
+                  "outcome": {
+                    "const": "pass"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

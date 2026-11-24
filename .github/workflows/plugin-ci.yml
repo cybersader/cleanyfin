@@ -7,10 +7,14 @@ on:
     branches: [main]
     paths:
       - 'plugin/**'
+      - 'delivery/Cleanyfin.Delivery/**'
+      - 'delivery/evidence/**'
       - '.github/workflows/plugin-ci.yml'
   pull_request:
     paths:
       - 'plugin/**'
+      - 'delivery/Cleanyfin.Delivery/**'
+      - 'delivery/evidence/**'
       - '.github/workflows/plugin-ci.yml'
 
 concurrency:

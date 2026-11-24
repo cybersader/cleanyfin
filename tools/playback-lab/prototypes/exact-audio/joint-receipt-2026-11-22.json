@@ -1,0 +1,106 @@
+{
+  "method": "One mpv playback per take, image + 48 kHz stereo s16le PCM, uninterrupted decode minus marked source sample indices; no alignment",
+  "mpvImage": "sha256:dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+  "mpvVersion": "v0.40.0",
+  "ffmpegVersion": "7.1.2-0+deb13u1 (runtime 7.1.5-0+deb13u1)",
+  "fixtureImage": "jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db",
+  "sourceSHA256": "c389aa672ebd63dcf1cb77fbaa2ea9946cd3ff4e8430b6ce5b8710d1669502c8",
+  "sourceCuts": [
+    {
+      "startFrame": 137,
+      "endFrame": 263,
+      "startMs": 5480,
+      "endMs": 10520,
+      "muxedVideo": {
+        "timeBase": "1/12800",
+        "firstMarkedPts": 70144,
+        "firstMarkedPtsTime": "5.480000",
+        "lastMarkedPts": 134144,
+        "lastMarkedPtsTime": "10.480000"
+      }
+    }
+  ],
+  "control": {
+    "pictures": 500,
+    "markedPictures": 126,
+    "markedToneMs": 5040
+  },
+  "straightCut": {
+    "picture": {
+      "frames": 374,
+      "markedCount": 0,
+      "markedRanges": [],
+      "missingCount": 0,
+      "missingRanges": [],
+      "unreadableCount": 0,
+      "duplicateCount": 0,
+      "duplicateRanges": [],
+      "monotonic": true,
+      "pass": true
+    },
+    "toneWindows": {
+      "windowMs": 5,
+      "thresholdPeak": 0.1,
+      "captureMs": 14960.0,
+      "leakMs": 0,
+      "tonesHz": {
+        "440": {
+          "presentMs": 5480,
+          "expectedMs": 5480,
+          "lossMs": 0,
+          "captureRangesMs": [
+            [
+              0,
+              5480
+            ]
+          ]
+        },
+        "880": {
+          "presentMs": 0,
+          "expectedMs": 0,
+          "lossMs": 0,
+          "captureRangesMs": []
+        },
+        "660": {
+          "presentMs": 9480,
+          "expectedMs": 9480,
+          "lossMs": 0,
+          "captureRangesMs": [
+            [
+              5480,
+              14960
+            ]
+          ]
+        }
+      },
+      "pass": true
+    },
+    "pcm": {
+      "exact": true,
+      "unequalFrames": 0,
+      "firstUnequal": null,
+      "lastUnequal": null,
+      "pre": 0,
+      "post": 0,
+      "delta": 0,
+      "expectedFrames": 718080,
+      "actualFrames": 718080,
+      "peakLRmax": [
+        0,
+        0
+      ],
+      "rmsOverUnequal": [
+        0,
+        0
+      ],
+      "runCount": 0,
+      "firstRunsInclusive": [],
+      "expectedSHA256": "11103dc7ee694762b44d2b044e1cf3aa808d97d4a75ae0367cd458b3de138fed",
+      "actualSHA256": "11103dc7ee694762b44d2b044e1cf3aa808d97d4a75ae0367cd458b3de138fed"
+    }
+  },
+  "seekDiagnostic": {
+    "markedPictures": 0,
+    "markedToneMs": 0
+  }
+}

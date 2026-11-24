@@ -18,8 +18,12 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
         : base(applicationPaths, xmlSerializer)
     {
+        ShelfRoot=System.IO.Path.Combine(applicationPaths.PluginConfigurationsPath,"cleanyfin-shelves-v1");
         Instance = this;
     }
+
+    internal string ShelfRoot { get; }
+    internal bool IsShelfPath(string? path) => path?.StartsWith(System.IO.Path.Combine(ShelfRoot,"shelves")+"/",StringComparison.Ordinal)==true;
 
     /// <summary>Gets the current plugin instance.</summary>
     public static Plugin? Instance { get; private set; }

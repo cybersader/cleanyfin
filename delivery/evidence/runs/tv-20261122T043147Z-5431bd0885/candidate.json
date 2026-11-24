@@ -1,0 +1,48 @@
+{
+  "tuple": {
+    "adapterId": "mpv-edl",
+    "adapterRevision": "1",
+    "appId": "Wholphin",
+    "appVersion": "1.1.2-0-gc530f5c5",
+    "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+    "backend": "mpv",
+    "deviceMode": "Google TV API 36 x86_64 emulator 1280x720, 1536 MiB, llvmpipe with 2 requested llvmpipe workers, software video vo-gpu Android GLES, stereo PCM",
+    "jellyfinVersion": "10.11.11",
+    "pluginBuild": "e86214175b0f499dca6a3e62689f8f019c66364a0a92477551ebfd0ca162aa7f",
+    "source": {
+      "container": "mp4",
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "trackLayout": "0 video 1280x720 25 fps 1/12800, 1 stereo AAC-LC 48 kHz 1/48000, source presentation zero, no extra tracks",
+      "durationMs": 20000
+    }
+  },
+  "actions": [
+    "cut"
+  ],
+  "controls": [
+    "straight-play"
+  ],
+  "results": {
+    "markedPicture": {
+      "outcome": "not-measured",
+      "limit": "Uncut display did not witness all 500 in order on a verified tap"
+    },
+    "markedSound": {
+      "outcome": "not-measured",
+      "limit": "Two uncut controls did not calibrate the known marked tone; filtered detector 80/80 ms L/R, not a leak count"
+    },
+    "keptPictureAtJoin": {
+      "outcome": "not-measured",
+      "limit": "Uncut display did not witness all 500 in order on a verified tap"
+    },
+    "keptSoundAtJoin": {
+      "outcome": "not-measured",
+      "limit": "Fixed origin; before 960/960, 10365.5/10365.5 vs 2383.5/2383.5 LSB RMS floor; after 960/960, 8163.54/8163.54 vs 8900.27/8900.27 LSB RMS floor; span at 512 LSB 720016/718080 samples; constant delay not established"
+    }
+  },
+  "evidenceRef": "delivery/evidence/runs/tv-20261122T043147Z-5431bd0885/summary.json",
+  "date": "2026-11-22",
+  "status": "experimental",
+  "observation": "Synthetic emulator, verified MPV settings and 1x AAC takes only. Supplemental quarter-speed/FLAC takes are not candidate evidence. Split taps still play both tracks. Never grants eligibility."
+}

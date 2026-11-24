@@ -1,0 +1,82 @@
+{
+  "startedUtc": "20261121T232547Z",
+  "recording": "Synthetic fixture only; emulator display at requested 60 fps, isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "verifiedSettings": {
+      "backend": "MPV",
+      "mpvOptions": [
+        "hwdec=no",
+        "vo=gpu",
+        "gpu-context=android",
+        "opengl-es=yes",
+        "msg-level=all=v"
+      ],
+      "verification": "MPV-only preferences visible and saved mpv.conf reopened"
+    },
+    "milestone": "uncut real-speed playback and capture",
+    "controlDiagnostic": {
+      "libmpvAO": "audiotrack 48000Hz stereo float",
+      "libmpvVO": "gpu 1280x720 yuv420p",
+      "runtimeEofLogFound": false,
+      "sessionsClearedThisTake": true,
+      "routes": [
+        "POST PlaybackInfo 200",
+        "GET original stream 206",
+        "POST Playing 204",
+        "POST Playing/Progress 204",
+        "POST Playing/Stopped 204"
+      ],
+      "screenshots": [
+        "launcher at 0.5s",
+        "uncut blue at 7s",
+        "marked red at 12s",
+        "uncut green at 21s"
+      ],
+      "videoBytes": 964882,
+      "videoDurationS": 23.721,
+      "videoPackets": 457,
+      "videoDistinctFixtureFrames": 101,
+      "videoDistinctMarkedFrames": 26,
+      "maxInPictureCaptureGapMs": 190,
+      "audioBytes": 3993600,
+      "audioDurationS": 20.8,
+      "peakAudioLsb": 199,
+      "typicalTonePeakLsb": 82,
+      "noiseFloorLsbRms": 0,
+      "audioMarkedToneMsAtStandardDetectionLimit": [
+        0,
+        0
+      ]
+    }
+  },
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "emulatorVersion": "37.2.12",
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "audioInputFormat": "s16le 2ch 48000Hz",
+  "pluginBuild": "8adb7723167d0258bb9bc6948b24334912849ab5a55b500215ba89453c0191e1",
+  "fixtureSha256": "c389aa672ebd63dcf1cb77fbaa2ea9946cd3ff4e8430b6ce5b8710d1669502c8",
+  "scratchPeakBytesObserved": 1362083840,
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": false,
+  "elapsedSeconds": 299.6,
+  "blocker": "Uncut diagnostic only; both captures finalized for offline inspection",
+  "claims": [
+    "not-measured picture control \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured marked picture \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured kept picture at join \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured real-speed join \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured sound control \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured marked sound \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured kept tones \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured kept PCM at join \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured seek forward/back \u2014 Uncut diagnostic only; both captures finalized for offline inspection",
+    "not-measured persisted resume \u2014 Uncut diagnostic only; both captures finalized for offline inspection"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261121T232547Z-90792e91a6",
+  "candidateWritten": true,
+  "scratchRemovedAfterInspection": true
+}

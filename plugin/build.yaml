@@ -13,3 +13,4 @@ category: "Metadata"
 owner: "cybersader"
 artifacts:
   - "Jellyfin.Plugin.Cleanyfin.dll"
+  - "Cleanyfin.Delivery.dll"

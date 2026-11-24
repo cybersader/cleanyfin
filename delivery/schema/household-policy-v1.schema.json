@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cybersader.github.io/cleanyfin/schema/v1/household-policy.schema.json",
+  "title": "Cleanyfin private household policy v1",
+  "$comment": "Also apply strict runtime parsing and independent authentication/profile selection. Schema does not enforce unique categories, lexical integer spelling, duplicate keys or byte/depth limits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["policyVersion", "profileRef", "policyRev", "trustRev", "rules"],
+  "properties": {
+    "policyVersion": {"const": 1},
+    "profileRef": {"$ref": "#/$defs/ref"},
+    "policyRev": {"$ref": "#/$defs/ref"},
+    "trustRev": {"$ref": "#/$defs/ref"},
+    "rules": {"type": "array", "maxItems": 9, "uniqueItems": true, "items": {"$ref": "#/$defs/rule"}}
+  },
+  "$defs": {
+    "ref": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*(?![\\s\\S])"},
+    "category": {
+      "enum": ["profanity", "sexual_dialogue", "sex_scene", "nudity", "violence", "gore", "disturbing", "substance_use", "crude"]
+    },
+    "severity": {"type": "integer", "minimum": 0, "maximum": 3},
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "minimumSeverity", "filter"],
+      "properties": {
+        "category": {"$ref": "#/$defs/category"},
+        "minimumSeverity": {"$ref": "#/$defs/severity"},
+        "filter": {"type": "boolean"}
+      }
+    }
+  }
+}

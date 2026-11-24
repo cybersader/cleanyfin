@@ -31,7 +31,7 @@ public class FingerprintController : ControllerBase
     public ActionResult<FingerprintResult> GetFingerprint([FromQuery] Guid itemId)
     {
         var item = _libraryManager.GetItemById(itemId);
-        if (item is null)
+        if (item is null || Plugin.Instance?.IsShelfPath(item.Path)==true)
         {
             return NotFound();
         }

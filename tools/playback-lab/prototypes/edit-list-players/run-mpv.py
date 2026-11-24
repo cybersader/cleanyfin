@@ -7,11 +7,13 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-import wave
 
 HERE = Path(__file__).resolve().parent
 LAB = HERE.parents[1]
-MEDIA_IMAGE = 'jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db'
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(LAB))
+from exact_audio import BYTES_PER_FRAME, compare_cut, plan_frames, read_pcm, stereo_samples, summary
+from hard_fixture_lab import IMAGE as MEDIA_IMAGE
 
 
 def lab_script(name, *args, **kwargs):
@@ -50,18 +52,22 @@ def container(image, work, *args, entrypoint, timeout=90, **kwargs):
             cidfile.unlink()
 
 
-def score(fixture, label, *, video=None, audio=None):
+def score(fixture, label, *, video=None, audio=None, diagnostic=False):
     args = ['--plan', fixture / 'plan.json', '--json']
     if video is not None:
         args += ['--video', video]
     if audio is not None:
         args += ['--audio', audio]
     result = lab_script('analyze-capture.py', *args, capture_output=True, text=True, timeout=90)
-    print(f'\n{label}', flush=True)
-    print(result.stdout, end='', flush=True)
+    title = 'uncut positive control' if label == 'control' else f'{label} diagnostic' if diagnostic else label
+    print(f'\n{title}', flush=True)
+    # The all-kept cut verdict does not apply to the positive control or the
+    # start/seek/mute diagnostics; always show the measured frame and tone counts.
+    lines = result.stdout.splitlines()
+    print('\n'.join(lines[:-2]), flush=True)
     if result.stderr:
         print(result.stderr, end='', file=sys.stderr)
-    metrics = json.loads(result.stdout.splitlines()[-1])
+    metrics = json.loads(lines[-1])
     if 'error' in metrics:
         raise RuntimeError(metrics['error'])
     return metrics
@@ -73,38 +79,25 @@ def mpv(image, fixture, source, *options):
                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
-def capture(image, fixture, label, source, *, video=True, audio=True, scripted=False, options=()):
+def capture(image, fixture, label, source, *, scripted=False, options=()):
     frames, wav = fixture / (label + '-frames'), fixture / (label + '.wav')
-    common = ('--hwdec=no', '--hr-seek=yes', '--audio-file-auto=no', '--sub-auto=no',
-              '--untimed=' + ('no' if scripted else 'yes'))
-    png = ('--vo=image', '--vo-image-format=png', '--vo-image-png-compression=1',
-           f'--vo-image-outdir={frames.name}')
-    pcm_options = ('--ao=pcm', '--ao-pcm-waveheader=yes', f'--ao-pcm-file={wav.name}',
-                   '--audio-samplerate=48000', '--audio-channels=stereo', '--audio-format=s16')
-    streams = []
-    if video:
-        frames.mkdir()
+    frames.mkdir()
+    log_name = label + '-av.log'
+    result = mpv(image, fixture, source, f'--log-file={log_name}', '--hwdec=no', '--hr-seek=yes',
+                 '--audio-file-auto=no', '--sub-auto=no', '--framedrop=no',
+                 '--untimed=' + ('no' if scripted else 'yes'), '--vo=image', '--vf=scale=160:90',
+                 '--vo-image-format=png', '--vo-image-png-compression=1', f'--vo-image-outdir={frames.name}',
+                 '--ao=pcm', '--ao-pcm-waveheader=yes', f'--ao-pcm-file={wav.name}',
+                 '--audio-samplerate=48000', '--audio-channels=stereo', '--audio-format=s16', *options)
+    log = (fixture / log_name).read_text() if (fixture / log_name).exists() else result.stdout
+    if result.returncode != 0:
+        raise RuntimeError(f'{label}/av: mpv exited {result.returncode}\n{log[-4000:]}')
     if scripted:
-        # PCM alone races to EOF before the Lua observer sees intermediate time-pos.
-        # Exercise the same seek sequence on both tracks in one A/V playback run.
-        streams.append(('av', (*png, *pcm_options)))
-    else:
-        if video:
-            streams.append(('video', ('--no-audio', *png)))
-        if audio:
-            streams.append(('audio', ('--no-video', *pcm_options)))
-    for kind, driver in streams:
-        log_name = label + '-' + kind + '.log'
-        result = mpv(image, fixture, source, f'--log-file={log_name}', *common, *driver, *options)
-        log = (fixture / log_name).read_text() if (fixture / log_name).exists() else result.stdout
-        if result.returncode != 0:
-            raise RuntimeError(f'{label}/{kind}: mpv exited {result.returncode}\n{log[-4000:]}')
-        if label == 'seek':
-            relevant = [line.split('[seek]')[-1].strip() for line in log.splitlines() if 'SEEK-' in line]
-            print(f'{label}/{kind}: ' + '; '.join(relevant), flush=True)
-            if not any('SEEK-BACK-LANDED' in line for line in relevant):
-                raise RuntimeError(f'{label}/{kind}: seek script did not finish')
-    return score(fixture, label, video=frames if video else None, audio=wav if audio else None)
+        relevant = [line.split('[seek]')[-1].strip() for line in log.splitlines() if 'SEEK-' in line]
+        print(f'{label}/av: ' + '; '.join(relevant), flush=True)
+        if not any('SEEK-BACK-LANDED' in line for line in relevant):
+            raise RuntimeError(f'{label}/av: seek script did not finish')
+    return score(fixture, label, video=frames, audio=wav, diagnostic=label != 'cut')
 
 
 def write_seek(fixture, splice, before):
@@ -138,35 +131,13 @@ end)
 ''')
 
 
-def pcm(fixture, label):
-    with wave.open(str(fixture / (label + '.wav')), 'rb') as wav:
-        if (wav.getframerate(), wav.getnchannels(), wav.getsampwidth()) != (48000, 2, 2):
-            raise RuntimeError(f'{label}: expected 48 kHz stereo signed 16-bit WAV')
-        return wav.readframes(wav.getnframes())
-
-
-def compare_pcm(fixture, plan):
-    cut, = plan['cuts']
-    start, end = [cut[k] * 48 * 4 for k in ('startMs', 'endMs')]
-    duration = plan['source']['frames'] * 48000 // plan['source']['fps'] * 4
-    source, cut_pcm, muted = (pcm(fixture, name) for name in ('control', 'cut', 'mute'))
-    print(f'PCM frames: source {len(source)//4}, cut {len(cut_pcm)//4}, mute {len(muted)//4}', flush=True)
-    trim = source[:start] + source[end:duration]
-    differences = [i // 4 for i in range(0, min(len(trim), len(cut_pcm)), 4)
-                   if trim[i:i+4] != cut_pcm[i:i+4]]
-    extent = f', first {differences[0]}, last {differences[-1]}' if differences else ''
-    print(f'Cut vs trimmed control: {len(differences)} unequal overlapping PCM frames{extent}; '
-          f'length delta {(len(cut_pcm)-len(trim))//4} frames', flush=True)
-    print(f'Mute: {sum(muted[i:i+4] != bytes(4) for i in range(start, min(end, len(muted)), 4))} '
-          'nonzero PCM frames in the marked interval', flush=True)
-
 
 def failures(image, fixture):
     (fixture / 'malformed.mpv.edl').write_text('# mpv EDL v0\nsource.mp4,not-a-time,5.480\n')
     for name in ('missing', 'malformed'):
         log = name + '.log'
         wav = name + '.wav'
-        result = mpv(image, fixture, name + '.mpv.edl', f'--log-file={log}', '--no-video',
+        result = mpv(image, fixture, name + '.mpv.edl', f'--log-file={log}', '--vo=null',
                      '--untimed', '--ao=pcm', f'--ao-pcm-file={wav}')
         output = (fixture / log).read_text() if (fixture / log).exists() else result.stdout
         errors = [line for line in output.splitlines() if '[e]' in line or '[f]' in line]
@@ -176,9 +147,11 @@ def failures(image, fixture):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--image', default='cleanyfin-edl-lab:mpv')
+    parser.add_argument('--receipt', type=Path, help='write the measured straight-cut and control results as JSON')
     args = parser.parse_args()
     image = image_id(args.image)
-    container(image, None, '--version', entrypoint='mpv', check=True)
+    version = container(image, None, '--version', entrypoint='mpv', check=True, capture_output=True).stdout
+    print(version, end='', flush=True)
     container(image, None, '-W', 'mpv', entrypoint='dpkg-query', check=True)
     with tempfile.TemporaryDirectory(prefix='cleanyfin-mpv-') as work:
         work = Path(work)
@@ -189,18 +162,44 @@ def main():
                 or control['video']['duplicateCount'] or not control['video']['monotonic']
                 or abs(control['audio']['leakMs'] - 5040) > 5):
             raise RuntimeError('Invalid capture method: unedited control did not show the full fixture')
-        capture(image, fixture, 'cut', 'fixture.mpv.edl')
+        cut_metrics = capture(image, fixture, 'cut', 'fixture.mpv.edl')
+        pcm = compare_cut(plan, read_pcm(fixture/'control.wav'), read_pcm(fixture/'cut.wav'))
+        print(f'{"PASS" if pcm["exact"] else "FAIL"}: joint cut PCM: {summary(pcm)}', flush=True)
+        pictures, tones = cut_metrics['video'], cut_metrics['audio']
+        pictures_exact = pictures['pass'] and pictures['frames'] == 374 and not pictures['duplicateCount']
+        print(f'{"PASS" if tones["pass"] else "FAIL"}: joint cut tone-window cross-check', flush=True)
+        if not (pcm['exact'] and pictures_exact and tones['pass']):
+            raise RuntimeError('Joint straight-cut result differs from the research result')
+        print(f'PASS: joint AAC cut: {pictures["frames"]} kept pictures, {pictures["markedCount"]} marked pictures, '
+              f'0 marked samples (exact kept PCM), {tones["leakMs"]:g} ms marked tone', flush=True)
         cut, = plan['cuts']
         splice = cut['startMs'] / 1000
         before = splice - 0.20
         capture(image, fixture, 'start', 'fixture.mpv.edl', options=(f'--start={before:.3f}',))
         write_seek(fixture, splice, before)
-        capture(image, fixture, 'seek', 'fixture.mpv.edl', scripted=True,
+        seek = capture(image, fixture, 'seek', 'fixture.mpv.edl', scripted=True,
                 options=(f'--start={before - 0.32:.3f}', '--script=seek.lua'))
         gate = f'lt(n,{cut["startMs"]*48})+gte(n,{cut["endMs"]*48})'
         af = f"--af=lavfi=[aeval=exprs='val(0)*({gate})|val(1)*({gate})':channel_layout=stereo]"
-        capture(image, fixture, 'mute', 'source.mp4', video=False, options=(af,))
-        compare_pcm(fixture, plan)
+        capture(image, fixture, 'mute', 'source.mp4', options=(af,))
+        start, end, _ = plan_frames(plan)
+        muted = read_pcm(fixture/'mute.wav')[start*BYTES_PER_FRAME:end*BYTES_PER_FRAME]
+        nonzero = sum(sample != bytes(BYTES_PER_FRAME) for sample in stereo_samples(muted))
+        print(f'Mute diagnostic: {nonzero} nonzero PCM samples in the marked interval', flush=True)
+        if args.receipt:
+            args.receipt.write_text(json.dumps({
+                'method': 'One mpv playback per take, image + 48 kHz stereo s16le PCM, '
+                          'uninterrupted decode minus marked source sample indices; no alignment',
+                'mpvImage': image, 'mpvVersion': version.splitlines()[0].split()[1],
+                'ffmpegVersion': version.splitlines()[2].removeprefix('FFmpeg version: '),
+                'fixtureImage': MEDIA_IMAGE,
+                'sourceSHA256': plan['source']['sha256'], 'sourceCuts': plan['cuts'],
+                'control': {'pictures': control['video']['frames'], 'markedPictures': control['video']['markedCount'],
+                            'markedToneMs': control['audio']['leakMs']},
+                'straightCut': {'picture': pictures, 'toneWindows': tones, 'pcm': pcm},
+                'seekDiagnostic': {'markedPictures': seek['video']['markedCount'],
+                                   'markedToneMs': seek['audio']['leakMs']},
+            }, indent=2) + '\n')
         failures(image, fixture)
         print(f'Temporary on-disk artifacts: {sum(p.stat().st_blocks*512 for p in work.rglob("*") if p.is_file())} bytes', flush=True)
 

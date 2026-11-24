@@ -47,7 +47,7 @@ public class SegmentsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var item = _libraryManager.GetItemById(request.ItemId);
-        if (item is null)
+        if (item is null || Plugin.Instance?.IsShelfPath(item.Path)==true)
         {
             return NotFound();
         }
