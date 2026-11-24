@@ -5,8 +5,8 @@ namespace Cleanyfin.Marking;
 
 /// <summary>
 /// The household's marking record: append-only captures, every mark revision, and the hash-chained audit log.
-/// Slice 1 ships an in-memory and a plain-file implementation; slice 2 puts the same interface behind the household
-/// plugin's endpoints (R16). A separate compute service (AI suggestions, fingerprinting, alignment, possibly on other
+/// In-memory and plain-file implementations live here; the household plugin implements the same interface behind its
+/// endpoints (R16, slice 2: <c>PluginMarkingStore</c>). A separate compute service (AI suggestions, fingerprinting, alignment, possibly on other
 /// hardware) reaches the household only through <see cref="MarkingService.AddCapture"/> as a <c>suggester</c>:
 /// it can add suggested captures and never accept or publish.
 /// </summary>
@@ -173,7 +173,7 @@ public class InMemoryMarkingStore : IMarkingStore, IIssuedPlanLookup
 /// <summary>
 /// Three JSON Lines files in one private directory: <c>captures.jsonl</c>, <c>marks.jsonl</c> (every revision and state
 /// change, latest line wins) and <c>audit.jsonl</c>. Everything is re-read strictly on open. For the CLI and the
-/// disposable lab; slice 2 replaces it with plugin storage behind the same interface.
+/// disposable lab; the plugin's store (slice 2) adds a recorded audit head behind the same interface.
 /// </summary>
 public sealed class FileMarkingStore : InMemoryMarkingStore
 {

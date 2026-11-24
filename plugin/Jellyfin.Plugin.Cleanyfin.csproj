@@ -1,7 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!--
+    One explicit Jellyfin target. Pick it with -p:JellyfinTarget=10.11 (default) or 12.4.
+    Each line pins the server package, the runtime that server line runs on, and the one server
+    version the disposable lab gate admits (read back via AssemblyMetadata); nothing else in the
+    plugin may name a Jellyfin version. Add a line only after the lab cases pass on that server.
+  -->
   <PropertyGroup>
+    <JellyfinTarget Condition="'$(JellyfinTarget)' == ''">10.11</JellyfinTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(JellyfinTarget)' == '10.11'">
+    <JellyfinControllerVersion>10.11.11</JellyfinControllerVersion>
+    <JellyfinLabServerVersion>10.11.11</JellyfinLabServerVersion>
     <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(JellyfinTarget)' == '12.4'">
+    <JellyfinControllerVersion>12.4.0</JellyfinControllerVersion>
+    <JellyfinLabServerVersion>12.4.0</JellyfinLabServerVersion>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <RootNamespace>Jellyfin.Plugin.Cleanyfin</RootNamespace>
@@ -11,15 +30,23 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
 
+  <Target Name="CleanyfinRequireKnownJellyfin" BeforeTargets="Restore;CollectPackageReferences;Build">
+    <Error Condition="'$(JellyfinControllerVersion)' == ''" Text="Unknown JellyfinTarget '$(JellyfinTarget)'. Use 10.11 or 12.4." />
+  </Target>
+
   <ItemGroup>
+    <AssemblyMetadata Include="CleanyfinLabServerVersion" Value="$(JellyfinLabServerVersion)" />
     <ProjectReference Include="../delivery/Cleanyfin.Delivery/Cleanyfin.Delivery.csproj" />
+    <ProjectReference Include="../delivery/Cleanyfin.Marking/Cleanyfin.Marking.csproj" />
     <!-- Provided by the Jellyfin server at runtime; referenced here to compile. -->
-    <PackageReference Include="Jellyfin.Controller" Version="10.11.11" />
+    <PackageReference Include="Jellyfin.Controller" Version="$(JellyfinControllerVersion)" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Configuration/configPage.html" />
     <EmbeddedResource Include="../delivery/evidence/register-v1.json" LogicalName="Cleanyfin.Evidence.Register.v1" />
+    <EmbeddedResource Include="../delivery/evidence/review-timing-v1.json" LogicalName="Cleanyfin.Review.Timing.v1" />
+    <EmbeddedResource Include="Marking/Web/*" LogicalName="Cleanyfin.Marking.Web.%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

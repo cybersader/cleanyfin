@@ -14,7 +14,8 @@ import time
 
 HERE = Path(__file__).resolve().parent
 LAB = HERE.parent.parent
-MEDIA_IMAGE = 'jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db'
+sys.path.insert(0, str(LAB))
+from hard_fixture_lab import IMAGE as MEDIA_IMAGE  # noqa: E402
 CAPTURE_FPS = 50
 
 

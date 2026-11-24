@@ -1,6 +1,6 @@
 # Marking foundation: from a button press to a reviewed snapshot
 
-**ADOPTED · 2026-11-24 · slice 1 built ([§6](#6-first-slice-prove-the-chain-end-to-end)); slice 2 not started.** Delivery is built: an accepted snapshot of marks bound to one exact file becomes a playback plan ([pattern](../../../.claude/13-DELIVERY-PATTERN.md), [schemas](../../../delivery/schema/)). Marking is still done by hand. This note designs the marking side so a parent can mark while watching, classify as they go, tighten it later, and approve it for the kids, under household rules rather than per-viewer free choice.
+**ADOPTED · 2026-11-24 · slices 1 and 2 built ([§6](#6-first-slice-prove-the-chain-end-to-end), [slice 2](#slice-2-the-store-in-the-plugin-built-2026-11-24)).** Delivery is built: an accepted snapshot of marks bound to one exact file becomes a playback plan ([pattern](../../../.claude/13-DELIVERY-PATTERN.md), [schemas](../../../delivery/schema/)). Marking is still done by hand. This note designs the marking side so a parent can mark while watching, classify as they go, tighten it later, and approve it for the kids, under household rules rather than per-viewer free choice.
 
 **The idea in three lines.** Capture is cheap and fuzzy; refinement is exact; approval is a separate, recorded act by someone allowed to approve. Each step is its own small versioned document, and the last step writes the *existing* `annotation-snapshot-v1`, so the resolver, plan and mpv adapter do not change. Categories stay a small fixed core that every mark rolls up to; households add their own finer labels beneath it.
 
@@ -222,7 +222,24 @@ Where the build differs from the draft shapes above, and why:
 
 **Deliberately deferred:** the browser review page and frame stepping; store endpoints in the household plugin; pause-to-mark; MCF/EDL import and export; subcategory-aware `snapshot-v2`/`policy-v2`; multi-reviewer rules; exceptions UI; hub contribution; mute (the resolver still refuses it); any cross-file alignment.
 
-**Slice 2** puts the store behind household endpoints (once the plugin port lands) and adds the review page with its fixture test.
+### Slice 2: the store in the plugin (built 2026-11-24)
+
+The household store now lives in the Jellyfin plugin (R16), with a phone capture page and a review page served on Jellyfin's own origin. One lab run per Jellyfin line (`check-plugin.py --case marking`, 10.11.11 and 12.4.0) goes from a press on the phone page, through a marker's draft and the administrator's frame-exact refinement in a headless browser, to an accepted snapshot that the existing filtered shelf plays: mpv kept all 374 unmarked frames, showed none of the marked ones and matched the PCM sample for sample. [Plugin usage](../../../plugin/README.md#household-marking-slice-2) · [lab steps](../../../tools/playback-lab/README.md#household-marking-end-to-end).
+
+![Phone capture page served by the plugin, after a span, a mark and an offline press were all delivered](capture-page-plugin.png)
+
+![Review page after stepping to the first red frame (137) of the barcode fixture: accepted mark [5480, 10520) and the published snapshot](review-page.png)
+
+Where slice 2 differs from the draft above, and why:
+- **Exact boundaries are gated per browser.** The review page enables Set start / Set end / Propose only for a measured browser engine, major version, platform, headless or headed mode and frame rate (`delivery/evidence/review-timing-v1.json`). Measured: Chromium 151, Linux, headless, 25 fps: 64 seeks, steps and 100 ms nudges on the barcode fixture, page frame equal to the decoded barcode every time, on both Jellyfin lines. Headed desktop browsers and other frame rates are refused until measured. A start is rounded down and an end up to the millisecond, so no part of a marked frame is kept.
+- **Binding is lab-only.** A mark binds to `bind:<item>:<full SHA-256>` through the shelf's pinned-asset verifier, which only accepts operator-pinned lab files. On an ordinary household file captures are stored, but drafting and publishing refuse (`UnverifiedBinding`) instead of binding to a guessed identity.
+- **Default roles.** Without a governance file, administrators are admin + reviewer and everyone else is a viewer who may only flag. The design listed this; the build adds that API keys are refused (they name no person) and that a request body can never carry an actor, author or state.
+- **The audit head is recorded** in `audit.head` beside the log, so dropping the newest lines is now evident without an outside record (same disk, so still accident evidence only). The store is reopened and re-verified on every request.
+- **Captures on a filtered item are refused** (`FilteredItemNotSupported`): the plugin issues a new plan revision per grant and does not keep them, so it cannot yet map a filtered position back to the source.
+- **The phone page reads only the signed-in person's own sessions.** Marking while the TV is signed in to a child's account is not supported.
+- **Two copies of the capture rules.** The plugin ships plain JavaScript (`plugin/Marking/Web/capture-core.js`) because it has no bundler; `pwa/test/plugin-capture.test.ts` checks it builds byte-identical captures to `pwa/src/capture.ts`.
+
+**Still deferred:** a binding verifier for ordinary household files; filtered-clock mapping; pause-to-mark; Media Segments on the review timeline; MCF/EDL import and export; a governance and taxonomy editor; measuring headed Chrome, Firefox, Safari and 23.976/29.97 fps.
 
 ---
 
@@ -237,7 +254,7 @@ Where the build differs from the draft shapes above, and why:
 | Browser video timing (`currentTime`, `requestVideoFrameCallback`) on the review page | browser vendors | promised API, **observed** accuracy | refined boundaries off by a frame or mux offset | fixture test per supported browser; refuse refinement on an unmeasured browser |
 | MCF 1.1.0 and Kodi EDL formats, and the MCF→core mapping file | MCF project; Kodi | promised formats | imports fail or mis-map | pin the format version; mapping is ours and versioned |
 | Marking schemas, taxonomy core and audit log format | Cleanyfin | **ours** | publish/compile and any outside reader | versioned; meaning change is a new version; contract tests on every change |
-| Jellyfin CORS for the PWA origin | the household's Jellyfin config | observed | phone capture cannot read Sessions | setup docs; slice 2 serves the PWA from the household side to remove this |
+| Jellyfin CORS for the PWA origin | the household's Jellyfin config | observed | phone capture cannot read Sessions | **retired for marking in slice 2**: the plugin serves both pages same-origin; only the standalone `pwa/` dev tool still needs it |
 
 ---
 

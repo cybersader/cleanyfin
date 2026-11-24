@@ -21,7 +21,9 @@ The top card is the household marking path ([design](../knowledge-base/01-workin
 - **Mark** saves "something around here" with no category; **Language / Violence / Sex / Nudity / Other** save a moment with that hint; **Start … End** saves a span (a category tapped while it is open names the span).
 - Each press becomes one [capture-v1](../delivery/schema/capture-v1.schema.json) in this browser's IndexedDB. The position is the session's last report plus the time since `LastPlaybackCheckIn`, and the search window widens by that age. The TV is not paused (R18).
 - **Export captures** downloads a JSON array of captures for the reviewer, who sets exact bounds with `cleanyfin-mark review` (see [delivery/README](../delivery/README.md#marking)). A capture never filters anything by itself.
-- Captures stay on the phone until exported; clearing site data deletes them. Slice 2 sends them to the household store instead.
+- Captures stay on the phone until exported; clearing site data deletes them.
+
+**For a household, use the page the Jellyfin plugin serves instead:** `<your Jellyfin>/Cleanyfin/marking/capture` (slice 2). It is the same card, signs in with your Jellyfin account, needs no CORS setting, and sends each press to the household store as it is taken, keeping an offline outbox. This PWA card remains as a standalone export tool; `test/plugin-capture.test.ts` keeps both builders identical. See [plugin/README](../plugin/README.md#household-marking-slice-2).
 
 `bun test` checks the capture builder.
 

@@ -18,11 +18,10 @@ from urllib.parse import urlencode
 
 sys.dont_write_bytecode = True
 from exact_audio import compare_cut, read_pcm, summary
-from hard_fixture_lab import IMAGE
+from hard_fixture_lab import DEFAULT_JELLYFIN, JELLYFIN
 
 LAB = Path(__file__).resolve().parent
 ROOT = LAB.parents[1]
-SDK = 'mcr.microsoft.com/dotnet/sdk:9.0'
 MPV = 'cleanyfin-edl-lab:mpv'
 PLUGIN = 'b1f7c2e0-4a3d-4c9a-9f2b-1e6d5a8c0f11'
 BASE = '/labbase'
@@ -45,8 +44,10 @@ def sha(data):
 
 
 class Lab:
-    def __init__(self, work):
+    def __init__(self, work, jellyfin=DEFAULT_JELLYFIN):
         self.work = work
+        # Server image, plugin JellyfinTarget and SDK always move together (one table row).
+        self.jf = JELLYFIN[jellyfin]
         self.name = 'cleanyfin-auth-' + secrets.token_hex(6)
         self.cid = None
         self.port = 8096  # private loopback in a new --network none namespace
@@ -56,12 +57,13 @@ class Lab:
         self.client, self.version = 'auth-range', '1'
 
     def setup(self):
-        for img in (IMAGE, SDK):
+        image, sdk = self.jf['image'], self.jf['sdk']
+        for img in (image, sdk):
             docker('image', 'inspect', img)
         w = self.work
-        for name in ('config/config', 'cache', 'plans', 'other', 'capture'):
+        for name in ('config/config', 'cache', 'plans', 'other', 'capture', 'home'):
             (w/name).mkdir(parents=True)
-        for folder in ('plugin', 'delivery/Cleanyfin.Delivery', 'delivery/evidence'):
+        for folder in ('plugin', 'delivery/Cleanyfin.Delivery', 'delivery/Cleanyfin.Marking', 'delivery/evidence'):
             shutil.copytree(ROOT/folder, w/'src'/folder, ignore=shutil.ignore_patterns('bin','obj'))
         # A pre-staged package source permits a completely networkless SDK build.
         feed = os.environ.get('CLEANYFIN_NUGET_FEED')
@@ -73,12 +75,13 @@ class Lab:
             sdk_options = ['--network', 'none', '-v', f'{path}:/packages:ro,z']
             build_options = ['--source', '/packages', '-p:NuGetAudit=false']
         docker('run', '--rm', '--pull=never', '--user', USER, '-e', 'HOME=/out/home',
-                       '-v', f'{w}:/out:z', '-w', '/out/src', *sdk_options, SDK,
-                       'dotnet', 'build', 'plugin', '-c', 'Release', '--artifacts-path', '/out/artifacts',
+                       '-v', f'{w}:/out:z', '-w', '/out/src', *sdk_options, sdk,
+                       'dotnet', 'build', 'plugin', '-c', 'Release', '-p:JellyfinTarget='+self.jf['target'],
+                       '--artifacts-path', '/out/artifacts',
                        '-v:q', *build_options)
         install = w/'config/plugins/Cleanyfin_0.1.0.0'
         install.mkdir(parents=True)
-        for dll in ('Jellyfin.Plugin.Cleanyfin.dll', 'Cleanyfin.Delivery.dll'):
+        for dll in ('Jellyfin.Plugin.Cleanyfin.dll', 'Cleanyfin.Delivery.dll', 'Cleanyfin.Marking.dll'):
             src, = (w/'artifacts/bin').glob(f'Jellyfin.Plugin.Cleanyfin/release/{dll}')
             shutil.copyfile(src, install/dll)
         self.build_disk = sum(p.stat().st_blocks*512 for p in w.rglob('*') if p.is_file())
@@ -99,7 +102,7 @@ class Lab:
                           '--user', USER,
                           '-v', f'{w}/config:/config:z', '-v', f'{w}/cache:/cache:z',
                           '-v', f'{w}/fixture/source.mp4:/fixture-library/source.mp4:ro,z',
-                          '-v', f'{w}/other:/other:ro,z', '-v', f'{w}/plans:/cleanyfin-fixture:ro,z', IMAGE).decode().strip()
+                          '-v', f'{w}/other:/other:ro,z', '-v', f'{w}/plans:/cleanyfin-fixture:ro,z', image).decode().strip()
         docker('start', self.cid)
         for _ in range(90):
             try:
@@ -110,6 +113,8 @@ class Lab:
             time.sleep(1)
         else:
             raise RuntimeError('disposable loopback Jellyfin unavailable')
+        self.server_version = json.loads(self.request('/System/Info/Public')[2])['Version']
+        check(f"server reports {self.jf['server']} (image pinned by digest)", self.server_version == self.jf['server'])
 
     def request(self, path, method='GET', data=None, user=None, headers=None):
         if path.startswith('http'):
@@ -125,7 +130,7 @@ class Lab:
             h['Authorization'] = f'MediaBrowser Client="{self.client}", Device="fixture", DeviceId="{device}", Version="{self.version}"' + (f', Token="{token}"' if token else '')
         if data is not None:
             h['Content-Type'] = 'application/json'
-            args.append('data-binary = '+json.dumps(json.dumps(data)))
+            args.append('data-binary = '+json.dumps(data if isinstance(data, str) else json.dumps(data)))
         args.extend('header = '+json.dumps(k+': '+v) for k,v in h.items())
         raw = docker('exec','-i',self.cid,'curl','-q','-si','--noproxy','*','--max-time','20','--config','-',input=('\n'.join(args)+'\n').encode(),stderr=subprocess.DEVNULL)
         head,body=raw.split(b'\r\n\r\n',1); lines=head.decode('iso-8859-1').split('\r\n')
@@ -151,6 +156,7 @@ class Lab:
             device = device or name
             ans = api('/Users/AuthenticateByName', 'POST', {'Username':name,'Pw':pw}, user=(device,''))
             return (device, ans['AccessToken']), ans['User']['Id'].replace('-', '')
+        self.passwords = {'admin': adminpw, 'one': p1, 'two': p2}
         self.admin, _ = login('admin', adminpw)
         for name, pw in [('one', p1), ('two', p2)]:
             api('/Users/New', 'POST', {'Name':name, 'Password':pw}, user=self.admin)
@@ -360,8 +366,8 @@ class PointerLab(Lab):
     profile = {'Name':'mpv', 'DirectPlayProfiles':[{'Type':'Video','Container':'mp4','VideoCodec':'h264','AudioCodec':'aac'}],
                'TranscodingProfiles':[{'Type':'Video','Context':'Streaming','Protocol':'hls','Container':'ts','VideoCodec':'h264','AudioCodec':'aac'}]}
 
-    def __init__(self, work):
-        super().__init__(work)
+    def __init__(self, work, jellyfin=DEFAULT_JELLYFIN):
+        super().__init__(work, jellyfin)
         self.seed = json.loads(REGISTER.read_bytes())
         self.wholphin, = [r for r in self.seed['rows'] if r['tuple']['appId']=='Wholphin' and r['tuple']['backend']=='mpv']
         self.client,self.version = (self.wholphin['tuple'][k] for k in ('appId', 'appVersion'))
@@ -392,6 +398,8 @@ class PointerLab(Lab):
         # disposable row to exercise the gate, never rewrite the historical evidence.
         row = json.loads(json.dumps(self.wholphin))
         row['tuple']['pluginBuild'] = self.plugin_build
+        # Exercise the gate on the server under test; the historical row names 10.11.11 only.
+        row['tuple']['jellyfinVersion'] = self.server_version
         row['observation'] = 'Synthetic integration-test setup only; no claims about playback fidelity on this build.'
         row['evidenceRef'] = 'tools/playback-lab/check-plugin.py'
         row['controls'] = []
@@ -589,6 +597,11 @@ class EligibilityLab(PointerLab):
         self.setup_pointer(stub_evidence=False)
         check('historical plugin build differs: no offer', self.refusal('EvidenceTupleUnknown'))
         stub = self.stub_register()
+        # The same synthetic row naming any other server version must not admit this server.
+        foreign = json.loads(json.dumps(stub))
+        foreign['rows'][0]['tuple']['jellyfinVersion'] = next(j['server'] for j in JELLYFIN.values() if j['server'] != self.server_version)
+        self.put(self.register_path, json.dumps(foreign).encode())
+        check('row for another Jellyfin version: EvidenceTupleUnknown', self.refusal('EvidenceTupleUnknown'))
         self.put(self.register_path, json.dumps(stub).encode())
         status, headers, raw = self.play()
         sources = json.loads(raw).get('MediaSources', [])
@@ -759,12 +772,331 @@ class ShelfLab(PointerLab):
         check('cleanup: only owned pointers and inventory removed; original bytes unchanged',foreign.read_text()=='retain me' and self.snapshot.read_bytes()==raw and not list((self.data/'shelves').rglob('*.strm')) and not (self.data/'inventory.json').exists() and media()==before)
 
 
+class LoopbackForward:
+    """Gives the headless browser a host-loopback origin for the network-less lab.
+
+    Listens on 127.0.0.1 only. Each browser connection becomes one `docker exec` that opens the lab
+    server's own loopback socket inside its namespace; the container keeps --network none and nothing
+    is published to any interface.
+    """
+    def __init__(self, cid, port):
+        import socket
+        import threading
+        self.threading = threading
+        self.cid, self.target, self.procs = cid, port, []
+        self.sock = socket.socket()
+        self.sock.bind(('127.0.0.1', 0))
+        self.sock.listen(32)
+        self.port = self.sock.getsockname()[1]
+        threading.Thread(target=self.accept, daemon=True).start()
+
+    def accept(self):
+        while True:
+            try:
+                conn, _ = self.sock.accept()
+            except OSError:
+                return
+            self.threading.Thread(target=self.pipe, args=(conn,), daemon=True).start()
+
+    def pipe(self, conn):
+        p = subprocess.Popen(['docker', 'exec', '-i', self.cid, 'bash', '-c',
+                              f'exec 3<>/dev/tcp/127.0.0.1/{self.target}; cat <&3 & cat >&3; wait'],
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        self.procs.append(p)
+
+        def up():
+            try:
+                while data := conn.recv(65536):
+                    p.stdin.write(data)
+                    p.stdin.flush()
+            except (OSError, ValueError):
+                pass
+            finally:
+                p.kill()
+        self.threading.Thread(target=up, daemon=True).start()
+        try:
+            while data := p.stdout.read1(65536):
+                conn.sendall(data)
+        except (OSError, ValueError):
+            pass
+        finally:
+            conn.close()
+            p.kill()
+
+    def close(self):
+        self.sock.close()
+        for p in self.procs:
+            p.kill()
+
+
+DESIGN = ROOT/'knowledge-base/01-working/marking-foundation-2026-11-24'
+
+
+class MarkingLab(PointerLab):
+    """Slice 2: phone capture -> household store in the plugin -> review page refinement -> accepted
+    snapshot -> the existing filtered shelf, with role, bypass and audit checks on the way."""
+
+    def __init__(self, work, jellyfin=DEFAULT_JELLYFIN):
+        super().__init__(work, jellyfin)
+        self.name = 'cleanyfin-marking-' + secrets.token_hex(6)
+        self.forward = None
+
+    def m(self, path, method='GET', data=None, user=None, headers=None):
+        status, h, body = self.request('/Cleanyfin/marking/' + path, method, data, user, headers)
+        parsed = json.loads(body) if body and h.get('content-type', '').startswith('application/json') else body
+        return status, parsed, h
+
+    def ok(self, path, method='GET', data=None, user=None, expect=(200,)):
+        status, body, _ = self.m(path, method, data, user)
+        if status not in expect:
+            raise RuntimeError(f'marking {method} {path.split("/")[0]} status {status} {body.get("refusal") if isinstance(body, dict) else ""}')
+        return body
+
+    def refused(self, path, method, data, user, status, reason=None):
+        got, body, h = self.m(path, method, data, user)
+        return got == status and (reason is None or (isinstance(body, dict) and body.get('refusal') == reason
+                                                     and h.get('x-cleanyfin-refusal') == reason))
+
+    def capture(self, author, ref, at, *, kind='point', end=None, category=None, surface='phone-remote', item=None, server=None):
+        doc = {'captureVersion': 1, 'ref': ref, 'capturedAt': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+               'author': author, 'surface': surface,
+               'target': {'serverRef': server or self.server_ref, 'itemId': item or self.item, 'mediaSourceId': item or self.item},
+               'clock': {'kind': 'source'}, 'kind': kind, 'atMs': at, 'window': {'beforeMs': 4000, 'afterMs': 1500}}
+        if end is not None:
+            doc['endAtMs'] = end
+        if category:
+            doc['category'] = category
+        return doc
+
+    def governance(self, self_approval=True):
+        doc = {'governanceVersion': 1, 'rev': f'gov:lab:{secrets.token_hex(4)}',
+               'members': [{'user': self.ref['admin'], 'roles': ['admin', 'reviewer']},
+                           {'user': self.ref['one'], 'roles': ['marker']},
+                           {'user': self.ref['two'], 'roles': ['viewer']},
+                           {'user': self.ref['svc'], 'roles': ['suggester']}],
+               'profiles': [], 'approval': {'selfApproval': self_approval, 'snapshotExpiryDays': 30}}
+        self.put(self.mdata/'governance.json', json.dumps(doc).encode())
+
+    def browser(self, scenario, user, **extra):
+        cfg = {'origin': f'http://127.0.0.1:{self.forward.port}{BASE}', 'itemId': self.item, 'scratch': str(self.work),
+               'user': {'name': user, 'password': self.passwords[user]}, **extra}
+        r = subprocess.run(['node', LAB/'marking-browser.mjs', scenario], input=json.dumps(cfg).encode(),
+                           stdout=subprocess.PIPE, timeout=300)
+        out = json.loads(r.stdout.decode().strip().splitlines()[-1])
+        if 'error' in out:
+            raise RuntimeError(f'browser {scenario}: {out["error"]}')
+        return out
+
+    def audit_lines(self):
+        return [l for l in (self.mdata/'audit.jsonl').read_text().split('\n') if l]
+
+    def exercise(self):
+        self.users_library()
+        api = self.api
+        self.original = (self.work/'fixture/source.mp4').read_bytes()
+        self.configurl = '/Plugins/'+PLUGIN+'/Configuration'
+        self.cfg = api(self.configurl, user=self.admin)
+        self.data = self.work/'config/plugins/configurations/cleanyfin-shelves-v1'
+        self.mdata = self.work/'config/plugins/configurations/cleanyfin-marking-v1'
+        self.snapshot = self.data/'snapshots'/(self.item+'.json')
+        self.register_path = self.data/'evidence-register-v1.json'
+        self.put(self.register_path, json.dumps(self.stub_register()).encode())
+        self.policy(self.viewer, self.one[0], ['violence'])
+        self.cfg.update(EnableAuthRangeLab=True, LabOrigin=self.origin, LabPointerKey=secrets.token_hex(16),
+                        LabLifetimeSeconds=300, LabSourceSha256=sha(self.original))
+        self.update()
+        self.server_ref = api('/System/Info/Public')['Id']
+        pw = secrets.token_urlsafe(24)
+        api('/Users/New', 'POST', {'Name': 'svc', 'Password': pw}, user=self.admin)
+        login = api('/Users/AuthenticateByName', 'POST', {'Username': 'svc', 'Pw': pw}, user=('svc', ''))
+        self.svc = ('svc', login['AccessToken'])
+        self.extra_tokens = [self.svc[1]]
+        uid = lambda u: api('/Users/Me', user=u)['Id'].replace('-', '')
+        self.ref = {'admin': 'jf:user:'+uid(self.admin), 'one': 'jf:user:'+self.viewer, 'two': 'jf:user:'+self.viewer2,
+                    'svc': 'jf:user:'+uid(self.svc)}
+
+        # Pages are static and same-origin; every data route needs a person.
+        pages = [self.request('/Cleanyfin/marking/'+p) for p in ('capture', 'review', 'assets/common.js', 'assets/review.js')]
+        check('pages served same-origin without data, with a strict CSP',
+              all(s == 200 for s, _, _ in pages) and pages[0][1]['content-type'].startswith('text/html')
+              and "default-src 'self'" in pages[1][1].get('content-security-policy', '')
+              and self.request('/Cleanyfin/marking/assets/..%2Fconfig')[0] == 404
+              and all(self.request('/Cleanyfin/marking/'+p)[0] == 401 for p in ('me', 'items', 'audit', 'timing')))
+
+        # Default roles from Jellyfin: administrators review; everyone else may only flag a moment.
+        me_admin, me_one = self.ok('me', user=self.admin), self.ok('me', user=self.one)
+        check('no governance file: admin is admin+reviewer, others viewer (Jellyfin default)',
+              me_admin['roles'] == ['admin', 'reviewer'] and me_one['roles'] == ['viewer']
+              and me_admin['governanceSource'] == 'jellyfin-default' and me_one['serverRef'] == self.server_ref)
+        flag = self.capture(self.ref['one'], 'cap:lab:flag', 3000)
+        check('viewer may flag a moment (capture) but not draft a mark',
+              self.m('captures', 'POST', flag, self.one)[0] == 201
+              and self.refused('marks', 'POST', {'captureRef': 'cap:lab:flag'}, self.one, 403, 'NotPermitted'))
+        api('/Auth/Keys?app=cleanyfin-lab', 'POST', user=self.admin)
+        key, = [k['AccessToken'] for k in api('/Auth/Keys', user=self.admin)['Items'] if k['AppName'] == 'cleanyfin-lab']
+        self.extra_tokens.append(key)
+        keyed = {'Authorization': f'MediaBrowser Token="{key}"'}
+        check('an API key names no person: refused on every marking route',
+              all(self.request('/Cleanyfin/marking/'+p, m, d, headers=keyed)[0] == 403
+                  for p, m, d in [('me', 'GET', None), ('items/'+self.item+'/publish', 'POST', {}), ('captures', 'POST', flag)]))
+
+        self.governance()
+        check('governance file is authoritative', self.ok('me', user=self.one)['roles'] == ['marker']
+              and self.ok('me', user=self.admin)['governanceSource'] == 'file')
+        check('a capture cannot name another author', self.refused('captures', 'POST', self.capture(self.ref['admin'], 'cap:lab:spoof', 4000), self.one, 403, 'NotPermitted'))
+        check('a capture for another server or a hidden item is refused',
+              self.refused('captures', 'POST', self.capture(self.ref['one'], 'cap:lab:srv', 4000, server='elsewhere'), self.one, 422, 'BindingMismatch')
+              and self.refused('captures', 'POST', self.capture(self.ref['two'], 'cap:lab:hidden', 4000), self.two, 404, 'UnknownItem'))
+        check('malformed and oversized bodies refused', self.m('captures', 'POST', '{"captureVersion":1,', self.one)[0] == 400
+              and self.m('captures', 'POST', 'x'*70000, self.one)[0] == 413)
+        check('suggester: service captures only; no drafts',
+              self.refused('captures', 'POST', self.capture(self.ref['svc'], 'cap:lab:svc1', 4000), self.svc, 403, 'NotPermitted')
+              and self.m('captures', 'POST', self.capture(self.ref['svc'], 'cap:lab:svc2', 4000, surface='service'), self.svc)[0] == 201
+              and self.refused('marks', 'POST', {'captureRef': 'cap:lab:svc2'}, self.svc, 403, 'NotPermitted'))
+        check('a phone-remote capture from a person cannot use the service surface',
+              self.refused('captures', 'POST', self.capture(self.ref['one'], 'cap:lab:fake-svc', 4000, surface='service'), self.one, 403, 'NotPermitted'))
+
+        # The phone page, served by the plugin, while a "TV" session of the same account plays the original.
+        tv = self.api('/Users/AuthenticateByName', 'POST', {'Username': 'one', 'Pw': self.passwords['one']}, user=('tv', ''))
+        tv = ('tv', tv['AccessToken']); self.extra_tokens.append(tv[1])
+        self.api('/Sessions/Capabilities/Full', 'POST', {'PlayableMediaTypes': ['Video'], 'SupportedCommands': [], 'SupportsMediaControl': True}, user=tv)
+        play = self.api('/Items/'+self.item+'/PlaybackInfo', user=tv)['PlaySessionId']
+        self.api('/Sessions/Playing', 'POST', {'ItemId': self.item, 'MediaSourceId': self.item, 'PlaySessionId': play, 'CanSeek': True,
+                                               'PlayMethod': 'DirectPlay', 'PositionTicks': 56_000_000, 'IsPaused': False}, user=tv)
+        self.forward = LoopbackForward(self.cid, self.port)
+        phone = self.browser('capture', 'one', screenshot=str(DESIGN/'capture-page-plugin.png'))
+        print('Phone page:', phone['browser'], '|', ' / '.join(phone['sentAfterReconnect']), flush=True)
+        stored = self.ok(f'items/{self.item}', user=self.admin)['captures']
+        mine = [c for c in stored if c['author'] == self.ref['one'] and c['surface'] == 'phone-remote' and c['ref'].startswith('cap:') and not c['ref'].startswith('cap:lab:')]
+        span = [c for c in mine if c['kind'] == 'span']
+        check('phone page: span, mark and an offline press all reach the household store',
+              len(mine) == 3 and len(span) == 1 and span[0]['category'] == 'violence' and span[0]['endAtMs'] > span[0]['atMs'] >= 5600
+              and sorted(c.get('category', '') for c in mine) == ['', 'language', 'violence'] and 'waiting to send' in phone['queuedOffline'])
+        self.api('/Sessions/Playing/Stopped', 'POST', {'ItemId': self.item, 'MediaSourceId': self.item, 'PlaySessionId': play, 'PositionTicks': 60_000_000}, user=tv)
+
+        # A marker drafts and roughs in; only a reviewer decides.
+        draft = self.ok('marks', 'POST', {'captureRef': span[0]['ref']}, self.one, expect=(201,))
+        mark = draft['ref']
+        check('marker drafts a mark from their capture over its search window, unclassified',
+              draft['state'] == 'proposed' and draft['boundsSource'] == 'capture-window' and 'category' not in draft and not draft['fileChanged'])
+        rough = {'rev': 1, 'startMs': 5000, 'endMs': 11000, 'category': 'violence', 'severity': 2, 'action': 'skip'}
+        edited = self.ok('marks/'+mark, 'PUT', rough, self.one)
+        check('marker edits their own proposed mark', edited['rev'] == 2 and edited['editedBy'] == self.ref['one'])
+        check('stale revision refused', self.refused('marks/'+mark, 'PUT', rough, self.one, 409, 'StaleRevision'))
+        check('marker cannot accept, reject, withdraw or publish',
+              all(self.refused(f'marks/{mark}/{d}', 'POST', {'rev': 2}, self.one, 403, 'NotPermitted') for d in ('accept', 'reject', 'withdraw'))
+              and self.refused(f'items/{self.item}/publish', 'POST', {}, self.one, 403, 'NotPermitted'))
+        check('a body cannot carry an actor or state', self.refused(f'marks/{mark}/accept', 'POST', '{"rev":2,"actor":"%s"}' % self.ref['admin'], self.one, 400, 'UnknownField')
+              and self.refused('marks/'+mark, 'PUT', dict(rough, rev=2, state='accepted'), self.one, 400, 'UnknownField'))
+        check('suggester and library-less viewer cannot decide',
+              self.refused(f'marks/{mark}/accept', 'POST', {'rev': 2}, self.svc, 403, 'NotPermitted')
+              and self.refused(f'marks/{mark}/accept', 'POST', {'rev': 2}, self.two, 404, 'UnknownMark'))
+        check('a rough (capture-window) mark cannot be accepted, even by a reviewer',
+              self.refused('marks', 'POST', {'captureRef': 'cap:lab:flag'}, self.two, 404) and
+              self.ok('marks', 'POST', {'captureRef': 'cap:lab:flag'}, self.admin, expect=(201,))['boundsSource'] == 'capture-window')
+        flagged = [m for m in self.ok(f'items/{self.item}', user=self.admin)['marks'] if m['provenance']['from'] == ['cap:lab:flag']][0]
+        check('...a draft carries no guessed classification, so accept refuses it', self.refused(f'marks/{flagged["ref"]}/accept', 'POST', {'rev': 1}, self.admin, 422, 'IncompleteMark'))
+        self.ok(f'marks/{flagged["ref"]}/withdraw', 'POST', {'rev': 1}, self.admin)
+        self.governance(self_approval=False)
+        own = self.ok('marks', 'POST', {'captureRef': 'cap:lab:svc2', 'exact': {'startMs': 100, 'endMs': 200, 'category': 'gore', 'severity': 1, 'action': 'skip'}}, self.admin, expect=(201,))
+        check('second-reviewer setting: a reviewer cannot accept their own mark', self.refused(f'marks/{own["ref"]}/accept', 'POST', {'rev': 1}, self.admin, 403, 'SecondReviewerRequired'))
+        self.ok(f'marks/{own["ref"]}/withdraw', 'POST', {'rev': 1}, self.admin)
+        self.governance()
+
+        # Review page: refuses exact boundaries until this browser's frame timing is measured on the fixture.
+        self.put(self.mdata/'review-timing-v1.json', b'{"timingVersion":1,"rows":[]}')
+        measured = self.browser('measure', 'admin')
+        print('Review page timing:', measured['product'], json.dumps(measured['browser']), f"{measured['framesChecked']} frames, {measured['mismatches']} off", flush=True)
+        check('unmeasured browser: exact boundaries refused (I does nothing)',
+              measured['before']['timing'] == 'unmeasured' and measured['before']['refine'] == '0' and measured['afterKeyI'] == '–')
+        bad = [c for c in measured['checks'] if c['page'] != c['expected'] or c['pixels'] != c['expected']]
+        check(f"browser frame timing on the barcode fixture: {measured['framesChecked']} seeks/steps/nudges, page frame = decoded barcode",
+              not bad and measured['framesChecked'] >= 60 and measured['msExact'] and measured['redExact'] and measured['fault'] == 'unmeasured')
+        row = dict(measured['browser'], frameRates=[25], result='pass', framesChecked=measured['framesChecked'], mismatches=0,
+                   product=measured['product'], jellyfin=self.server_version,
+                   fixture='tools/playback-lab/hard-fixture.py (500 frames, 25 fps, H.264 High with B-frames, AAC)',
+                   measuredAt=datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), evidenceRef='tools/playback-lab/check-plugin.py --case marking')
+        self.timing_row = row
+        print('Timing register row:', json.dumps(row), flush=True)
+        self.put(self.mdata/'review-timing-v1.json', json.dumps({'timingVersion': 1, 'rows': [row]}).encode())
+
+        refined = self.browser('refine', 'admin', markRef=mark, accept=True, publish=True, screenshot=str(DESIGN/'review-page.png'))
+        print('Refined:', json.dumps(refined['form']), '|', refined.get('accepted'), '|', refined.get('published'), flush=True)
+        check('measured browser: reviewer steps to the first and last red frame by eye',
+              refined['timing'] == 'measured' and refined['refineEnabled'] == '1' and refined['firstRed'] == {'page': 137, 'pixels': 137}
+              and refined['lastRed'] == {'page': 262, 'pixels': 262, 'color': 'red'})
+        latest = next(m for m in self.ok(f'items/{self.item}', user=self.admin)['marks'] if m['ref'] == mark)
+        check('proposed, accepted and published from the page: [5480, 10520) violence/2/skip',
+              (latest['startMs'], latest['endMs'], latest['category'], latest['severity'], latest['action'], latest['state'], latest['boundsSource'], latest['editedBy'])
+              == (5480, 10520, 'violence', 2, 'skip', 'accepted', 'reviewer', self.ref['admin']) and 'Published 1' in refined['published'])
+        snap = json.loads(self.snapshot.read_bytes())
+        ann, = snap['annotations']
+        check('snapshot written where the resolver reads it, bound to the exact original',
+              snap['binding']['sha256'] == sha(self.original) and snap['binding']['serverRef'] == self.server_ref
+              and snap['binding']['itemId'] == self.item and ann['ref'] == mark and (ann['startMs'], ann['endMs']) == (5480, 10520)
+              and ann['contentSha256'] == sha(f'annotation-v1|{mark}|violence|2|skip|5480|10520'.encode()))
+
+        # The existing filtered shelf now plays the published plan, through the same checks as hand-placed snapshots.
+        check('reconcile: one filtered pointer from the published snapshot', self.api('/Cleanyfin/lab/reconcile', 'POST', user=self.admin)['Count'] == 1)
+        self.pointer, row_ = self.find_pointer(self.viewer)
+        self.folders = {f['Name']: f['ItemId'] for f in self.api('/Library/VirtualFolders', user=self.admin)}
+        self.folders['Shelf'] = self.folders['Playback samples '+self.viewer]
+        self.shelf_access(True)
+        self.body = {'DeviceProfile': self.profile, 'MediaSourceId': self.pointer, 'MaxStreamingBitrate': 100000000, 'AutoOpenLiveStream': True}
+        check('capture on a filtered item refused until its clock can be mapped',
+              self.refused('captures', 'POST', self.capture(self.ref['one'], 'cap:lab:filtered', 4000, item=self.pointer), self.one, 422, 'FilteredItemNotSupported'))
+        url, _ = self.projection()
+        self.player(url)
+
+        # Audit: the chain, its recorded head, and the trail from plan to decision.
+        lines = self.audit_lines()
+        head = self.ok('audit', user=self.admin)
+        prev = '0'*64
+        for line in lines:
+            assert json.loads(line)['prev'] == prev, 'audit chain'
+            prev = sha(line.encode())
+        types = [(json.loads(l)['type'], json.loads(l)['actor']) for l in lines]
+        accept = [json.loads(l) for l in lines if json.loads(l)['type'] == 'mark.accept']
+        check('audit: chain verifies; head matches disk; accept names admin and the published digest',
+              head == {'verified': True, 'count': len(lines), 'head': sha(lines[-1].encode())}
+              and ('snapshot.publish', self.ref['admin']) in types and ('mark.edit', self.ref['one']) in types
+              and accept[-1]['subject'] == f'{mark}@{latest["rev"]}' and accept[-1]['digest'] == ann['contentSha256']
+              and accept[-1]['actor'] == self.ref['admin'])
+        check('audit head readable by markers, not viewers', self.m('audit', user=self.one)[0] == 200 and self.refused('audit', 'GET', None, self.two, 403, 'NotPermitted'))
+        raw = (self.mdata/'audit.jsonl').read_bytes()
+        middle = len(lines)//2
+        tampered = lines[:]; tampered[middle] = tampered[middle].replace('"actor":"jf:user:', '"actor":"jf:user:0', 1)
+        (self.mdata/'audit.jsonl').write_text('\n'.join(tampered)+'\n')
+        # A rewritten line still parses; the next line's prev no longer matches it.
+        check(f'edited audit line {middle+1} detected at line {middle+2}; publish refused', self.refused('audit', 'GET', None, self.admin, 409, 'AuditChainBroken')
+              and self.m('audit', user=self.admin)[1]['line'] == middle+2 and self.refused(f'items/{self.item}/publish', 'POST', {}, self.admin, 409, 'AuditChainBroken'))
+        (self.mdata/'audit.jsonl').write_text('\n'.join(lines[:-1])+'\n')
+        check('dropped newest audit line detected against the recorded head', self.refused('audit', 'GET', None, self.admin, 409, 'AuditTruncated'))
+        head_file = (self.mdata/'audit.head').read_bytes()
+        (self.mdata/'audit.jsonl').write_bytes(raw); (self.mdata/'audit.head').unlink()
+        check('removed head detected', self.refused('audit', 'GET', None, self.admin, 409, 'AuditHeadMissing'))
+        (self.mdata/'audit.head').write_bytes(head_file)
+        check('restored record verifies again', self.ok('audit', user=self.admin) == head)
+
+        # Editing an accepted mark takes it out of the next snapshot until it is accepted again.
+        again = self.ok('marks/'+mark, 'PUT', {'rev': latest['rev'], 'startMs': 5480, 'endMs': 10520, 'category': 'violence', 'severity': 3, 'action': 'skip'}, self.admin)
+        pub = self.ok(f'items/{self.item}/publish', 'POST', {}, self.admin)
+        check('edit after accept: proposed rev, empty snapshot, shelf withdrawn',
+              again['state'] == 'proposed' and pub['annotations'] == 0 and json.loads(self.snapshot.read_bytes())['annotations'] == []
+              and self.api('/Cleanyfin/lab/reconcile', 'POST', user=self.admin)['Count'] == 0)
+        logs = docker('logs', self.cid, stderr=subprocess.STDOUT)
+        check('no ApiKey= query strings in the server log', b'apikey=' not in logs.lower())
+        self.forward.close()
+
+
 def main():
     if not __debug__:
         raise SystemExit('Run without Python optimization: fixture assertions are required.')
-    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation','eligibility'],required=True);case=p.parse_args().case
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation','eligibility','marking'],required=True)
+    p.add_argument('--jellyfin',choices=sorted(JELLYFIN),default=DEFAULT_JELLYFIN,help='server line under test: image, plugin target and SDK together')
+    args=p.parse_args();case=args.case
     scratch=ROOT/'plugin/obj';scratch.mkdir(exist_ok=True)
-    w=Path(tempfile.mkdtemp(prefix=case+'-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab,'eligibility':EligibilityLab}[case](w);ok=False
+    w=Path(tempfile.mkdtemp(prefix=f'{case}-{args.jellyfin}-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab,'eligibility':EligibilityLab,'marking':MarkingLab}[case](w,args.jellyfin);ok=False
     try:
         lab.setup();lab.exercise();docker('stop',lab.cid);lab.inspect();ok=True
     except Exception as e:
@@ -772,6 +1104,8 @@ def main():
         msg=str(e) if isinstance(e,(AssertionError,RuntimeError)) else type(e).__name__
         print('FAIL',msg or 'fixture assertion',flush=True)
     finally:
+        if getattr(lab, 'forward', None):
+            lab.forward.close()
         if lab.cid:
             docker('stop',lab.cid)
             if ok: docker('rm','-v',lab.cid)

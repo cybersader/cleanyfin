@@ -1,0 +1,26 @@
+{
+  "timingVersion": 1,
+  "note": "Browsers whose review-page frame timing passed the barcode fixture (tools/playback-lab/check-plugin.py --case marking). The review page enables exact boundaries only for a matching engine, major version, platform, mode and frame rate. A row is a lab measurement, not a promise about other builds.",
+  "rows": [
+    {
+      "engine": "Chromium",
+      "major": 151,
+      "platform": "Linux",
+      "mode": "headless",
+      "frameRates": [
+        25
+      ],
+      "result": "pass",
+      "framesChecked": 64,
+      "mismatches": 0,
+      "product": "Chrome/151.0.7922.34",
+      "fixture": "tools/playback-lab/hard-fixture.py (500 frames, 25 fps, H.264 High with B-frames, AAC)",
+      "measuredAt": "2026-11-24T21:31:07Z",
+      "evidenceRef": "tools/playback-lab/check-plugin.py --case marking",
+      "jellyfin": [
+        "10.11.11",
+        "12.4.0"
+      ]
+    }
+  ]
+}

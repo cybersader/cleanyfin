@@ -18,6 +18,7 @@ public class ServiceRegistrator : IPluginServiceRegistrator
             s.GetRequiredService<MediaBrowser.Controller.Library.IUserManager>()));
         serviceCollection.AddSingleton(_ => new PinnedAsset());
         serviceCollection.AddSingleton<ShelfStore>();
+        serviceCollection.AddSingleton<Marking.HouseholdMarking>();
         serviceCollection.AddHostedService<ShelfWorker>();
         serviceCollection.AddScoped<FixtureGate>();
         serviceCollection.AddSingleton<IStartupFilter, GrantPipeline>();

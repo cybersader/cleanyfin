@@ -93,6 +93,13 @@ public class CleanyfinSegmentProvider : IMediaSegmentProvider
         }
     }
 
+    /// <summary>
+    /// Required by <see cref="IMediaSegmentProvider"/> from Jellyfin 12.x: discard anything this
+    /// provider extracted for the item. Cleanyfin extracts and stores nothing per item (segments are
+    /// fetched on demand), so there is nothing to clean up. On 10.11 this is an unused public method.
+    /// </summary>
+    public Task CleanupExtractedData(Guid itemId, CancellationToken cancellationToken) => Task.CompletedTask;
+
     private sealed class SegmentsResponse
     {
         [JsonPropertyName("segments")]

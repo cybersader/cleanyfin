@@ -37,9 +37,9 @@ The golden pair uses the lab's timing with synthetic asset and authority identit
 | Policy | [household-governance-v1](schema/household-governance-v1.schema.json) + viewer `household-policy-v1` | Stricter wins; a viewer can tighten but never loosen a profile's floor. The result is the existing `household-policy-v1`. |
 | Labels | [taxonomy-v1](schema/taxonomy-v1.schema.json) | Household concepts roll up to one core category through at most two others. Snapshots carry only the core category. |
 
-A capture on a filtered clock maps back to source time through the issued plan's kept ranges, or refuses (`UnknownPlan`) and stays for manual placement. The audit log is hash-chained JSON Lines: an edited, removed or reordered line is evident; dropping the newest lines is evident only against a recorded head, and none of this protects against whoever controls the disk. `IMarkingStore` is the seam: slice 1 has in-memory and plain-file stores; slice 2 puts the same interface behind the household plugin (R16).
+A capture on a filtered clock maps back to source time through the issued plan's kept ranges, or refuses (`UnknownPlan`) and stays for manual placement. The audit log is hash-chained JSON Lines: an edited, removed or reordered line is evident; dropping the newest lines is evident only against a recorded head (the plugin's store keeps one in `audit.head`), and none of this protects against whoever controls the disk. `IMarkingStore` is the seam: slice 1 has in-memory and plain-file stores; slice 2 puts the same interface behind the household plugin (R16).
 
-The lab CLI turns a phone export plus a reviewer's exact bounds into accepted marks and a snapshot. It reads no media and talks to no server:
+In a household the Jellyfin plugin is the store, with a phone capture page and a review page on Jellyfin's own origin ([plugin/README](../plugin/README.md#household-marking-slice-2)). The lab CLI turns a phone export plus a reviewer's exact bounds into accepted marks and a snapshot. It reads no media and talks to no server:
 
 ```sh
 dotnet run --project delivery/Cleanyfin.Marking.Cli -- review --store <private dir> \

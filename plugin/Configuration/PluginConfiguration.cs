@@ -11,7 +11,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Optional pseudonymous submitter id used for any future writes.</summary>
     public string SubmitterId { get; set; } = string.Empty;
 
-    // Disposable 10.11.11 auth-range fixture only. Not household playback configuration.
+    // Disposable auth-range fixture only (server version fixed by JellyfinTarget). Not household playback configuration.
     public bool EnableAuthRangeLab { get; set; }
     // When on, require eligible evidence even if the lab flag is also set.
     public bool EnableProductionEligibility { get; set; }

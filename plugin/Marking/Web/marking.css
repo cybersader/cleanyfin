@@ -1,0 +1,74 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #0b1220;
+  color: #e6ecf5;
+}
+body { margin: 0; padding: 1rem; }
+[hidden] { display: none !important; }
+h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+h1 small { color: #7f8db0; font-weight: 400; }
+h2 { font-size: 1rem; margin: 0 0 0.75rem; color: #a7b3d4; }
+.card { background: #131c2e; border: 1px solid #223052; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+.card.narrow { max-width: 420px; margin: 2rem auto; }
+label { display: block; margin: 0.5rem 0; font-size: 0.85rem; color: #a7b3d4; }
+input, select {
+  display: block; width: 100%; margin-top: 0.2rem; padding: 0.5rem; box-sizing: border-box;
+  background: #0b1220; color: #e6ecf5; border: 1px solid #2b3b63; border-radius: 6px;
+}
+button {
+  margin-top: 0.5rem; padding: 0.5rem 0.9rem; cursor: pointer;
+  background: #2f6df6; color: #fff; border: 0; border-radius: 6px; font-weight: 600;
+}
+button:hover:not(:disabled) { background: #4a82ff; }
+button:disabled { background: #2a3550; color: #7f8db0; cursor: not-allowed; }
+button.secondary { background: #1d2a46; border: 1px solid #2b3b63; }
+button.small { padding: 0.25rem 0.55rem; font-size: 0.8rem; margin: 0 0 0 0.4rem; }
+.row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.mono { font-family: ui-monospace, monospace; }
+.status { min-height: 1.2em; font-size: 0.85rem; color: #c9d4ee; }
+kbd { font-family: ui-monospace, monospace; background: #1d2a46; border: 1px solid #2b3b63; border-radius: 4px; padding: 0 0.3rem; }
+
+/* phone */
+.phone main { max-width: 520px; margin: 0 auto; }
+.capture .now { font-size: 0.95rem; color: #c9d4ee; margin: 0 0 0.75rem; }
+.capture button { width: 100%; margin-top: 0.6rem; }
+.capture .row button { width: auto; flex: 1; }
+.capture .mark { font-size: 1.6rem; padding: 1.1rem; border-radius: 14px; background: #e0473b; }
+.capture .mark:hover:not(:disabled) { background: #f05a4e; }
+.capture .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.capture .quick button { font-size: 1.05rem; padding: 0.9rem 0.5rem; border-radius: 12px; background: #2b3b63; }
+.capture .quick button:hover:not(:disabled) { background: #36497a; }
+.capture .span { font-size: 1.15rem; padding: 0.9rem; border-radius: 12px; background: #2f6df6; }
+.capture .span.open { background: #d98a1c; }
+.capture .hint { font-size: 0.8rem; color: #7f8db0; }
+.capture .queue { font-size: 0.85rem; color: #f0c27a; min-height: 1em; }
+.captures { margin: 0.5rem 0 0; padding-left: 1.2rem; font-family: ui-monospace, monospace; font-size: 0.85rem; color: #c9d4ee; }
+.captures li { margin: 0.2rem 0; }
+
+/* desk */
+.bar { display: flex; align-items: baseline; gap: 1rem; }
+.bar h1 { flex: 1; }
+.who { color: #a7b3d4; font-size: 0.9rem; }
+.review { display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 1rem; align-items: start; }
+.side .list { list-style: none; margin: 0 0 1rem; padding: 0; font-size: 0.82rem; }
+.list li { padding: 0.45rem 0.5rem; border: 1px solid #223052; border-radius: 6px; margin-bottom: 0.35rem; background: #131c2e; }
+.list li.pick { cursor: pointer; }
+.list li.selected { border-color: #2f6df6; background: #17264a; }
+.count { color: #7f8db0; font-weight: 400; }
+.player { background: #000; border-radius: 8px; overflow: hidden; }
+.player video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+.readout { display: flex; gap: 1rem; align-items: baseline; margin-top: 0.5rem; flex-wrap: wrap; }
+.readout .mono { font-size: 1.05rem; }
+.timing { font-size: 0.82rem; }
+.timing[data-state="measured"] { color: #8fce9b; }
+.timing[data-state="unmeasured"], .timing[data-state="unbound"] { color: #f0c27a; }
+.timing[data-state="fault"] { color: #f08a8a; }
+.transport { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.transport .go { flex: 1; min-width: 10rem; }
+.transport .go input { margin-top: 0.5rem; }
+.keys { font-size: 0.8rem; color: #7f8db0; }
+.editor .bounds { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.6rem; align-items: center; }
+.editor .bounds button { margin: 0; }
+.editor .accept { background: #2e8b57; }
+.editor .publish { background: #7a4fd6; width: 100%; }

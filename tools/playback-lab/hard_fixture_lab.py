@@ -4,7 +4,22 @@ import random
 import struct
 import subprocess
 
-IMAGE = 'jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db'
+# The one table of Jellyfin lab targets. Each row moves together: the server image (by digest,
+# version verified inside), the plugin's JellyfinTarget (see the plugin csproj) and the SDK that
+# builds it. Add a row only with its own lab run; a new server never inherits another's evidence.
+JELLYFIN = {
+    '10.11': dict(image='jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db',
+                  server='10.11.11', target='10.11',
+                  sdk='mcr.microsoft.com/dotnet/sdk@sha256:1dfdb27e9c2c345cb598925ccf6b13719ecfebea8467bd4745c23a3c108cdf84'),  # 9.0
+    # Docker Hub 12.4.20261026-211555 (multi-arch index; amd64 sha256:7da5184c...).
+    '12.4': dict(image='jellyfin/jellyfin@sha256:fea863d0cd9ec445985d9c75fc6ed64e38a1d2766cf0c250a33d553f4fc1b771',
+                 server='12.4.0', target='12.4',
+                 sdk='mcr.microsoft.com/dotnet/sdk@sha256:8c6edfb26c85153f236d26efebd9ad349aec403583f343f201ee67838b23658d'),  # 10.0
+}
+DEFAULT_JELLYFIN = '10.11'
+# Media tools (fixture generation, probes) stay on the default image so fixture bytes are identical
+# whichever server is under test.
+IMAGE = JELLYFIN[DEFAULT_JELLYFIN]['image']
 FPS, HZ = 25, 48000
 IDENTIFIABLE_CUT = (6, 11)  # Omit [0.240, 0.440) s; exposes the lossless join rounding.
 WIDTH, HEIGHT = 1280, 720
