@@ -13,7 +13,7 @@ An open-source, self-hosted **content-filtering layer for [Jellyfin](https://jel
 [![docs](https://github.com/cybersader/cleanyfin/actions/workflows/deploy-docs.yml/badge.svg)](https://cybersader.github.io/cleanyfin/)
 [![server CI](https://github.com/cybersader/cleanyfin/actions/workflows/server-ci.yml/badge.svg)](https://github.com/cybersader/cleanyfin/actions/workflows/server-ci.yml)
 [![plugin CI](https://github.com/cybersader/cleanyfin/actions/workflows/plugin-ci.yml/badge.svg)](https://github.com/cybersader/cleanyfin/actions/workflows/plugin-ci.yml)
-[![Jellyfin 10.11+](https://img.shields.io/badge/Jellyfin-10.11%2B-00A4DC?logo=jellyfin&logoColor=white)](https://jellyfin.org)
+[![Jellyfin 10.11 | 12.4](https://img.shields.io/badge/Jellyfin-10.11%20%7C%2012.4-00A4DC?logo=jellyfin&logoColor=white)](https://jellyfin.org)
 [![code: AGPL-3.0](https://img.shields.io/badge/code-AGPL--3.0-blue.svg)](LICENSE)
 [![data: CC0-1.0](https://img.shields.io/badge/data-CC0--1.0-lightgrey.svg)](DATA-LICENSE)
 
@@ -78,7 +78,7 @@ The **Jellyfin plugin** (`plugin/`) and **marking PWA** (`pwa/`) build cleanly a
 | Component | What it does | Status |
 |---|---|---|
 | **`server/`** — Go API | Crowdsourced segment DB (SQLite/WAL): submit · vote (auto-hide ≤ −2) · exact + **k-anonymity** lookup · public **dump** for mirrors · CORS. One static binary, one `docker compose up`. | ✅ built · tested · CI |
-| **`plugin/`** — C# Jellyfin plugin | `IMediaSegmentProvider` that fetches by **moviehash** fingerprint and emits native Media Segments; a fingerprint + write endpoint. Jellyfin 10.11 / .NET 9. | ✅ builds · CI |
+| **`plugin/`** — C# Jellyfin plugin | `IMediaSegmentProvider` that fetches by **moviehash** fingerprint and emits native Media Segments; a fingerprint + write endpoint. Jellyfin 10.11 / .NET 9 or 12.4 / .NET 10 (one build per line; lab cases pass on both). | ✅ builds · CI |
 | **`pwa/`** — marking app | Vite + TS: reads live `/Sessions` position, stamps in/out + category, submits to the API. | ✅ builds · CI |
 | **`docs/`** — docs site | Astro + Starlight, published to GitHub Pages. | ✅ live |
 

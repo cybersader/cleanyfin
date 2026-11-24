@@ -18,11 +18,10 @@ from urllib.parse import urlencode
 
 sys.dont_write_bytecode = True
 from exact_audio import compare_cut, read_pcm, summary
-from hard_fixture_lab import IMAGE
+from hard_fixture_lab import DEFAULT_JELLYFIN, JELLYFIN
 
 LAB = Path(__file__).resolve().parent
 ROOT = LAB.parents[1]
-SDK = 'mcr.microsoft.com/dotnet/sdk:9.0'
 MPV = 'cleanyfin-edl-lab:mpv'
 PLUGIN = 'b1f7c2e0-4a3d-4c9a-9f2b-1e6d5a8c0f11'
 BASE = '/labbase'
@@ -45,8 +44,10 @@ def sha(data):
 
 
 class Lab:
-    def __init__(self, work):
+    def __init__(self, work, jellyfin=DEFAULT_JELLYFIN):
         self.work = work
+        # Server image, plugin JellyfinTarget and SDK always move together (one table row).
+        self.jf = JELLYFIN[jellyfin]
         self.name = 'cleanyfin-auth-' + secrets.token_hex(6)
         self.cid = None
         self.port = 8096  # private loopback in a new --network none namespace
@@ -56,10 +57,11 @@ class Lab:
         self.client, self.version = 'auth-range', '1'
 
     def setup(self):
-        for img in (IMAGE, SDK):
+        image, sdk = self.jf['image'], self.jf['sdk']
+        for img in (image, sdk):
             docker('image', 'inspect', img)
         w = self.work
-        for name in ('config/config', 'cache', 'plans', 'other', 'capture'):
+        for name in ('config/config', 'cache', 'plans', 'other', 'capture', 'home'):
             (w/name).mkdir(parents=True)
         for folder in ('plugin', 'delivery/Cleanyfin.Delivery', 'delivery/evidence'):
             shutil.copytree(ROOT/folder, w/'src'/folder, ignore=shutil.ignore_patterns('bin','obj'))
@@ -73,8 +75,9 @@ class Lab:
             sdk_options = ['--network', 'none', '-v', f'{path}:/packages:ro,z']
             build_options = ['--source', '/packages', '-p:NuGetAudit=false']
         docker('run', '--rm', '--pull=never', '--user', USER, '-e', 'HOME=/out/home',
-                       '-v', f'{w}:/out:z', '-w', '/out/src', *sdk_options, SDK,
-                       'dotnet', 'build', 'plugin', '-c', 'Release', '--artifacts-path', '/out/artifacts',
+                       '-v', f'{w}:/out:z', '-w', '/out/src', *sdk_options, sdk,
+                       'dotnet', 'build', 'plugin', '-c', 'Release', '-p:JellyfinTarget='+self.jf['target'],
+                       '--artifacts-path', '/out/artifacts',
                        '-v:q', *build_options)
         install = w/'config/plugins/Cleanyfin_0.1.0.0'
         install.mkdir(parents=True)
@@ -99,7 +102,7 @@ class Lab:
                           '--user', USER,
                           '-v', f'{w}/config:/config:z', '-v', f'{w}/cache:/cache:z',
                           '-v', f'{w}/fixture/source.mp4:/fixture-library/source.mp4:ro,z',
-                          '-v', f'{w}/other:/other:ro,z', '-v', f'{w}/plans:/cleanyfin-fixture:ro,z', IMAGE).decode().strip()
+                          '-v', f'{w}/other:/other:ro,z', '-v', f'{w}/plans:/cleanyfin-fixture:ro,z', image).decode().strip()
         docker('start', self.cid)
         for _ in range(90):
             try:
@@ -110,6 +113,8 @@ class Lab:
             time.sleep(1)
         else:
             raise RuntimeError('disposable loopback Jellyfin unavailable')
+        self.server_version = json.loads(self.request('/System/Info/Public')[2])['Version']
+        check(f"server reports {self.jf['server']} (image pinned by digest)", self.server_version == self.jf['server'])
 
     def request(self, path, method='GET', data=None, user=None, headers=None):
         if path.startswith('http'):
@@ -360,8 +365,8 @@ class PointerLab(Lab):
     profile = {'Name':'mpv', 'DirectPlayProfiles':[{'Type':'Video','Container':'mp4','VideoCodec':'h264','AudioCodec':'aac'}],
                'TranscodingProfiles':[{'Type':'Video','Context':'Streaming','Protocol':'hls','Container':'ts','VideoCodec':'h264','AudioCodec':'aac'}]}
 
-    def __init__(self, work):
-        super().__init__(work)
+    def __init__(self, work, jellyfin=DEFAULT_JELLYFIN):
+        super().__init__(work, jellyfin)
         self.seed = json.loads(REGISTER.read_bytes())
         self.wholphin, = [r for r in self.seed['rows'] if r['tuple']['appId']=='Wholphin' and r['tuple']['backend']=='mpv']
         self.client,self.version = (self.wholphin['tuple'][k] for k in ('appId', 'appVersion'))
@@ -392,6 +397,8 @@ class PointerLab(Lab):
         # disposable row to exercise the gate, never rewrite the historical evidence.
         row = json.loads(json.dumps(self.wholphin))
         row['tuple']['pluginBuild'] = self.plugin_build
+        # Exercise the gate on the server under test; the historical row names 10.11.11 only.
+        row['tuple']['jellyfinVersion'] = self.server_version
         row['observation'] = 'Synthetic integration-test setup only; no claims about playback fidelity on this build.'
         row['evidenceRef'] = 'tools/playback-lab/check-plugin.py'
         row['controls'] = []
@@ -589,6 +596,11 @@ class EligibilityLab(PointerLab):
         self.setup_pointer(stub_evidence=False)
         check('historical plugin build differs: no offer', self.refusal('EvidenceTupleUnknown'))
         stub = self.stub_register()
+        # The same synthetic row naming any other server version must not admit this server.
+        foreign = json.loads(json.dumps(stub))
+        foreign['rows'][0]['tuple']['jellyfinVersion'] = next(j['server'] for j in JELLYFIN.values() if j['server'] != self.server_version)
+        self.put(self.register_path, json.dumps(foreign).encode())
+        check('row for another Jellyfin version: EvidenceTupleUnknown', self.refusal('EvidenceTupleUnknown'))
         self.put(self.register_path, json.dumps(stub).encode())
         status, headers, raw = self.play()
         sources = json.loads(raw).get('MediaSources', [])
@@ -762,9 +774,11 @@ class ShelfLab(PointerLab):
 def main():
     if not __debug__:
         raise SystemExit('Run without Python optimization: fixture assertions are required.')
-    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation','eligibility'],required=True);case=p.parse_args().case
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation','eligibility'],required=True)
+    p.add_argument('--jellyfin',choices=sorted(JELLYFIN),default=DEFAULT_JELLYFIN,help='server line under test: image, plugin target and SDK together')
+    args=p.parse_args();case=args.case
     scratch=ROOT/'plugin/obj';scratch.mkdir(exist_ok=True)
-    w=Path(tempfile.mkdtemp(prefix=case+'-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab,'eligibility':EligibilityLab}[case](w);ok=False
+    w=Path(tempfile.mkdtemp(prefix=f'{case}-{args.jellyfin}-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab,'eligibility':EligibilityLab}[case](w,args.jellyfin);ok=False
     try:
         lab.setup();lab.exercise();docker('stop',lab.cid);lab.inspect();ok=True
     except Exception as e:
