@@ -218,7 +218,7 @@ Where the build differs from the draft shapes above, and why:
 - Under `viewerMay: none`, viewer preferences are ignored rather than refused, so a locked profile still plays with its floor.
 - The phone records only the source clock. A filtered-clock capture maps or refuses in the library, but the phone cannot know the plan revision of a filtered item until the plugin exposes it (slice 2).
 - A rewritten audit line is detected at the following line; dropping the newest lines is evident only against a recorded head (`verify-audit` prints it).
-- Marks bound to another `bindingRev` are left out of a publish; they are not yet flagged "file changed, review again".
+- Marks bound to another `bindingRev` are left out of a publish; they are not yet flagged "file changed, review again". (Since household file binding: they are flagged, and a publish for a changed file refuses until they are withdrawn or rejected.)
 
 **Deliberately deferred:** the browser review page and frame stepping; store endpoints in the household plugin; pause-to-mark; MCF/EDL import and export; subcategory-aware `snapshot-v2`/`policy-v2`; multi-reviewer rules; exceptions UI; hub contribution; mute (the resolver still refuses it); any cross-file alignment.
 
@@ -232,14 +232,14 @@ The household store now lives in the Jellyfin plugin (R16), with a phone capture
 
 Where slice 2 differs from the draft above, and why:
 - **Exact boundaries are gated per browser.** The review page enables Set start / Set end / Propose only for a measured browser engine, major version, platform, headless or headed mode and frame rate (`delivery/evidence/review-timing-v1.json`). Measured: Chromium 151, Linux, headless, 25 fps: 64 seeks, steps and 100 ms nudges on the barcode fixture, page frame equal to the decoded barcode every time, on both Jellyfin lines. Headed desktop browsers and other frame rates are refused until measured. A start is rounded down and an end up to the millisecond, so no part of a marked frame is kept.
-- **Binding is lab-only.** A mark binds to `bind:<item>:<full SHA-256>` through the shelf's pinned-asset verifier, which only accepts operator-pinned lab files. On an ordinary household file captures are stored, but drafting and publishing refuse (`UnverifiedBinding`) instead of binding to a guessed identity.
+- **Binding is lab-only.** A mark binds to `bind:<item>:<full SHA-256>` through the shelf's pinned-asset verifier, which only accepts operator-pinned lab files. On an ordinary household file captures are stored, but drafting and publishing refuse (`UnverifiedBinding`) instead of binding to a guessed identity. **Superseded 2026-11-24:** ordinary household files now bind through a background full-file check ([household file binding](02-household-file-binding.md)).
 - **Default roles.** Without a governance file, administrators are admin + reviewer and everyone else is a viewer who may only flag. The design listed this; the build adds that API keys are refused (they name no person) and that a request body can never carry an actor, author or state.
 - **The audit head is recorded** in `audit.head` beside the log, so dropping the newest lines is now evident without an outside record (same disk, so still accident evidence only). The store is reopened and re-verified on every request.
 - **Captures on a filtered item are refused** (`FilteredItemNotSupported`): the plugin issues a new plan revision per grant and does not keep them, so it cannot yet map a filtered position back to the source.
 - **The phone page reads only the signed-in person's own sessions.** Marking while the TV is signed in to a child's account is not supported.
 - **Two copies of the capture rules.** The plugin ships plain JavaScript (`plugin/Marking/Web/capture-core.js`) because it has no bundler; `pwa/test/plugin-capture.test.ts` checks it builds byte-identical captures to `pwa/src/capture.ts`.
 
-**Still deferred:** a binding verifier for ordinary household files; filtered-clock mapping; pause-to-mark; Media Segments on the review timeline; MCF/EDL import and export; a governance and taxonomy editor; measuring headed Chrome, Firefox, Safari and 23.976/29.97 fps.
+**Still deferred:** filtered-clock mapping; pause-to-mark; Media Segments on the review timeline; MCF/EDL import and export; a governance and taxonomy editor; measuring headed Chrome, Firefox, Safari and 23.976/29.97 fps.
 
 ---
 
