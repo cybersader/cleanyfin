@@ -230,6 +230,8 @@ Goal: a press on the phone becomes a filtered plan without any hand-written JSON
 
 ## 8. Decisions only the owner can make
 
+**Decided 2026-11-24: the recommended option (a) on all three. Recorded as R16, R17 and R18 in `.claude/41-QUESTIONS-RESOLVED.md`.**
+
 1. **Where household marking data lives.** (a) **In the household Jellyfin plugin** — one install, Jellyfin logins and roles, private data stays home, snapshots written where the resolver already reads them. (b) A separate household service. (c) The shared hub. **Recommend (a)**, with the API shaped so (b) remains possible; never (c) for private notes or roles.
 2. **Can one parent both mark and approve?** (a) **Yes, recorded in the audit log**, with an optional "second reviewer required" setting per household. (b) Always require a second reviewer. **Recommend (a)**: most households have one person doing this, and a two-person rule would stall them.
 3. **Should a press on the phone pause the TV?** (a) **No by default; offer pause-to-mark as a setting** once measured on that app. (b) Always pause. **Recommend (a)**: marking while watching should not interrupt the viewing, and refinement fixes precision later.
