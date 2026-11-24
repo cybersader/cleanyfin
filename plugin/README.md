@@ -9,8 +9,8 @@ Builds for one Jellyfin line at a time, chosen by the `JellyfinTarget` property 
 
 | `-p:JellyfinTarget=` | Jellyfin.Controller | Framework | SDK image | Lab result |
 |---|---|---|---|---|
-| `10.11` (default) | 10.11.11 | `net9.0` | `mcr.microsoft.com/dotnet/sdk:9.0` | all four `check-plugin.py` cases pass on 10.11.11 |
-| `12.4` | 12.4.0 | `net10.0` | `mcr.microsoft.com/dotnet/sdk:10.0` | all four `check-plugin.py` cases pass on 12.4.0 (2026-11-24) |
+| `10.11` (default) | 10.11.11 | `net9.0` | `mcr.microsoft.com/dotnet/sdk:9.0` | all five `check-plugin.py` cases pass on 10.11.11 |
+| `12.4` | 12.4.0 | `net10.0` | `mcr.microsoft.com/dotnet/sdk:10.0` | all five `check-plugin.py` cases pass on 12.4.0 (2026-11-24) |
 
 A build for one line refuses the lab gate on any other server version. Neither line has measured player evidence beyond what `delivery/evidence/register-v1.json` lists (10.11.11 only). The release manifest (`build.yaml`, `manifest.json`) still declares only the 10.11 ABI.
 
@@ -23,7 +23,7 @@ docker run --rm -v "$PWD:/src" -w /src mcr.microsoft.com/dotnet/sdk:9.0 dotnet b
 docker run --rm -v "$PWD:/src" -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet build plugin -c Release -p:JellyfinTarget=12.4
 ```
 
-Or with a local SDK: `dotnet build plugin -c Release`. Package both `Jellyfin.Plugin.Cleanyfin.dll` and `Cleanyfin.Delivery.dll` from `plugin/bin/Release/net9.0/` (or `net10.0/` for 12.4). The [disposable authenticated-handoff spike](../tools/playback-lab/README.md#authenticated-cut-list-handoff-disposable-lab-only) is disabled by default; it does not change ordinary playback.
+Or with a local SDK: `dotnet build plugin -c Release`. Package `Jellyfin.Plugin.Cleanyfin.dll`, `Cleanyfin.Delivery.dll` and `Cleanyfin.Marking.dll` from `plugin/bin/Release/net9.0/` (or `net10.0/` for 12.4). The [disposable authenticated-handoff spike](../tools/playback-lab/README.md#authenticated-cut-list-handoff-disposable-lab-only) is disabled by default; it does not change ordinary playback.
 
 ### Per-viewer playback shelves (disposable 10.11.11 / 12.4.0 lab only)
 
@@ -47,6 +47,27 @@ The plugin creates native shelves and writes only inert `.strm` locators in `she
 **What a viewer will not get:** no chapters (reject embedded chapters and set mpv `!no_chapters`), no trickplay, images, extras or scrub previews from the original (no copied metadata or extraction), no external subtitles and no alternate audio (reject nonmatching physical streams and sidecars; only H.264 + one AAC track). Native pointer image, trickplay-image and download routes are withheld. Titles are deliberately neutral, not a promise about the movie. External captions, downloads/offline use, arbitrary clients and remux/transcode retries are unsupported.
 
 **Removal:** turn `EnableAuthRangeLab` and `EnableProductionEligibility` off, then as administrator `POST /Cleanyfin/lab/cleanup`. This drops inventory and matching owned files, not inputs, foreign files or the original library. Empty native shelf libraries can be removed in Jellyfin. Removing the plugin first leaves inert locator files, never a path to the original. Restore the plugin with the flag off to use its cleanup action. See [the disposable runner](../tools/playback-lab/README.md#per-viewer-shelf-lifecycle) and the [upkeep ledger](../.claude/32-UPKEEP-LEDGER.md).
+
+## Household marking (slice 2)
+
+Marks are made, refined and approved inside the household, in this plugin (decision R16). Two pages are served on Jellyfin's own origin, so a phone or desktop browser needs no CORS setting and no second server:
+
+| Page | Who | What it does |
+|---|---|---|
+| `<server>/Cleanyfin/marking/capture` | anyone signed in, on a phone | **Mark**, **Start/End** and four quick categories while the TV plays. Each press becomes a [capture-v1](../delivery/schema/capture-v1.schema.json) and is sent at once. The browser keeps an IndexedDB outbox; a press made offline is sent when the network returns, and leaves the outbox only when the server has it. Position is read from `GET /Sessions` for the signed-in person's own playback; the TV is not paused (R18). |
+| `<server>/Cleanyfin/marking/review` | markers and reviewers, on a desktop | Lists an item's captures and marks, plays the original through Jellyfin's ordinary static stream, steps one frame (`,` `.`) or 100 ms (`[` `]`), sets the first and last affected frame (`I`, `O`), category (`1`–`9`), severity (`S`), action, then proposes (`Enter`), accepts (`A`, reviewers) and publishes. |
+
+Sign-in is Jellyfin's own `AuthenticateByName`. The API under `/Cleanyfin/marking/` (`me`, `captures`, `items`, `items/{id}`, `marks`, `marks/{ref}` + `accept` / `reject` / `withdraw`, `items/{id}/publish`, `audit`, `timing`) runs every call as the authenticated Jellyfin user, read through `IAuthorizationContext` under Jellyfin's `[Authorize]`. Request bodies carry values only (strict, closed: `MarkingRequests` in `Cleanyfin.Marking`); a body naming an actor, author or state is refused, and API keys are refused because they name no person. Every role check is server-side in `MarkingService`.
+
+**Roles.** With no governance file, Jellyfin administrators are `admin` + `reviewer` and everyone else is a `viewer`, who may flag a moment (a capture) and nothing more. Once `cleanyfin-marking-v1/governance.json` ([household-governance-v1](../delivery/schema/household-governance-v1.schema.json)) exists it is authoritative: members by `jf:user:<32-hex Jellyfin user id>`, roles, profiles and `selfApproval` (R17; `false` requires a second reviewer). A `suggester` (a household compute service signed in as its own Jellyfin user) may add `service` captures only.
+
+**Storage.** Under Jellyfin's plugin configurations folder (`/config/plugins/configurations` in the official image), beside the shelves and outside the versioned install folder: `cleanyfin-marking-v1/` holds `captures.jsonl`, `marks.jsonl`, the hash-chained `audit.jsonl` and `audit.head` (count and digest of the newest line, so dropping the newest lines is evident too), plus the optional `governance.json`, `taxonomy.json` and `review-timing-v1.json`. The store is reopened and re-verified on every request; an edited, removed or truncated line refuses every call (`409`) until it is restored. Back up by copying the folder. This detects accidents; it is not protection against whoever controls the disk.
+
+**Publishing** writes `cleanyfin-shelves-v1/snapshots/<item>.json`, the file the shelf resolver already reads; nothing downstream knows marking exists. A mark is bound to the exact file (`bind:<item>:<full SHA-256>`). Binding verification reuses the shelf's pinned-asset verifier, so **today only operator-pinned lab files can be bound**: on any other file captures are stored, but drafting, refining and publishing refuse with `UnverifiedBinding` rather than bind to a guessed identity. Marks on a replaced file are shown as "file changed, review again" and are left out of a publish.
+
+**Exact boundaries need a measured browser.** The review page reads the presented frame's `requestVideoFrameCallback` media time, maps it through the binding's video anchor and checks it is the frame it asked for. It enables Set start / Set end / Propose only when `review-timing-v1.json` (built in from `delivery/evidence/`, overridable in the marking folder) has a passing row for this browser engine, major version, platform, headless/headed mode and the item's frame rate; anywhere else it says so and refuses. Measured so far: Chromium 151, Linux, headless, 25 fps, on the barcode fixture (`tools/playback-lab/check-plugin.py --case marking`). A start is the first affected frame's start (rounded down to ms); an end is the start of the frame after the last affected one (rounded up), so a boundary never keeps part of a marked frame.
+
+Not yet: captures on a filtered item (refused, `FilteredItemNotSupported`, until a plan revision can be mapped back), pause-to-mark, Media Segments on the review timeline, MCF/EDL import, a governance editor, and a binding verifier for ordinary household files.
 
 ## Install (once released)
 
