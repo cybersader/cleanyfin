@@ -56,7 +56,11 @@ public enum RefusalCode
     EvidenceRegisterInvalid = 48,
     EvidenceIdentityUnavailable = 49,
     EvidenceModeUnverified = 50,
-    EvidenceDisabled = 51
+    EvidenceDisabled = 51,
+    // Edition binding (household files): the full hash is still being computed in the background.
+    VerificationPending = 52,
+    // The streams' first timestamps cannot be written as exact millisecond anchors on one source clock.
+    UnsupportedSourceClock = 53
 }
 
 public sealed class Decision<T> where T : class
