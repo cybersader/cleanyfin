@@ -55,6 +55,7 @@ class Lab:
         self.tokens, self.slots = set(), set()
         self.build_disk = 0
         self.client, self.version = 'auth-range', '1'
+        self.mounts = []  # extra read-only library mounts a case adds (e.g. an ordinary household folder)
 
     def setup(self):
         image, sdk = self.jf['image'], self.jf['sdk']
@@ -102,7 +103,7 @@ class Lab:
                           '--user', USER,
                           '-v', f'{w}/config:/config:z', '-v', f'{w}/cache:/cache:z',
                           '-v', f'{w}/fixture/source.mp4:/fixture-library/source.mp4:ro,z',
-                          '-v', f'{w}/other:/other:ro,z', '-v', f'{w}/plans:/cleanyfin-fixture:ro,z', image).decode().strip()
+                          '-v', f'{w}/other:/other:ro,z', '-v', f'{w}/plans:/cleanyfin-fixture:ro,z', *self.mounts, image).decode().strip()
         docker('start', self.cid)
         for _ in range(90):
             try:
@@ -1089,14 +1090,203 @@ class MarkingLab(PointerLab):
         self.forward.close()
 
 
+class HouseholdBindingLab(MarkingLab):
+    """An ordinary household library file (a folder mount, not an operator-pinned inode) is checked in the
+    background, marked, reviewed, published and played filtered; then a touch keeps it and a replacement
+    withdraws the filtered item and asks for review again. The file's bytes are the hard fixture's, because
+    playback is only offered for a measured stream layout; its path, mount and verifier are the household ones."""
+
+    MOVIE = 'Lab Movie (2026)/Lab Movie (2026).mp4'
+    PACE = 100_000  # bytes per second, so the background check is slow enough to watch
+
+    def __init__(self, work, jellyfin=DEFAULT_JELLYFIN):
+        super().__init__(work, jellyfin)
+        self.name = 'cleanyfin-household-' + secrets.token_hex(6)
+        self.household = work/'household'
+        self.household.mkdir()
+        self.mounts = ['-v', f'{self.household}:/media/movies:ro,z']
+
+    def governance(self, self_approval=True):
+        doc = {'governanceVersion': 1, 'rev': f'gov:lab:{secrets.token_hex(4)}',
+               'members': [{'user': self.ref['admin'], 'roles': ['admin', 'reviewer']},
+                           {'user': self.ref['one'], 'roles': ['marker']},
+                           {'user': self.ref['two'], 'roles': ['viewer']}],
+               'profiles': [], 'approval': {'selfApproval': self_approval, 'snapshotExpiryDays': 30}}
+        self.put(self.mdata/'governance.json', json.dumps(doc).encode())
+
+    def detail(self):
+        return self.ok(f'items/{self.item}', user=self.admin)
+
+    def wait_edition(self, label, until, limit=90):
+        seen, started = [], time.monotonic()
+        while time.monotonic() - started < limit:
+            t0 = time.monotonic(); d = self.detail(); latency = time.monotonic() - t0
+            seen.append((d['edition']['state'], d['edition']['bytesDone'], d['edition']['bytesTotal'], latency))
+            if until(d):
+                return d, seen, time.monotonic() - started
+            time.sleep(0.25)
+        raise RuntimeError(f'{label}: edition check did not settle')
+
+    def offer_now(self):
+        url, src = self.projection()
+        assert self.request(src, headers={'Range': 'bytes=0-99'})[2] == self.original[:100]
+        return url, src
+
+    def exercise(self):
+        self.users_library()
+        api = self.api
+        self.original = (self.work/'fixture/source.mp4').read_bytes()
+        movie = self.household/self.MOVIE
+        movie.parent.mkdir()
+        shutil.copyfile(self.work/'fixture/source.mp4', movie)
+        inside = '/media/movies/' + self.MOVIE
+        self.folder('Movies', '/media/movies')
+        folders = {f['Name']: f['ItemId'] for f in api('/Library/VirtualFolders', user=self.admin)}
+        self.refresh(folders['Movies'])
+        for _ in range(60):
+            items = api('/Items?Recursive=true&IncludeItemTypes=Movie,Video&Fields=Path,MediaSources', user=self.admin)['Items']
+            match = [i for i in items if i.get('Path') == inside and i.get('MediaSources')]
+            if match: break
+            time.sleep(1)
+        else: raise RuntimeError('household movie not indexed')
+        self.item = match[0]['Id'].replace('-', '')
+        policy = api('/Users/'+self.viewer, user=self.admin)['Policy']
+        policy.update(EnableAllFolders=False, EnabledFolders=[folders['Movies']])
+        api(f'/Users/{self.viewer}/Policy', 'POST', policy, user=self.admin)
+        check('an ordinary library file: folder mount, spaces in its path, not under the pinned fixture path',
+              match[0]['Path'] == inside and not inside.startswith('/fixture-library/'))
+
+        self.configurl = '/Plugins/'+PLUGIN+'/Configuration'
+        self.cfg = api(self.configurl, user=self.admin)
+        self.data = self.work/'config/plugins/configurations/cleanyfin-shelves-v1'
+        self.mdata = self.work/'config/plugins/configurations/cleanyfin-marking-v1'
+        self.editions = self.work/'config/plugins/configurations/cleanyfin-editions-v1'
+        self.snapshot = self.data/'snapshots'/(self.item+'.json')
+        self.register_path = self.data/'evidence-register-v1.json'
+        self.put(self.register_path, json.dumps(self.stub_register()).encode())
+        self.policy(self.viewer, self.one[0], ['violence'])
+        self.cfg.update(EnableAuthRangeLab=True, LabOrigin=self.origin, LabPointerKey=secrets.token_hex(16),
+                        LabLifetimeSeconds=300, LabSourceSha256=sha(self.original), EditionHashBytesPerSecond=self.PACE)
+        self.update()
+        self.server_ref = api('/System/Info/Public')['Id']
+        uid = lambda u: api('/Users/Me', user=u)['Id'].replace('-', '')
+        self.ref = {'admin': 'jf:user:'+uid(self.admin), 'one': 'jf:user:'+self.viewer, 'two': 'jf:user:'+self.viewer2}
+        self.extra_tokens = []
+        self.governance()
+
+        # Before the background check finishes: captures are fine, binding anything is refused with a reason.
+        check('captures need no file identity', self.m('captures', 'POST', self.capture(self.ref['one'], 'cap:hh:span', 5600, kind='span', end=10000, category='violence'), self.one)[0] == 201)
+        first, seen, took = self.wait_edition('first check', lambda d: d['binding'] is not None)
+        pending = [s for s in seen if s[0] in ('queued', 'verifying')]
+        early = seen[0]
+        print(f'Edition check: {len(seen)} looks over {took:.1f} s at {self.PACE} B/s pace; slowest look {max(s[3] for s in seen)*1000:.0f} ms', flush=True)
+        check('first look: queued or verifying in the background, refused as VerificationPending, request not blocked',
+              early[0] in ('queued', 'verifying') and pending and max(s[3] for s in seen) < 2.0)
+        check('progress is reported while the file is read', any(0 < s[1] < s[2] for s in seen if s[0] == 'verifying'))
+        b = first['binding']
+        record = json.loads((self.editions/(self.item+'.json')).read_bytes())
+        edition = sha(f"edition-v1|{record['sha256']}|{record['layoutSha256']}".encode())
+        check('verified: binding = full SHA-256 of the bytes, size, 20 s, exact clock, edition digest in bindingRev',
+              first['edition']['state'] == 'verified' and b['sha256'] == sha(self.original) and b['sizeBytes'] == len(self.original)
+              and b['durationMs'] == 20000 and b['bindingRev'] == f'bind:{self.item}:{edition}'
+              and [(t['index'], t['kind'], t['timeBase'], t['anchorPts'], t['anchorSourceMs']) for t in b['tracks']]
+              == [(0, 'video', [1, 12800], 0, 0), (1, 'audio', [1, 48000], 0, 0)])
+        check('edition record stored privately (path, signals, hash, layout), no media',
+              record['path'] == inside and record['sha256'] == sha(self.original) and record['stamp']['size'] == len(self.original)
+              and len((self.editions/(self.item+'.json')).read_bytes()) < 4096)
+
+        # A marker drafts, the administrator refines frame-exactly in the browser, accepts and publishes.
+        span = next(c for c in self.detail()['captures'] if c['ref'] == 'cap:hh:span')
+        draft = self.ok('marks', 'POST', {'captureRef': span['ref']}, self.one, expect=(201,))
+        mark = draft['ref']
+        self.ok('marks/'+mark, 'PUT', {'rev': 1, 'startMs': 5000, 'endMs': 11000, 'category': 'violence', 'severity': 2, 'action': 'skip'}, self.one)
+        self.forward = LoopbackForward(self.cid, self.port)
+        self.put(self.mdata/'review-timing-v1.json', b'{"timingVersion":1,"rows":[]}')
+        measured = self.browser('measure', 'admin')
+        bad = [c for c in measured['checks'] if c['page'] != c['expected'] or c['pixels'] != c['expected']]
+        check(f"review page on the household file: {measured['framesChecked']} seeks/steps/nudges, page frame = decoded barcode",
+              not bad and measured['framesChecked'] >= 60 and measured['msExact'] and measured['redExact'])
+        row = dict(measured['browser'], frameRates=[25], result='pass', framesChecked=measured['framesChecked'], mismatches=0,
+                   product=measured['product'], jellyfin=self.server_version,
+                   fixture='tools/playback-lab/hard-fixture.py (500 frames, 25 fps, H.264 High with B-frames, AAC)',
+                   measuredAt=datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), evidenceRef='tools/playback-lab/check-plugin.py --case household-binding')
+        self.put(self.mdata/'review-timing-v1.json', json.dumps({'timingVersion': 1, 'rows': [row]}).encode())
+        refined = self.browser('refine', 'admin', markRef=mark, accept=True, publish=True)
+        latest = next(m for m in self.detail()['marks'] if m['ref'] == mark)
+        print('Refined:', json.dumps({k: refined.get(k) for k in ('timing', 'refineEnabled', 'firstRed', 'lastRed', 'form', 'accepted', 'published')}),
+              '|', (latest['startMs'], latest['endMs'], latest['state']), flush=True)
+        check('reviewer refines to [5480, 10520), accepts and publishes on the household file',
+              refined['firstRed'] == {'page': 137, 'pixels': 137} and (latest['startMs'], latest['endMs'], latest['state']) == (5480, 10520, 'accepted')
+              and 'Published 1' in refined['published'])
+        snap = json.loads(self.snapshot.read_bytes())
+        check('snapshot bound to the household edition', snap['binding'] == b and [a['ref'] for a in snap['annotations']] == [mark])
+
+        # The filtered item plays exactly (same mpv sample-exact checks as the pinned fixture).
+        check('reconcile: one filtered item for the household file', api('/Cleanyfin/lab/reconcile', 'POST', user=self.admin)['Count'] == 1)
+        self.pointer, row_ = self.find_pointer(self.viewer)
+        self.folders = {f['Name']: f['ItemId'] for f in api('/Library/VirtualFolders', user=self.admin)}
+        self.folders['Shelf'] = self.folders['Playback samples '+self.viewer]
+        self.folders['Original'] = self.folders['Movies']
+        self.shelf_access(True)
+        self.body = {'DeviceProfile': self.profile, 'MediaSourceId': self.pointer, 'MaxStreamingBitrate': 100000000, 'AutoOpenLiveStream': True}
+        url, _ = self.projection()
+        self.player(url)
+
+        # Touch (same bytes, new mtime): the old proof lapses at once; a background re-hash gives the same edition back.
+        url, src = self.offer_now()
+        now = time.time_ns(); os.utime(movie, ns=(now, now))
+        lapsed = self.denied(url) and self.denied(src, headers={'Range': 'bytes=0-99'})
+        kept = api('/Cleanyfin/lab/reconcile', 'POST', user=self.admin)['Count'] == 1 and self.find_pointer(self.viewer)[0] == self.pointer
+        back, seen, took = self.wait_edition('touch', lambda d: d['binding'] is not None)
+        check(f'touch: outstanding offer refused at once; same edition after re-hash ({took:.1f} s); filtered item kept',
+              lapsed and kept and back['binding'] == b and not any(m['fileChanged'] for m in back['marks']) and back['reviewAgain'] == 0)
+        url, src = self.offer_now()
+        check('touch: the same filtered item plays again', self.find_pointer(self.viewer)[0] == self.pointer)
+
+        # Replace with a same-size, same-duration copy (new inode, mtime preserved), as a re-download would.
+        altered = self.original.replace(b'Lavf', b'Xavf', 1); assert altered != self.original and len(altered) == len(self.original)
+        st = movie.stat(); part = movie.with_name('.incoming.part'); part.write_bytes(altered)
+        os.utime(part, ns=(st.st_atime_ns, st.st_mtime_ns)); os.replace(part, movie)
+        duration = docker('exec', self.cid, '/usr/lib/jellyfin-ffmpeg/ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', inside)
+        refused_now = self.denied(url) and self.denied(src, headers={'Range': 'bytes=0-99'})
+        changed, seen, took = self.wait_edition('replace', lambda d: d['binding'] is not None and d['binding']['bindingRev'] != b['bindingRev'])
+        stale = next(m for m in changed['marks'] if m['ref'] == mark)
+        check(f'replace (same size, duration {float(duration):g} s, mtime): offer refused at once; new edition after re-hash ({took:.1f} s)',
+              float(duration) == 20 and refused_now and changed['binding']['sha256'] == sha(altered) and changed['binding']['sizeBytes'] == len(self.original))
+        withdrawn = api('/Cleanyfin/lab/reconcile', 'POST', user=self.admin)['Count'] == 0
+        status, _, body = self.request('/Items/'+self.pointer+'/PlaybackInfo', 'POST', self.body, user=self.one)
+        no_fallback = b'/Cleanyfin/play/' not in body and inside.encode() not in body and b'/media/movies' not in body
+        check('replace: filtered item withdrawn, no unfiltered fallback', withdrawn and no_fallback and json.loads(self.snapshot.read_bytes())['binding'] == b)
+        check('replace: the mark stays on its edition, flagged "file changed, review again"; publishing refuses',
+              stale['fileChanged'] and stale['bindingRev'] == b['bindingRev'] and stale['state'] == 'accepted' and changed['reviewAgain'] == 1
+              and self.refused(f'items/{self.item}/publish', 'POST', {}, self.admin, 422, 'FileChanged'))
+        seen_page = self.browser('look', 'admin', screenshot=str(DESIGN/'household-review-again.png'))
+        print('Review page says:', seen_page['text'], flush=True)
+        check('review page surfaces "review again" and the changed mark',
+              seen_page['reviewAgain'] == 1 and 'Review again' in seen_page['text'] and any('FILE CHANGED, review again' in t for t in seen_page['marks']))
+        # The reviewer withdraws the old mark; a new mark is bound to the new edition. Nothing moved across.
+        self.ok(f'marks/{mark}/withdraw', 'POST', {'rev': latest['rev']}, self.admin)
+        self.m('captures', 'POST', self.capture(self.ref['one'], 'cap:hh:again', 7000), self.one)
+        fresh = self.ok('marks', 'POST', {'captureRef': 'cap:hh:again'}, self.one, expect=(201,))
+        pub = self.ok(f'items/{self.item}/publish', 'POST', {}, self.admin)
+        check('after review: new mark bound to the new edition; publish has nothing accepted, so nothing is offered',
+              fresh['bindingRev'] == changed['binding']['bindingRev'] and pub['annotations'] == 0
+              and api('/Cleanyfin/lab/reconcile', 'POST', user=self.admin)['Count'] == 0)
+        logs = docker('logs', self.cid, stderr=subprocess.STDOUT)
+        for line in re.findall(rb'Edition verified: [^\n]*', logs):
+            print('Plugin log:', line.decode(errors='replace'), flush=True)
+        check('no ApiKey= query strings in the server log', b'apikey=' not in logs.lower())
+        self.forward.close()
+
+
 def main():
     if not __debug__:
         raise SystemExit('Run without Python optimization: fixture assertions are required.')
-    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation','eligibility','marking'],required=True)
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--case',choices=['auth-range','pointer-refresh','shelf-isolation','eligibility','marking','household-binding'],required=True)
     p.add_argument('--jellyfin',choices=sorted(JELLYFIN),default=DEFAULT_JELLYFIN,help='server line under test: image, plugin target and SDK together')
     args=p.parse_args();case=args.case
     scratch=ROOT/'plugin/obj';scratch.mkdir(exist_ok=True)
-    w=Path(tempfile.mkdtemp(prefix=f'{case}-{args.jellyfin}-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab,'eligibility':EligibilityLab,'marking':MarkingLab}[case](w,args.jellyfin);ok=False
+    w=Path(tempfile.mkdtemp(prefix=f'{case}-{args.jellyfin}-',dir=scratch));lab={'auth-range':Lab,'pointer-refresh':PointerLab,'shelf-isolation':ShelfLab,'eligibility':EligibilityLab,'marking':MarkingLab,'household-binding':HouseholdBindingLab}[case](w,args.jellyfin);ok=False
     try:
         lab.setup();lab.exercise();docker('stop',lab.cid);lab.inspect();ok=True
     except Exception as e:

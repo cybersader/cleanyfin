@@ -7,7 +7,8 @@
 //   node tools/playback-lab/marking-browser.mjs SCENARIO < config.json   (one JSON result on stdout)
 //
 // Scenarios: capture (phone page, live + offline queue), measure (review-page frame timing against the
-// barcode fixture), refine (step to exact boundaries, propose, accept, publish). Secrets arrive on stdin,
+// barcode fixture), refine (step to exact boundaries, propose, accept, publish), look (what the review page
+// says about the file: checking, verified, or changed and to be reviewed again). Secrets arrive on stdin,
 // never in argv, and are not printed.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readdirSync, rmSync, writeFileSync, existsSync } from 'node:fs';
@@ -271,7 +272,9 @@ async function refine(b) {
   await b.key('Enter');
   await b.waitFor(`document.getElementById('editStatus').dataset.result === 'proposed'`, 'proposal saved');
   result.proposed = await b.eval(`document.getElementById('editStatus').textContent`);
-  await b.waitFor(`document.getElementById('markTitle').textContent.includes('proposed')`, 'new revision loaded');
+  // Wait for the page to hold the new revision itself, not just any proposed one (the rough draft is proposed too).
+  const rev = /rev (\d+)/.exec(result.proposed)?.[1];
+  await b.waitFor(`document.getElementById('markTitle').textContent.includes('rev ${rev} · proposed')`, 'new revision loaded');
   if (config.accept) {
     await b.key('a');
     await b.waitFor(`['accepted', 'refused'].includes(document.getElementById('editStatus').dataset.result)`, 'accept answered');
@@ -289,9 +292,21 @@ async function refine(b) {
   return result;
 }
 
+// ---------------- review page: what a reviewer is told about the file ----------------
+
+async function look(b) {
+  await openReview(b, config.user, `item=${config.itemId}`);
+  await go(b, 137);
+  const result = await b.eval(`({ timing: document.getElementById('timing').dataset.state, text: document.getElementById('timing').textContent,
+    reviewAgain: Number(document.body.dataset.reviewAgain), marks: [...document.querySelectorAll('#marks li span')].map((s) => s.textContent),
+    publishDisabled: document.getElementById('publishBtn').disabled })`);
+  if (config.screenshot) await b.screenshot(config.screenshot);
+  return result;
+}
+
 const b = new Browser();
 try {
-  const run = { capture, measure, refine }[scenario];
+  const run = { capture, measure, refine, look }[scenario];
   if (!run) throw new Error(`unknown scenario ${scenario}`);
   process.stdout.write(JSON.stringify(await run(b)) + '\n');
 } catch (err) {
