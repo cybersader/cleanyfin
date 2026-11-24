@@ -11,10 +11,30 @@
   <main>
     <h1>cleanyfin <small>· mark segments</small></h1>
 
+    <section class="card capture" aria-labelledby="captureTitle">
+      <h2 id="captureTitle">Mark while watching</h2>
+      <p id="captureNow" class="now">Connect below, then start a movie on the TV.</p>
+      <button id="markBtn" class="mark" disabled>Mark</button>
+      <div class="quick" role="group" aria-label="Mark with a category">
+        <button class="cat" data-cat="language" disabled>Language</button>
+        <button class="cat" data-cat="violence" disabled>Violence</button>
+        <button class="cat" data-cat="sex_nudity" disabled>Sex / Nudity</button>
+        <button class="cat" data-cat="other" disabled>Other</button>
+      </div>
+      <button id="spanBtn" class="span" disabled>Start</button>
+      <p id="captureStatus" class="status" aria-live="polite"></p>
+      <p class="hint">Rough is fine: each press saves a moment on this phone. The TV keeps playing. Exact start and end are set later at review, and nothing is filtered until a reviewer approves it.</p>
+      <ol id="captureList" class="captures"></ol>
+      <div class="row">
+        <button id="exportBtn" class="secondary">Export captures (<span id="captureCount">0</span>)</button>
+      </div>
+    </section>
+
     <section class="card">
       <h2>1 · Connect</h2>
       <label>Jellyfin server URL <input id="jfBase" type="url" placeholder="http://localhost:8096" /></label>
       <label>Jellyfin API token <input id="jfToken" type="password" placeholder="access token / API key" /></label>
+      <label>Household server name <input id="serverRef" type="text" value="home" /></label>
       <label>cleanyfin API URL <input id="apiBase" type="url" placeholder="http://localhost:8080" /></label>
       <label>Your submitter id <input id="submitterId" type="text" placeholder="pseudonymous-id" /></label>
       <button id="connectBtn">Connect</button>

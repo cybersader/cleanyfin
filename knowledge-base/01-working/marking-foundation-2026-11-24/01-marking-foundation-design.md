@@ -1,6 +1,6 @@
 # Marking foundation: from a button press to a reviewed snapshot
 
-**PROPOSED · 2026-11-24 · design only, no product code changed.** Delivery is built: an accepted snapshot of marks bound to one exact file becomes a playback plan ([pattern](../../../.claude/13-DELIVERY-PATTERN.md), [schemas](../../../delivery/schema/)). Marking is still done by hand. This note designs the marking side so a parent can mark while watching, classify as they go, tighten it later, and approve it for the kids, under household rules rather than per-viewer free choice.
+**ADOPTED · 2026-11-24 · slice 1 built ([§6](#6-first-slice-prove-the-chain-end-to-end)); slice 2 not started.** Delivery is built: an accepted snapshot of marks bound to one exact file becomes a playback plan ([pattern](../../../.claude/13-DELIVERY-PATTERN.md), [schemas](../../../delivery/schema/)). Marking is still done by hand. This note designs the marking side so a parent can mark while watching, classify as they go, tighten it later, and approve it for the kids, under household rules rather than per-viewer free choice.
 
 **The idea in three lines.** Capture is cheap and fuzzy; refinement is exact; approval is a separate, recorded act by someone allowed to approve. Each step is its own small versioned document, and the last step writes the *existing* `annotation-snapshot-v1`, so the resolver, plan and mpv adapter do not change. Categories stay a small fixed core that every mark rolls up to; households add their own finer labels beneath it.
 
@@ -206,6 +206,19 @@ Goal: a press on the phone becomes a filtered plan without any hand-written JSON
    - `FilteredToSource` (capture on a filtered clock → source ms, or refuse).
 3. **Contract tests** (`Category=Marking`): published snapshot validates against the existing schema and its digests match the README formula; publish → existing `HouseholdResolver` → plan equals today's hand-placed golden plan; editing an accepted mark drops it from the next snapshot until re-accepted; a marker cannot accept; a viewer preference cannot loosen a floor; a household subcategory rolls up to its core category; an unmapped filtered capture refuses; the audit chain detects a removed line.
 4. **Thin capture path:** extend the existing `pwa/` with the one-tap Mark / Start-End / 4 quick categories, writing `capture-v1` to the browser's IndexedDB with export as a JSON file. A small CLI turns a capture file plus a reviewer's exact bounds into marks, accepts them, and publishes the snapshot into the lab's shelf root. That runs the real chain in the disposable lab without touching the plugin while the 12.4 port is in progress.
+
+**Built 2026-11-24 (slice 1).** Schemas in `delivery/schema/`, `delivery/Cleanyfin.Marking`, the `cleanyfin-mark` CLI, `tests/Marking.Contract.Tests` and the phone card below. A real phone export goes through the CLI and the existing resolver to a plan byte-identical to the hand-placed golden plan ([usage](../../../delivery/README.md#marking)).
+
+![Phone capture card on a synthetic session](capture-screen.png)
+
+Where the build differs from the draft shapes above, and why:
+- `mark-v1` adds `boundsSource` (`capture-window` until a person sets exact bounds; such a mark cannot be accepted) and `editedBy` (who made this revision, for the second-reviewer rule). Category, severity, action and digest are present together or not at all, so a draft from a one-tap capture carries no guessed classification.
+- Governance adds a `suggester` role for a household compute service (R16 note): it may add `service` captures only, and cannot hold any other role. `mark-v1.method` adds `auto:service`.
+- A capture's `category` is a hint: one of the four phone buttons or a core id. Only Language and Violence name exactly one core category; the reviewer picks for the others.
+- Under `viewerMay: none`, viewer preferences are ignored rather than refused, so a locked profile still plays with its floor.
+- The phone records only the source clock. A filtered-clock capture maps or refuses in the library, but the phone cannot know the plan revision of a filtered item until the plugin exposes it (slice 2).
+- A rewritten audit line is detected at the following line; dropping the newest lines is evident only against a recorded head (`verify-audit` prints it).
+- Marks bound to another `bindingRev` are left out of a publish; they are not yet flagged "file changed, review again".
 
 **Deliberately deferred:** the browser review page and frame stepping; store endpoints in the household plugin; pause-to-mark; MCF/EDL import and export; subcategory-aware `snapshot-v2`/`policy-v2`; multi-reviewer rules; exceptions UI; hub contribution; mute (the resolver still refuses it); any cross-file alignment.
 

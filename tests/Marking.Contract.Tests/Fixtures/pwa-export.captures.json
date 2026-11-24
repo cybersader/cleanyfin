@@ -1,0 +1,83 @@
+[
+  {
+    "captureVersion": 1,
+    "ref": "cap:mwv6h4arcqb0e8",
+    "capturedAt": "2026-11-24T20:59:32.739Z",
+    "author": "jf:user:3b1c0000000000000000000000000001",
+    "surface": "phone-remote",
+    "target": {
+      "serverRef": "home-A",
+      "itemId": "11111111111111111111111111111111",
+      "mediaSourceId": "11111111111111111111111111111111"
+    },
+    "clock": {
+      "kind": "source"
+    },
+    "kind": "span",
+    "atMs": 5655,
+    "endAtMs": 10305,
+    "window": {
+      "beforeMs": 6070,
+      "afterMs": 3227
+    },
+    "observed": {
+      "sessionPositionMs": 8578,
+      "reportedAt": "2026-11-24T20:59:31.012Z",
+      "paused": false
+    },
+    "category": "violence"
+  },
+  {
+    "captureVersion": 1,
+    "ref": "cap:mwv6h5gvujbf8t",
+    "capturedAt": "2026-11-24T20:59:34.255Z",
+    "author": "jf:user:3b1c0000000000000000000000000001",
+    "surface": "phone-remote",
+    "target": {
+      "serverRef": "home-A",
+      "itemId": "11111111111111111111111111111111",
+      "mediaSourceId": "11111111111111111111111111111111"
+    },
+    "clock": {
+      "kind": "source"
+    },
+    "kind": "point",
+    "atMs": 11821,
+    "window": {
+      "beforeMs": 6243,
+      "afterMs": 1500
+    },
+    "observed": {
+      "sessionPositionMs": 10578,
+      "reportedAt": "2026-11-24T20:59:33.012Z",
+      "paused": false
+    },
+    "category": "language"
+  },
+  {
+    "captureVersion": 1,
+    "ref": "cap:mwv6h60svifbaq",
+    "capturedAt": "2026-11-24T20:59:34.972Z",
+    "author": "jf:user:3b1c0000000000000000000000000001",
+    "surface": "phone-remote",
+    "target": {
+      "serverRef": "home-A",
+      "itemId": "11111111111111111111111111111111",
+      "mediaSourceId": "11111111111111111111111111111111"
+    },
+    "clock": {
+      "kind": "source"
+    },
+    "kind": "point",
+    "atMs": 12538,
+    "window": {
+      "beforeMs": 5959,
+      "afterMs": 1500
+    },
+    "observed": {
+      "sessionPositionMs": 11579,
+      "reportedAt": "2026-11-24T20:59:34.013Z",
+      "paused": false
+    }
+  }
+]

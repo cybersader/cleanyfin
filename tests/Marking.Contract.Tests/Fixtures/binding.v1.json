@@ -1,0 +1,15 @@
+{
+  "serverRef": "home-A",
+  "itemId": "11111111111111111111111111111111",
+  "mediaSourceId": "11111111111111111111111111111111",
+  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "sizeBytes": 1240000,
+  "timelineRef": "review:fixture:1",
+  "bindingRev": "binding:3",
+  "durationMs": 20000,
+  "origin": "source-presentation-zero",
+  "tracks": [
+    {"index": 0, "kind": "video", "timeBase": [1, 12800], "anchorPts": 0, "anchorSourceMs": 0},
+    {"index": 1, "kind": "audio", "timeBase": [1, 48000], "anchorPts": 0, "anchorSourceMs": 0}
+  ]
+}

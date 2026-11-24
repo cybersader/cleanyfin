@@ -6,11 +6,13 @@ on:
     paths:
       - 'delivery/**'
       - 'tests/Delivery.Contract.Tests/**'
+      - 'tests/Marking.Contract.Tests/**'
       - '.github/workflows/delivery-ci.yml'
   pull_request:
     paths:
       - 'delivery/**'
       - 'tests/Delivery.Contract.Tests/**'
+      - 'tests/Marking.Contract.Tests/**'
       - '.github/workflows/delivery-ci.yml'
 
 concurrency:
@@ -37,3 +39,6 @@ jobs:
 
       - name: Evidence register and admission
         run: dotnet test tests/Delivery.Contract.Tests --filter Category=Eligibility
+
+      - name: Marking capture, review, publish and policy
+        run: dotnet test tests/Marking.Contract.Tests --filter Category=Marking

@@ -14,7 +14,18 @@ bun run build     # tsc --noEmit && vite build -> dist/
 bun run preview   # serve the built dist/
 ```
 
-## How it works
+## Mark while watching
+
+The top card is the household marking path ([design](../knowledge-base/01-working/marking-foundation-2026-11-24/01-marking-foundation-design.md)):
+
+- **Mark** saves "something around here" with no category; **Language / Violence / Sex / Nudity / Other** save a moment with that hint; **Start … End** saves a span (a category tapped while it is open names the span).
+- Each press becomes one [capture-v1](../delivery/schema/capture-v1.schema.json) in this browser's IndexedDB. The position is the session's last report plus the time since `LastPlaybackCheckIn`, and the search window widens by that age. The TV is not paused (R18).
+- **Export captures** downloads a JSON array of captures for the reviewer, who sets exact bounds with `cleanyfin-mark review` (see [delivery/README](../delivery/README.md#marking)). A capture never filters anything by itself.
+- Captures stay on the phone until exported; clearing site data deletes them. Slice 2 sends them to the household store instead.
+
+`bun test` checks the capture builder.
+
+## How it works (shared-hub submission)
 
 1. Enter your **Jellyfin** server URL + an access token, and the **cleanyfin API**
    URL + a submitter id, then **Connect**.

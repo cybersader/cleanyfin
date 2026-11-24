@@ -1,0 +1,24 @@
+{
+  "governanceVersion": 1,
+  "rev": "gov:4",
+  "members": [
+    {"user": "jf:user:3b1c0000000000000000000000000001", "roles": ["admin", "reviewer"]},
+    {"user": "jf:user:parent2", "roles": ["reviewer"]},
+    {"user": "jf:user:spouse", "roles": ["marker"]},
+    {"user": "jf:user:kid", "roles": ["viewer"], "profileRef": "local:p2"},
+    {"user": "svc:suggest", "roles": ["suggester"]}
+  ],
+  "profiles": [
+    {
+      "profileRef": "local:p2",
+      "floor": [{"category": "violence", "minimumSeverity": 2, "filter": true}],
+      "viewerMay": "tighten-only"
+    },
+    {
+      "profileRef": "local:p3",
+      "floor": [{"category": "nudity", "minimumSeverity": 1, "filter": true}],
+      "viewerMay": "none"
+    }
+  ],
+  "approval": {"selfApproval": true, "snapshotExpiryDays": 365}
+}

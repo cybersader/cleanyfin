@@ -24,6 +24,33 @@ dotnet test tests/Delivery.Contract.Tests --filter Category=Resolver
 
 The golden pair uses the lab's timing with synthetic asset and authority identities; it is not proof of a live binding.
 
+## Marking
+
+`Cleanyfin.Marking` turns rough presses into the accepted snapshot above, following the [marking foundation design](../knowledge-base/01-working/marking-foundation-2026-11-24/01-marking-foundation-design.md). Nothing downstream changes: the last step writes an ordinary `annotation-snapshot-v1`.
+
+| Step | Document | Rule |
+|---|---|---|
+| Press on the phone | [capture-v1](schema/capture-v1.schema.json) | Append-only, fuzzy, never filters. Any household member may add one; a `suggester` (a household compute service) may add only `service` captures. |
+| Draft and refine | [mark-v1](schema/mark-v1.schema.json) | A draft's bounds are only the capture's search window (`boundsSource: capture-window`) and cannot be accepted. A person sets exact source-clock bounds; every edit is a new `rev` in `proposed`. |
+| Accept | [audit-event-v1](schema/audit-event-v1.schema.json) `mark.accept` | Reviewers only, naming `ref@rev` and the existing `contentSha256`. One person may mark and approve unless the household requires a second reviewer (R17). |
+| Publish | `annotation-snapshot-v1` | Only latest revisions in `accepted` with a matching `mark.accept` in a verified log. The bytes are re-read by `ResolverInputReader` before they are returned. |
+| Policy | [household-governance-v1](schema/household-governance-v1.schema.json) + viewer `household-policy-v1` | Stricter wins; a viewer can tighten but never loosen a profile's floor. The result is the existing `household-policy-v1`. |
+| Labels | [taxonomy-v1](schema/taxonomy-v1.schema.json) | Household concepts roll up to one core category through at most two others. Snapshots carry only the core category. |
+
+A capture on a filtered clock maps back to source time through the issued plan's kept ranges, or refuses (`UnknownPlan`) and stays for manual placement. The audit log is hash-chained JSON Lines: an edited, removed or reordered line is evident; dropping the newest lines is evident only against a recorded head, and none of this protects against whoever controls the disk. `IMarkingStore` is the seam: slice 1 has in-memory and plain-file stores; slice 2 puts the same interface behind the household plugin (R16).
+
+The lab CLI turns a phone export plus a reviewer's exact bounds into accepted marks and a snapshot. It reads no media and talks to no server:
+
+```sh
+dotnet run --project delivery/Cleanyfin.Marking.Cli -- review --store <private dir> \
+  --governance governance.json --binding binding.json --captures cleanyfin-captures.json \
+  --decisions decisions.json --actor jf:user:<id> --snapshot-rev home:review:10 --shelf-root <lab shelf root>
+dotnet run --project delivery/Cleanyfin.Marking.Cli -- verify-audit --store <private dir>
+dotnet test tests/Marking.Contract.Tests --filter Category=Marking
+```
+
+`decisions.json` is `{"decisionsVersion":1,"marks":[{"capture":"cap:…","mark":"home:mark:1","startMs":5480,"endMs":10520,"severity":2,"action":"skip"}]}`; `category` may be omitted when the capture's quick button names exactly one core category or a `subcategory` names it. `--shelf-root` writes `<root>/snapshots/<itemId>.json`. The contract tests run a real phone export through this CLI and the existing resolver to a plan byte-identical to the hand-placed golden plan.
+
 ## Evidence register
 
 Each [row](evidence/register-v1.json) names one exact adapter revision, app version/build, backend, device/output mode, server/plugin build and source layout. It lists actions, controls and marked/kept picture and sound outcomes, with capture limits and an evidence path. `null` is an exact missing value, not a wildcard. Production requires `eligible`, all four outcomes passing and all five controls exercised. **Nothing qualifies today.** Support claims in docs come from this register, not from DirectPlay flags or successful API tests.

@@ -30,4 +30,18 @@ button:hover { background: #4a82ff; }
 .row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .mono { font-family: ui-monospace, monospace; }
 .status { min-height: 1.2em; font-size: 0.85rem; }
+button:disabled { background: #2a3550; color: #7f8db0; cursor: not-allowed; }
+.capture .now { font-size: 0.95rem; color: #c9d4ee; margin: 0 0 0.75rem; }
+.capture button { width: 100%; margin-top: 0.6rem; }
+.capture .mark { font-size: 1.6rem; padding: 1.1rem; border-radius: 14px; background: #e0473b; }
+.capture .mark:hover:not(:disabled) { background: #f05a4e; }
+.capture .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.capture .quick button { font-size: 1.05rem; padding: 0.9rem 0.5rem; border-radius: 12px; background: #2b3b63; }
+.capture .quick button:hover:not(:disabled) { background: #36497a; }
+.capture .span { font-size: 1.15rem; padding: 0.9rem; border-radius: 12px; background: #2f6df6; }
+.capture .span.open { background: #d98a1c; }
+.capture .secondary { background: #1d2a46; border: 1px solid #2b3b63; }
+.capture .hint { font-size: 0.8rem; color: #7f8db0; }
+.captures { margin: 0.5rem 0 0; padding-left: 1.2rem; font-family: ui-monospace, monospace; font-size: 0.85rem; color: #c9d4ee; }
+.captures li { margin: 0.2rem 0; }
 .result { background: #0b1220; border: 1px solid #223052; border-radius: 6px; padding: 0.6rem; overflow-x: auto; white-space: pre-wrap; }
