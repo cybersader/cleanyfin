@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Diagnostics;
-using System.Globalization;
 using System.Text.Json;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Cleanyfin.Delivery;
 using MediaBrowser.Controller.Entities;
@@ -15,79 +12,89 @@ using MediaBrowser.Model.MediaInfo;
 
 namespace Jellyfin.Plugin.Cleanyfin.AuthRange;
 
-// Only operator-controlled lab inodes mounted individually, read-only, with no concurrent host writer.
+// The lab's edition verifier: one implementation of IEditionVerifier, with the same record, digest and binding as
+// household files, plus lab-only restrictions. Only operator-controlled lab inodes mounted individually, read-only,
+// with no concurrent host writer. Small enough (64 MiB) to hash in the request; the exact fixture layout only.
 // A read-only directory or matching path, mtime, runtime and length is NOT an immutable asset.
-internal sealed class PinnedAsset
+internal sealed class PinnedAsset : IEditionVerifier
 {
-    [StructLayout(LayoutKind.Explicit, Size = 256)]
-    private struct Stat
+    private const string Directory = "/fixture-library";
+    private readonly Dictionary<string, EditionRecord> _cache = new();
+
+    internal static bool Claims(Video video) => Path.GetDirectoryName(video.Path) == Directory;
+
+    // Change signals of a small operator document (profile, snapshot, device), for consistent-read checks.
+    internal static string FileVersion(string path)
     {
-        [FieldOffset(0)] public uint Mask; [FieldOffset(28)] public ushort Mode;
-        [FieldOffset(32)] public ulong Inode; [FieldOffset(40)] public long Size; [FieldOffset(96)] public long ChangeSec;
-        [FieldOffset(104)] public uint ChangeNs; [FieldOffset(144)] public ulong Mount;
+        using var f = File.OpenRead(path);
+        try { return FileStamp.Read(f.SafeFileHandle).ToString(); }
+        catch (EditionRefused e) { throw new Refused(e.Reason); }
     }
-    [DllImport("libc", SetLastError = true)] private static extern int statx(int fd, string path, int flags, uint mask, out Stat stat);
-    private sealed record Stamp(ulong Mount, ulong Inode, long Size, long Sec, uint Ns);
-    private readonly Dictionary<string, (Stamp Stamp, string Digest)> _cache = new();
-    private static Stamp Identity(FileStream f)
+
+    public EditionStatus Status(Video video)
     {
-        const uint mask = 0x100 | 0x200 | 0x80 | 0x1000 | 1; // ino, size, ctime, mount-id, type
-        FixtureGate.Require(statx(f.SafeFileHandle.DangerousGetHandle().ToInt32(), "", 0x1000, mask, out var st) == 0 &&
-            (st.Mask & mask) == mask && (st.Mode & 0xf000) == 0x8000, RefusalCode.UnverifiedBinding);
-        return new(st.Mount, st.Inode, st.Size, st.ChangeSec, st.ChangeNs);
+        Verify(video);
+        return new("verified", 0, 0, null);
     }
-    internal static string FileVersion(string path) { using var f = File.OpenRead(path); return Identity(f).ToString(); }
-    internal (MediaSourceInfo Source, VerifiedSourceIdentity Identity, string Version) Verify(Video video)
+
+    public VerifiedEdition Verify(Video video)
+    {
+        try { return VerifyPinned(video); }
+        catch (EditionRefused e) { throw new Refused(e.Reason); }
+    }
+
+    private VerifiedEdition VerifyPinned(Video video)
     {
         var path = video.Path;
-        FixtureGate.Require(OperatingSystem.IsLinux() && Path.GetDirectoryName(path) == "/fixture-library" && Path.GetExtension(path) == ".mp4" &&
+        FixtureGate.Require(OperatingSystem.IsLinux() && Claims(video) && Path.GetExtension(path) == ".mp4" &&
             !video.IsShortcut && video.SubtitleFiles.Length == 0 && video.AudioFiles.Length == 0 && !video.HasLocalAlternateVersions && video.LinkedAlternateVersions.Length == 0 &&
             File.ReadLines("/proc/self/mountinfo").Any(l => l.Split(' ') is [_, _, _, _, var mount, var opts, ..] && mount == path && opts.Split(',').Contains("ro")), RefusalCode.UnverifiedBinding);
         var sources = video.GetMediaSources(false);
         var src = sources.Count == 1 ? sources[0] : null;
-        FixtureGate.Require(src != null && src.Path == path && src.Id == video.Id.ToString("N") && Matches(src), RefusalCode.BindingMismatch);
+        var id = video.Id.ToString("N");
+        FixtureGate.Require(src != null && src.Path == path && src.Id == id && Matches(src), RefusalCode.BindingMismatch);
         using var f = File.OpenRead(path);
-        var stamp = Identity(f);
+        var stamp = FileStamp.Read(f.SafeFileHandle);
         FixtureGate.Require(stamp.Size == src!.Size && stamp.Size is > 0 and <= 67108864, RefusalCode.BindingMismatch);
         lock (_cache)
         {
-            if (!_cache.TryGetValue(path, out var entry) || entry.Stamp != stamp)
+            if (!_cache.TryGetValue(path, out var record) || !record.IsCurrent(id, src.Id, path, stamp))
             {
-                CheckPhysicalTracks(path, src);
+                var layout = CheckPhysicalTracks(path, src);
                 var digest = Convert.ToHexStringLower(SHA256.HashData(f));
-                FixtureGate.Require(Identity(f) == stamp, RefusalCode.BindingMismatch);
+                FixtureGate.Require(FileStamp.Read(f.SafeFileHandle) == stamp, RefusalCode.BindingMismatch);
                 if (_cache.Count >= 64) _cache.Clear();
-                _cache[path] = entry = (stamp, digest);
+                _cache[path] = record = new EditionRecord(id, src.Id, path, stamp, digest, layout, DateTimeOffset.UtcNow);
             }
-            return (src, new(video.Id.ToString("N"), src.Id, entry.Digest, stamp.Size, src.RunTimeTicks!.Value / 10000), stamp.ToString());
+            FixtureGate.Require(record.Layout.DurationMs * 10000 == src.RunTimeTicks, RefusalCode.BindingMismatch);
+            return new(src, record, "lab:" + stamp);
         }
     }
+
     // Catalogue duration may still describe the old inode. Probe actual container metadata once per version.
     // The pinned image owns this ffprobe; no shell, remote protocols, sidecars or media output.
-    private static void CheckPhysicalTracks(string path, MediaSourceInfo src)
+    private static EditionLayout CheckPhysicalTracks(string path, MediaSourceInfo src)
     {
-        var info = new ProcessStartInfo("/usr/lib/jellyfin-ffmpeg/ffprobe") { UseShellExecute = false, RedirectStandardOutput = true };
-        foreach (var arg in new[]{"-v","quiet","-protocol_whitelist","file","-enable_drefs","0","-f","mov","-show_entries",
-            "format=duration:stream=index,codec_type,codec_name,time_base,start_pts:chapter=id","-of","json",path}) info.ArgumentList.Add(arg);
-        using var child = Process.Start(info) ?? throw new Refused(RefusalCode.UnverifiedBinding);
+        string[] args = ["-v", "quiet", "-protocol_whitelist", "file", "-enable_drefs", "0", "-f", "mov", "-show_entries",
+            "format=format_name,start_time,duration:stream=index,codec_type,codec_name,time_base,start_pts:chapter=id", "-of", "json", path];
+        var text = Ffprobe.Run("/usr/lib/jellyfin-ffmpeg/ffprobe", args, TimeSpan.FromSeconds(5), 8192);
         try
         {
-            // Bound output by the pipe capacity. If a malformed file fills it, the timeout kills the probe.
-            if (!child.WaitForExit(5000)) throw new Refused(RefusalCode.UnverifiedBinding);
-            var text = child.StandardOutput.ReadToEnd(); FixtureGate.Require(child.ExitCode == 0 && text.Length is > 0 and < 8192, RefusalCode.UnverifiedBinding);
-            using var json = JsonDocument.Parse(text); var r = json.RootElement; var streams = r.GetProperty("streams");
-            FixtureGate.Require(streams.GetArrayLength() == 2 && r.GetProperty("chapters").GetArrayLength() == 0 &&
-                decimal.TryParse(r.GetProperty("format").GetProperty("duration").GetString(), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var sec) && sec * 10000000 == src.RunTimeTicks,
-                RefusalCode.UnverifiedBinding);
-            for (int i = 0; i < 2; i++)
-            {
-                var t = streams[i]; FixtureGate.Require(t.GetProperty("index").GetInt32() == i && t.GetProperty("start_pts").GetInt64() == 0 &&
-                t.GetProperty("codec_name").GetString() == (i == 0 ? "h264" : "aac") && t.GetProperty("time_base").GetString() == (i == 0 ? "1/12800" : "1/48000"), RefusalCode.UnverifiedBinding);
-            }
+            using var json = JsonDocument.Parse(text);
+            FixtureGate.Require(json.RootElement.GetProperty("chapters").GetArrayLength() == 0, RefusalCode.UnverifiedBinding);
         }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException or FormatException) { throw new Refused(RefusalCode.UnverifiedBinding); }
-        finally { if (!child.HasExited) { child.Kill(true); child.WaitForExit(); } }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException) { throw new Refused(RefusalCode.UnverifiedBinding); }
+        var layout = EditionLayout.ParseFfprobe(text);
+        FixtureGate.Require(layout.Streams.Length == 2 && layout.StartMicroseconds == 0 && layout.DurationMicroseconds * 10 == src.RunTimeTicks, RefusalCode.UnverifiedBinding);
+        for (int i = 0; i < 2; i++)
+        {
+            var t = layout.Streams[i];
+            FixtureGate.Require(t.Index == i && t.StartPts == 0 && t.Codec == (i == 0 ? "h264" : "aac") &&
+                (t.TimeBaseNumerator, t.TimeBaseDenominator) == (i == 0 ? (1, 12800) : (1, 48000)), RefusalCode.UnverifiedBinding);
+        }
+        return layout;
     }
+
     internal static bool Matches(MediaSourceInfo src) => src.Protocol == MediaProtocol.File && src.VideoType == VideoType.VideoFile &&
         !src.IsRemote && !src.IsInfiniteStream && !src.RequiresOpening && src.SupportsDirectPlay && PinnedMp4Container.DescribesSource(src.Container) &&
         src.RunTimeTicks is > 0 && src.RunTimeTicks % 10000 == 0 && src.MediaAttachments.Count == 0 && src.MediaStreams.Count == 2 &&

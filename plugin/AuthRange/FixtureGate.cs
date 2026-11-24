@@ -123,7 +123,7 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
         }
         Require(c.LabViewerId == b.User.ToString("N") && c.LabDeviceId == b.Device, RefusalCode.AuthorityMismatch);
         // The earlier range-only falsifier remains a separate opt-in, but verifies actual bytes too.
-        var (src,actual,_) = assets.Verify(item!);
+        var edition = assets.Verify(item!); var src = edition.Source; var actual = edition.Identity;
         Require(item!.Path==FixturePath && actual.MediaSourceId==b.Source && actual.Sha256==b.Digest && actual.DurationMs==20_000,RefusalCode.BindingMismatch);
         var context = new VerifiedPlanContext(b.Revision, new("auth-range", b.Item, b.Source, b.Digest, src!.Size!.Value,
             "review:fixture:1", "binding:3", 20_000, PlanValidator.SourceOrigin, [new(0,"video",1,12800,0,0), new(1,"audio",1,48000,0,0)]),

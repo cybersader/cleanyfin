@@ -155,11 +155,10 @@ internal sealed record MarkingSession(PluginMarkingStore Store, Governance Gover
 /// once <c>governance.json</c> exists it is authoritative. Every request runs under one lock against a store reopened
 /// and re-verified from disk.
 /// </summary>
-internal sealed class HouseholdMarking(IUserManager users, ILibraryManager library, IServerApplicationHost host, PinnedAsset assets)
+internal sealed class HouseholdMarking(IUserManager users, ILibraryManager library, IServerApplicationHost host, Editions editions)
 {
     internal const string Directory = "cleanyfin-marking-v1";
     private static readonly object Lock = new();
-    private static readonly TrackClock[] LabTracks = [new(0, "video", 1, 12800, 0, 0), new(1, "audio", 1, 48000, 0, 0)];
 
     internal static string Root => Path.Combine(Plugin.Instance!.ConfigurationsPath, Directory);
     internal string ServerRef => host.SystemId;
@@ -228,17 +227,13 @@ internal sealed class HouseholdMarking(IUserManager users, ILibraryManager libra
         GrantTable<Binding>.IsHandle(itemId) && library.GetItemById(Guid.ParseExact(itemId, "N")) is Video v && Plugin.Instance!.IsShelfPath(v.Path);
 
     /// <summary>
-    /// The exact source a mark belongs to: full SHA-256, size, duration and presentation clock, verified from the bytes.
-    /// Only operator-pinned lab assets can be verified today (see <see cref="PinnedAsset"/>); anything else refuses, so no
-    /// mark is ever bound to a file whose identity was guessed.
+    /// The exact edition a mark belongs to: full SHA-256 and stream layout of the file's bytes, valid while the file's
+    /// change signals are unchanged (<see cref="Editions"/>). A household file is hashed once in the background; until
+    /// then this refuses with <c>VerificationPending</c>, so no mark is ever bound to a file whose identity was guessed.
     /// </summary>
-    internal SourceBinding Bind(Video video)
-    {
-        var (_, id, _) = assets.Verify(video);
-        return new SourceBinding(host.SystemId, id.ItemId, id.MediaSourceId, id.Sha256, id.SizeBytes,
-            "clock:" + id.ItemId + ":" + id.Sha256, BindingPrefix(id.ItemId) + id.Sha256, id.DurationMs,
-            PlanValidator.SourceOrigin, [.. LabTracks]);
-    }
+    internal SourceBinding Bind(Video video) => editions.Verify(video).Binding(host.SystemId);
+
+    internal EditionStatus EditionStatus(Video video) => editions.Status(video);
 
     internal static string BindingPrefix(string itemId) => "bind:" + itemId + ":";
 

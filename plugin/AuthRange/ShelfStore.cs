@@ -25,7 +25,7 @@ namespace Jellyfin.Plugin.Cleanyfin.AuthRange;
 
 internal sealed record ShelfInput(string Device, string Generation, string Version, ResolvedPlaybackPlan Resolution, MediaSourceInfo Source);
 internal sealed class ShelfStore(ILibraryManager library, IUserManager users, IServerApplicationHost host,
-    GrantService grants, PinnedAsset assets, IProviderManager providers, IFileSystem fileSystem, ILogger<ShelfStore> log) : IPlanRevisionAllocator
+    GrantService grants, Editions editions, IProviderManager providers, IFileSystem fileSystem, ILogger<ShelfStore> log) : IPlanRevisionAllocator
 {
     private const int Limit = 8;
     private readonly SemaphoreSlim _writer = new(1);
@@ -94,8 +94,11 @@ internal sealed class ShelfStore(ILibraryManager library, IUserManager users, IS
         var privacy = policy.Value ?? throw new Refused(policy.Reason!.Value);
         var device = Encoding.UTF8.GetString(d).TrimEnd('\n', '\r'); Require(device.Length is > 0 and <= 128 && !device.Any(char.IsControl));
         var video = library.GetItemById(Guid.ParseExact(item, "N")) as Video ?? throw new Refused(RefusalCode.BindingMismatch);
-        var (src, verified, assetVersion) = assets.Verify(video);
-        Require(reviewed.Binding.Tracks.SequenceEqual(new TrackClock[] { new(0, "video", 1, 12800, 0, 0), new(1, "audio", 1, 48000, 0, 0) }));
+        // Lab fixture or household file, the same rule: the exact bytes and timeline the snapshot was reviewed on,
+        // re-checked now (cheap signals; a full re-hash only after they change, in the background).
+        var edition = editions.Verify(video);
+        var (src, verified, assetVersion) = (edition.Source, edition.Identity, edition.Version);
+        FixtureGate.Require(reviewed.Binding.Tracks.SequenceEqual(edition.Binding(host.SystemId).Tracks), RefusalCode.BindingMismatch);
         DateTimeOffset floor; lock (_clockLock) { var now = DateTimeOffset.UtcNow; FixtureGate.Require(now >= _floor, RefusalCode.ClockRollback); floor = _floor = now; }
         var result = HouseholdResolver.Resolve(reviewed, privacy, new(uid, uid, host.SystemId, verified, TimeProvider.System, floor, TimeSpan.FromSeconds(config.LabLifetimeSeconds)), this);
         var plan = result.Value ?? throw new Refused(result.Reason!.Value);
@@ -161,7 +164,16 @@ internal sealed class ShelfStore(ILibraryManager library, IUserManager users, IS
                     foreach (var id in items)
                     {
                         ct.ThrowIfCancellationRequested(); ShelfInput input;
-                        try { input = Resolve(uid!, id!); } catch (Exception ex) when (ex is Refused or IOException or UnauthorizedAccessException) { log.LogDebug("Shelf pair refused: {Reason}", ex is Refused r ? r.Reason : RefusalCode.AbsentSnapshot); continue; }
+                        try { input = Resolve(uid!, id!); }
+                        catch (Refused r) when (r.Reason == RefusalCode.VerificationPending)
+                        {
+                            // The file's signals changed and it is being re-hashed. Keep an existing filtered item in place
+                            // (it cannot play: every request re-resolves and refuses) so a touch or rename that turns out
+                            // to be the same bytes keeps its identity and resume point; a real change removes it next pass.
+                            foreach (var kept in rows.Where(r => r.Viewer == uid && r.Item == id)) current.Add(kept.Key);
+                            continue;
+                        }
+                        catch (Exception ex) when (ex is Refused or IOException or UnauthorizedAccessException) { log.LogDebug("Shelf pair refused: {Reason}", ex is Refused r ? r.Reason : RefusalCode.AbsentSnapshot); continue; }
                         var plan = input.Resolution; var origin = FixtureGate.Origin(FixtureGate.Config);
                         var row = ShelfRow.Reusable(rows, uid!, id!, plan.TimelineKey, origin);
                         if (row == null)
