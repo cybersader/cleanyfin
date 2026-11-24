@@ -5,7 +5,14 @@ content-filter segments from the cleanyfin API and exposes them to Jellyfin so
 native clients can skip them (the Intro Skipper pattern, decision R02). It ships
 **only** timestamps + type — never audio/video (R01).
 
-Targets Jellyfin **10.11.x** (`net9.0`, `Jellyfin.Controller` 10.11.11).
+Builds for one Jellyfin line at a time, chosen by the `JellyfinTarget` property in the csproj:
+
+| `-p:JellyfinTarget=` | Jellyfin.Controller | Framework | SDK image | Lab result |
+|---|---|---|---|---|
+| `10.11` (default) | 10.11.11 | `net9.0` | `mcr.microsoft.com/dotnet/sdk:9.0` | all four `check-plugin.py` cases pass on 10.11.11 |
+| `12.4` | 12.4.0 | `net10.0` | `mcr.microsoft.com/dotnet/sdk:10.0` | all four `check-plugin.py` cases pass on 12.4.0 (2026-11-24) |
+
+A build for one line refuses the lab gate on any other server version. Neither line has measured player evidence beyond what `delivery/evidence/register-v1.json` lists (10.11.11 only). The release manifest (`build.yaml`, `manifest.json`) still declares only the 10.11 ABI.
 
 ## Build
 
@@ -13,11 +20,12 @@ From the **repository root**, mount both the plugin and its delivery-library ref
 
 ```bash
 docker run --rm -v "$PWD:/src" -w /src mcr.microsoft.com/dotnet/sdk:9.0 dotnet build plugin -c Release
+docker run --rm -v "$PWD:/src" -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet build plugin -c Release -p:JellyfinTarget=12.4
 ```
 
-Or with a local SDK: `dotnet build plugin -c Release`. Package both `Jellyfin.Plugin.Cleanyfin.dll` and `Cleanyfin.Delivery.dll` from `plugin/bin/Release/net9.0/`. The [disposable authenticated-handoff spike](../tools/playback-lab/README.md#authenticated-cut-list-handoff-disposable-101111-only) is disabled by default; it does not change ordinary playback.
+Or with a local SDK: `dotnet build plugin -c Release`. Package both `Jellyfin.Plugin.Cleanyfin.dll` and `Cleanyfin.Delivery.dll` from `plugin/bin/Release/net9.0/` (or `net10.0/` for 12.4). The [disposable authenticated-handoff spike](../tools/playback-lab/README.md#authenticated-cut-list-handoff-disposable-lab-only) is disabled by default; it does not change ordinary playback.
 
-### Per-viewer playback shelves (disposable 10.11.11 lab only)
+### Per-viewer playback shelves (disposable 10.11.11 / 12.4.0 lab only)
 
 A shelf is a separate Jellyfin home-video library. **Library access controls browsing; enrollment controls Play.** A new account with “access all libraries” sees the shelves and neutral sample titles. It receives no playable source or grant unless its own profile, device, native session, shelf and original are authorized. To hide another shelf, an administrator must set the viewer's explicit library list. The plugin never changes that list. Someone with ordinary access can still choose the original in its own library.
 

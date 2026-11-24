@@ -36,6 +36,11 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
     internal const string FixturePath = "/fixture-library/source.mp4";
     private const string PlanPath = "/cleanyfin-fixture/plan.json";
     private const string Revision = "local:plan:42";
+    // The one server version this build's lab gate admits, fixed by JellyfinTarget in the csproj.
+    // A build for one server line never admits another, so nothing proven on 10.11.11 carries over.
+    internal static readonly string LabServerVersion = typeof(FixtureGate).Assembly
+        .GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
+        .Cast<System.Reflection.AssemblyMetadataAttribute>().Single(m => m.Key == "CleanyfinLabServerVersion").Value!;
     internal static bool PointerEnabled(PluginConfiguration? c) =>
         c is { EnableLegacyRangeFixture: false } && (c.EnableAuthRangeLab || c.EnableProductionEligibility);
     private static bool LegacyEnabled(PluginConfiguration? c) =>
@@ -92,7 +97,7 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
         Require(b.Pointer.HasValue ? PointerEnabled(c) : LegacyEnabled(c), RefusalCode.EvidenceDisabled);
         var ip = ctx.Connection.RemoteIpAddress;
         Require(ip != null && IPAddress.IsLoopback(ip.IsIPv4MappedToIPv6 ? ip.MapToIPv4() : ip) &&
-            host.ApplicationVersion.ToString(3) == "10.11.11", RefusalCode.UnverifiedBinding);
+            host.ApplicationVersion.ToString(3) == LabServerVersion, RefusalCode.UnverifiedBinding);
         Require(ReferenceEquals(c,b.Config) && (b.Shelf!=null || (c.LabItemId==b.Item && c.LabSourceSha256==b.Digest && c.LabPlanSha256==b.PlanHash)), RefusalCode.BindingMismatch);
         Require(b.Expires > DateTimeOffset.UtcNow && sessions.Sessions.Any(s => s.Id == b.Session && s.UserId == b.User && s.DeviceId == b.Device && s.Client == b.Client && s.ApplicationVersion == b.Version), RefusalCode.AuthorityMismatch);
         var device = devices.GetDevices(new DeviceQuery { UserId = b.User, DeviceId = b.Device }).Items.SingleOrDefault(d => GrantTable<Binding>.Hash(d.AccessToken) == b.TokenHash);

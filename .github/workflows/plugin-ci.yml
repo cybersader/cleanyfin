@@ -24,6 +24,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # One row per JellyfinTarget in plugin/Jellyfin.Plugin.Cleanyfin.csproj.
+        include:
+          - jellyfin: '10.11'
+            dotnet: '9.0.x'
+          - jellyfin: '12.4'
+            dotnet: '10.0.x'
     defaults:
       run:
         working-directory: plugin
@@ -34,10 +43,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: ${{ matrix.dotnet }}
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore -p:JellyfinTarget=${{ matrix.jellyfin }}
 
       - name: Build
-        run: dotnet build -c Release --no-restore
+        run: dotnet build -c Release --no-restore -p:JellyfinTarget=${{ matrix.jellyfin }}
