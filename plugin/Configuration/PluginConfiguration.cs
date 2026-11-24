@@ -27,4 +27,8 @@ public class PluginConfiguration : BasePluginConfiguration
     public string LabPointerKey { get; set; } = string.Empty;
     public bool LabWithholdProjection { get; set; }
     public int LabLifetimeSeconds { get; set; } = 120;
+
+    // Household file check: pace for the one-time background hash of a movie file, in bytes per second
+    // (0 = as fast as the disk allows). Lower it if a NAS share is busy while a new title is first checked.
+    public long EditionHashBytesPerSecond { get; set; }
 }

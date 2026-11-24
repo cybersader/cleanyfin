@@ -20,9 +20,12 @@ From the repository root with .NET SDK 9.0.x:
 dotnet test tests/Delivery.Contract.Tests --filter Category=Plan
 dotnet test tests/Delivery.Contract.Tests --filter Category=Mpv
 dotnet test tests/Delivery.Contract.Tests --filter Category=Resolver
+dotnet test tests/Delivery.Contract.Tests --filter Category=Edition
 ```
 
 The golden pair uses the lab's timing with synthetic asset and authority identities; it is not proof of a live binding.
+
+`Edition.cs` is how a live binding is proven: the full SHA-256 of a file plus the stream layout probed from it (the snapshot's `sha256`, `tracks`, `timelineRef` and `bindingRev`), valid only while the file's `statx` inode, size, mtime and ctime are unchanged, and hashed while checking that they do not change underneath ([design](../knowledge-base/01-working/marking-foundation-2026-11-24/02-household-file-binding.md), [edition-record-v1](schema/edition-record-v1.schema.json)). `Category=Edition` covers identity and every invalidation (replace, in-place edit with mtime kept, touch, hard link, rename, re-encode, timeline-only change, change during the hash).
 
 ## Marking
 

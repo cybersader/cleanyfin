@@ -156,6 +156,33 @@ public class MarkingTests
     }
 
     [Fact]
+    public void AChangedFileRefusesPublishingUntilItsOldMarksAreReviewedAndNothingMovesAcross()
+    {
+        var (service, store) = Household();
+        Accepted(service, MarkRef, Golden);
+        Assert.Single(Require(service.Publish(Binding, Parent, "home:review:1")).Snapshot.Annotations);
+
+        // The same item now plays a different edition (replaced or re-encoded file).
+        var replaced = Binding with { Sha256 = new string('b', 64), BindingRev = "binding:4" };
+        Assert.Equal([MarkRef], service.StaleMarks(replaced).Select(m => m.Ref).ToArray());
+        // Neither with the old marks (other bytes) nor silently without them (unfiltered where it was filtered).
+        Assert.Equal(MarkingRefusal.FileChanged, service.Publish(replaced, Parent, "home:review:2").Reason);
+        // The old edition still publishes exactly as reviewed; its own marks are not "changed".
+        Assert.Empty(service.StaleMarks(Binding));
+
+        // The reviewer withdraws the old mark (it stays on record) and marks the new file afresh.
+        Require(service.Withdraw(MarkRef, 2, Parent));
+        Assert.Empty(service.StaleMarks(replaced));
+        var draft = Require(service.CaptureToDraftMark(Phone[1].Ref, "home:fixture:mark2", replaced.BindingRev, Parent));
+        var mark = Require(service.Edit(draft.Ref, draft.Rev, Golden with { StartMs = 5500 }, Parent));
+        Require(service.Accept(mark.Ref, mark.Rev, Parent));
+        var snapshot = Require(service.Publish(replaced, Parent, "home:review:3")).Snapshot;
+        Assert.Equal((5500L, "home:fixture:mark2"), (snapshot.Annotations.Single().StartMs, snapshot.Annotations.Single().Ref));
+        Assert.Equal(replaced.Sha256, snapshot.Binding.Sha256);
+        Assert.Equal(10520, store.FindMark(MarkRef, 2)!.EndMs);
+    }
+
+    [Fact]
     public void OnlyReviewersAcceptOrPublishAndAServiceOnlySuggests()
     {
         var (service, _) = Household();

@@ -41,7 +41,9 @@ public enum MarkingRefusal
     NoRecordedAcceptance = 33,
     SnapshotInvalid = 34,
     InvalidExpiry = 35,
-    ConflictingInput = 36
+    ConflictingInput = 36,
+    // The item's file is no longer the edition some of its open marks were made on: review again first.
+    FileChanged = 37
 }
 
 public sealed class MarkingResult<T> where T : class

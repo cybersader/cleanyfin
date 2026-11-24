@@ -146,6 +146,19 @@ public sealed class MarkingService(IMarkingStore store, Governance governance, T
     /// exact ref@rev and digest. Reviewers only. <paramref name="expiresAt"/> defaults to the household's expiry and may
     /// not exceed it.
     /// </summary>
+    /// <summary>
+    /// Open (proposed or accepted) marks on the same item that were made on a different edition than
+    /// <paramref name="current"/>: the "file changed, review again" list. Marks are never moved to the new edition.
+    /// </summary>
+    public IEnumerable<Mark> StaleMarks(SourceBinding current)
+    {
+        // A mark belongs to an item through its binding (plugin form "bind:<item>:<edition>") or the captures it came from.
+        var prefix = "bind:" + current.ItemId + ":";
+        bool SameItem(Mark m) => m.BindingRev.StartsWith(prefix, StringComparison.Ordinal) ||
+            m.Provenance.From.Any(r => store.FindCapture(r)?.Target.ItemId == current.ItemId);
+        return store.LatestMarks().Where(m => m.BindingRev != current.BindingRev && m.State is Proposed or Accepted && SameItem(m));
+    }
+
     public MarkingResult<PublishedSnapshot> Publish(SourceBinding binding, string actor, string snapshotRev,
         DateTimeOffset? expiresAt = null) => Run(() =>
     {
@@ -160,6 +173,10 @@ public sealed class MarkingService(IMarkingStore store, Governance governance, T
         var limit = now.AddDays(governance.Approval.SnapshotExpiryDays);
         var expires = expiresAt ?? limit;
         Require(expires > now && expires <= limit, MarkingRefusal.InvalidExpiry);
+        // A file that changed since some of its open marks were made is not published at all: not with the old marks
+        // (they describe other bytes) and not without them (that would silently drop reviewed filtering). The
+        // reviewer withdraws or rejects each "file changed" mark, and re-marks the new file, first.
+        Require(!StaleMarks(binding).Any(), MarkingRefusal.FileChanged);
         var annotations = ImmutableArray.CreateBuilder<AcceptedAnnotation>();
         foreach (var mark in store.LatestMarks().Where(m => m.BindingRev == binding.BindingRev && m.State == Accepted)
                      .OrderBy(m => m.StartMs).ThenBy(m => m.Ref, StringComparer.Ordinal))

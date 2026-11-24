@@ -79,7 +79,7 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
         }
         catch (Exception ex) // only a bounded reason, never exception text or URL
         {
-            ctx.RequestServices.GetRequiredService<ILogger<PointerPlaybackFilter>>().LogInformation("Fixture projection refused: {Reason}", ex is Refused r ? r.Reason : RefusalCode.UnverifiedBinding);
+            ctx.RequestServices.GetRequiredService<ILogger<PointerPlaybackFilter>>().LogInformation("Fixture projection refused: {Reason} ({Kind})", ex is Refused r ? r.Reason : RefusalCode.UnverifiedBinding, ex is Refused ? "refusal" : ex.GetType().Name);
             ctx.Response.Headers["X-Cleanyfin-Reason"]=(ex is Refused refused ? refused.Reason : RefusalCode.UnverifiedBinding).ToString();
             if (executed == null) action.Result = denied; else executed.Result = denied;
         }

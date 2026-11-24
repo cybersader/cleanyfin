@@ -148,6 +148,7 @@ public sealed class MarkingController(IAuthorizationContext auth) : ControllerBa
         string? bindingRefusal = null;
         try { binding = h.Bind(video); }
         catch (Refused r) { bindingRefusal = r.Reason.ToString(); }
+        var edition = h.EditionStatus(video);
         var stream = video.GetMediaSources(false).FirstOrDefault()?.MediaStreams.FirstOrDefault(m => m.Type == MediaStreamType.Video);
         return h.Use(user, s =>
         {
@@ -173,6 +174,13 @@ public sealed class MarkingController(IAuthorizationContext auth) : ControllerBa
                 },
                 ["binding"] = binding == null ? null : JsonNode.Parse(MarkingDocuments.WriteBinding(binding)),
                 ["bindingRefusal"] = bindingRefusal,
+                // The file check: queued / verifying (with bytes done of total) / verified / refused.
+                ["edition"] = new JsonObject
+                {
+                    ["state"] = edition.State, ["bytesDone"] = edition.Done, ["bytesTotal"] = edition.Total, ["reason"] = edition.Reason,
+                },
+                // Open marks made on another edition of this item: they stay, never move, and block publishing.
+                ["reviewAgain"] = team && binding != null ? s.Service.StaleMarks(binding).Count() : 0,
                 ["captures"] = captures,
                 ["marks"] = marks,
             });

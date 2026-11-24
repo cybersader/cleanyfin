@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cybersader.github.io/cleanyfin/schema/v1/edition-record.schema.json",
+  "title": "Cleanyfin edition record v1",
+  "description": "Household-private, never shared or exported: the change signals one library file was fully hashed under, its SHA-256 and its probed stream layout. Valid only while the file's current signals equal 'stamp' exactly. Kept by the household server so a large file is hashed once, not after every restart. Snapshots and plans carry the derived binding, never this record or its path.",
+  "$comment": "Also apply strict runtime parsing (EditionRecord.Parse): duplicate keys, byte limits, stream indices equal to their position, and layoutSha256 recomputed from the layout. The binding is: sha256 = this sha256; sizeBytes = stamp.size; durationMs = ceil(durationUs / 1000); timelineRef = clock:<itemId>:<layoutSha256>; bindingRev = bind:<itemId>:<sha256('edition-v1|' + sha256 + '|' + layoutSha256)>; tracks = audio/video streams anchored at their own startPts on one millisecond clock.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["editionVersion", "itemId", "mediaSourceId", "path", "stamp", "sha256", "layout", "layoutSha256", "verifiedAt"],
+  "properties": {
+    "editionVersion": {"const": 1},
+    "itemId": {"$ref": "#/$defs/ref"},
+    "mediaSourceId": {"$ref": "#/$defs/ref"},
+    "path": {"type": "string", "minLength": 2, "maxLength": 4096, "pattern": "^/"},
+    "stamp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inode", "size", "mtimeSec", "mtimeNsec", "ctimeSec", "ctimeNsec"],
+      "properties": {
+        "inode": {"type": "string", "pattern": "^[0-9]{1,20}$"},
+        "size": {"$ref": "#/$defs/positive"},
+        "mtimeSec": {"$ref": "#/$defs/signed"},
+        "mtimeNsec": {"type": "integer", "minimum": 0, "maximum": 999999999},
+        "ctimeSec": {"$ref": "#/$defs/signed"},
+        "ctimeNsec": {"type": "integer", "minimum": 0, "maximum": 999999999}
+      }
+    },
+    "sha256": {"$ref": "#/$defs/sha256"},
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "startUs", "durationUs", "streams"],
+      "properties": {
+        "format": {"type": "string", "minLength": 1, "maxLength": 128},
+        "startUs": {"$ref": "#/$defs/signed"},
+        "durationUs": {"$ref": "#/$defs/positive"},
+        "streams": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["index", "kind", "codec", "timeBase"],
+            "properties": {
+              "index": {"type": "integer", "minimum": 0, "maximum": 255},
+              "kind": {"type": "string", "minLength": 1, "maxLength": 64},
+              "codec": {"type": "string", "minLength": 1, "maxLength": 128},
+              "timeBase": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/positive"}},
+              "startPts": {"$ref": "#/$defs/signed"}
+            }
+          }
+        }
+      }
+    },
+    "layoutSha256": {"$ref": "#/$defs/sha256"},
+    "verifiedAt": {"$ref": "#/$defs/utc"}
+  },
+  "$defs": {
+    "ref": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*(?![\\s\\S])"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "utc": {"type": "string", "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-5][0-9](\\.[0-9]{1,7})?Z(?![\\s\\S])"},
+    "signed": {"type": "integer", "minimum": -9007199254740991, "maximum": 9007199254740991},
+    "positive": {"type": "integer", "minimum": 1, "maximum": 9007199254740991}
+  }
+}

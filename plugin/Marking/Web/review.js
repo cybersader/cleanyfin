@@ -44,6 +44,12 @@ function timingVerdict() {
   const t = state.tuple;
   const who = `${t.engine} ${t.major} (${t.platform}, ${t.mode})`;
   if (state.timingFault) return { ok: false, text: `Exact boundaries are off: ${state.timingFault}.`, state: 'fault' };
+  const e = state.detail?.edition;
+  if (!state.detail?.binding && e && (e.state === 'queued' || e.state === 'verifying')) {
+    const pct = e.bytesTotal > 0 ? ` ${Math.floor((100 * e.bytesDone) / e.bytesTotal)}%` : '';
+    const why = e.reason === 'FileSignalsChanged' ? 'This file changed on disk. Checking it again' : 'Checking that this is the exact file being reviewed';
+    return { ok: false, text: `${why}${pct}… Marks can be placed when the check finishes.`, state: 'verifying' };
+  }
   if (!state.detail?.binding) return { ok: false, text: `No verified file identity for this title (${state.detail?.bindingRefusal ?? 'unknown'}); marks cannot be placed.`, state: 'unbound' };
   if (!state.fps) return { ok: false, text: 'This title has no known frame rate; exact boundaries are not available.', state: 'unmeasured' };
   const row = state.timingRows.find((r) => r.frameRates.some((f) => Math.abs(f - state.fps) < 1e-6));
@@ -126,8 +132,12 @@ function canEdit() {
 function render() {
   const verdict = state.detail ? timingVerdict() : { ok: false, text: '', state: 'none' };
   const timing = $('timing');
-  timing.textContent = verdict.text;
+  const again = state.detail?.reviewAgain > 0
+    ? `File changed: ${state.detail.reviewAgain} mark(s) were made on another copy of this title. Review again: withdraw or reject each one marked FILE CHANGED, then mark this copy; publishing is refused until then. `
+    : '';
+  timing.textContent = again + verdict.text;
   timing.dataset.state = verdict.state;
+  document.body.dataset.reviewAgain = String(state.detail?.reviewAgain ?? 0);
   const readout = $('frameReadout');
   if (state.frame != null && state.fps) {
     const ms = frameStart(state.frame);
@@ -206,9 +216,15 @@ async function loadItem(itemId, keepMark) {
     if (state.clock && state.fps) await showFrame(0);
     document.body.dataset.ready = '1';
   }
+  else if (state.clock && state.fps && state.frame == null) await showFrame(0);
   state.mark = keepMark ? state.detail.marks.find((m) => m.ref === keepMark) ?? null : null;
   renderLists();
   render();
+  // The file check runs in the background on the server; look again until it settles.
+  if (['queued', 'verifying'].includes(res.body.edition?.state)) {
+    clearTimeout(state.editionPoll);
+    state.editionPoll = setTimeout(() => { if (state.itemId === itemId) void loadItem(itemId, state.mark?.ref); }, 2000);
+  }
 }
 
 function select(ref) {
