@@ -1,0 +1,11 @@
+{
+  "taxonomyVersion": 1,
+  "rev": "tax:5",
+  "concepts": [
+    {"id": "household:jump-scare", "label": "Jump scare", "broader": "disturbing", "defaultSeverity": 2, "defaultAction": "skip"},
+    {"id": "household:blasphemy", "label": "Taking God's name in vain", "broader": "profanity", "defaultAction": "mute"},
+    {"id": "household:bar-fight", "label": "Bar fight", "broader": "violence"},
+    {"id": "household:fistfight", "label": "Fistfight", "broader": "household:bar-fight"},
+    {"id": "household:old-label", "label": "Retired label", "broader": "crude", "deprecated": true}
+  ]
+}

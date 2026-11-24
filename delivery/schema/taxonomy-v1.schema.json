@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cybersader.github.io/cleanyfin/schema/v1/taxonomy.schema.json",
+  "title": "Cleanyfin household taxonomy v1",
+  "$comment": "Lists non-core concepts only; the 9 core categories are the snapshot enum and are never redefined here. Every concept rolls up to exactly one core category directly or through at most two non-core concepts. Ids are never reused; retire with deprecated. Also apply strict runtime parsing. Schema does not check unique ids, broader resolution, cycles or hop count.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["taxonomyVersion", "rev", "concepts"],
+  "properties": {
+    "taxonomyVersion": {"const": 1},
+    "rev": {"$ref": "#/$defs/ref"},
+    "concepts": {"type": "array", "maxItems": 512, "uniqueItems": true, "items": {"$ref": "#/$defs/concept"}}
+  },
+  "$defs": {
+    "ref": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*(?![\\s\\S])"},
+    "category": {
+      "enum": ["profanity", "sexual_dialogue", "sex_scene", "nudity", "violence", "gore", "disturbing", "substance_use", "crude"]
+    },
+    "conceptId": {"type": "string", "maxLength": 128, "pattern": "^[a-z][a-z0-9]*:[a-z0-9][a-z0-9_-]*(?![\\s\\S])"},
+    "concept": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "broader"],
+      "properties": {
+        "id": {"$ref": "#/$defs/conceptId"},
+        "label": {"type": "string", "minLength": 1, "maxLength": 200},
+        "broader": {"anyOf": [{"$ref": "#/$defs/category"}, {"$ref": "#/$defs/conceptId"}]},
+        "defaultSeverity": {"type": "integer", "minimum": 0, "maximum": 3},
+        "defaultAction": {"enum": ["skip", "cut", "mute", "mark"]},
+        "deprecated": {"type": "boolean"}
+      }
+    }
+  }
+}

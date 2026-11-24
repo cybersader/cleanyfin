@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cybersader.github.io/cleanyfin/schema/v1/household-governance.schema.json",
+  "title": "Cleanyfin household governance v1",
+  "$comment": "Who may capture, mark, approve and publish, and the per-profile floors viewers can only tighten. Household-private; never leaves the house. A suggester is a household compute service (AI suggestions, fingerprinting, alignment) that may only add captures; it never approves or publishes. Also apply strict runtime parsing. Schema does not check unique users or profile refs, unique floor categories, that a member's profileRef exists, or that suggester is not combined with another role.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["governanceVersion", "rev", "members", "profiles", "approval"],
+  "properties": {
+    "governanceVersion": {"const": 1},
+    "rev": {"$ref": "#/$defs/ref"},
+    "members": {"type": "array", "maxItems": 256, "uniqueItems": true, "items": {"$ref": "#/$defs/member"}},
+    "profiles": {"type": "array", "maxItems": 256, "uniqueItems": true, "items": {"$ref": "#/$defs/profile"}},
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selfApproval", "snapshotExpiryDays"],
+      "properties": {
+        "selfApproval": {"type": "boolean", "$comment": "true: one person may mark and approve (logged). false: a second reviewer is required."},
+        "snapshotExpiryDays": {"type": "integer", "minimum": 1, "maximum": 3650}
+      }
+    }
+  },
+  "$defs": {
+    "ref": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*(?![\\s\\S])"},
+    "category": {
+      "enum": ["profanity", "sexual_dialogue", "sex_scene", "nudity", "violence", "gore", "disturbing", "substance_use", "crude"]
+    },
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["user", "roles"],
+      "properties": {
+        "user": {"$ref": "#/$defs/ref"},
+        "roles": {
+          "type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true,
+          "items": {"enum": ["admin", "reviewer", "marker", "viewer", "suggester"]}
+        },
+        "profileRef": {"$ref": "#/$defs/ref"}
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "minimumSeverity", "filter"],
+      "properties": {
+        "category": {"$ref": "#/$defs/category"},
+        "minimumSeverity": {"type": "integer", "minimum": 0, "maximum": 3},
+        "filter": {"type": "boolean"}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileRef", "floor", "viewerMay"],
+      "properties": {
+        "profileRef": {"$ref": "#/$defs/ref"},
+        "floor": {"type": "array", "maxItems": 9, "uniqueItems": true, "items": {"$ref": "#/$defs/rule"}},
+        "viewerMay": {"enum": ["tighten-only", "none"]}
+      }
+    }
+  }
+}

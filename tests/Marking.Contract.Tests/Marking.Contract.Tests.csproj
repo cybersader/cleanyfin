@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.1" PrivateAssets="all" />
+    <PackageReference Include="JsonSchema.Net" Version="7.3.4" />
+    <ProjectReference Include="../../delivery/Cleanyfin.Delivery/Cleanyfin.Delivery.csproj" />
+    <ProjectReference Include="../../delivery/Cleanyfin.Marking/Cleanyfin.Marking.csproj" />
+    <ProjectReference Include="../../delivery/Cleanyfin.Marking.Cli/Cleanyfin.Marking.Cli.csproj" />
+    <Using Include="Xunit" />
+    <None Update="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Delivery.Contract.Tests/Fixtures/hard-fixture.*" Link="Golden/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../delivery/schema/*.schema.json" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

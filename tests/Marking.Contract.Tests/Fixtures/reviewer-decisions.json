@@ -1,0 +1,6 @@
+{
+  "decisionsVersion": 1,
+  "marks": [
+    {"capture": "cap:mwv6h4arcqb0e8", "mark": "home:fixture:mark1", "startMs": 5480, "endMs": 10520, "severity": 2, "action": "skip"}
+  ]
+}
