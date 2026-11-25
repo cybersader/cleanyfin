@@ -92,9 +92,15 @@ def summarize(name, result):
             deviations.append(f"start {x['startSeconds']} s: " + (
                 f"{lead} extra sample(s) from before the start position ({'MARKED' if x['extraMarked'] else 'kept'} source samples)"
                 if lead else x['sound']['summary']))
+    # Subtitle text is marked content too: a line that starts inside the mark (e.g. a language mark) must not be shown.
+    marked_lines = [text for begin, _, text in ff.SUBTITLES if ff.START*fm.FRAME_MS <= begin < ff.END*fm.FRAME_MS]
+    shown = [t for t in marked_lines if any(seen.startswith(t + ' @') for seen in s.get('subtitles', []))]
+    if shown:
+        deviations.append(f"subtitle line(s) that start inside the mark shown after the join: {', '.join(shown)}")
     for l in result.get('seek', {}).get('landings', []):
         if l['landed'] != l['expected'] or l['marked']:
             deviations.append(f"seek {l['target']}: landed on frame {l['landed']}, expected {l['expected']}" + (' (MARKED)' if l['marked'] else ''))
+    v = dict(v, subtitles=not shown, exact=v['exact'] and not shown)
     return dict(layout=name, result='exact' if v['exact'] else 'inexact', verdict=v, deviations=deviations)
 
 
@@ -108,7 +114,7 @@ def register_row(name, summary, result, tuple_, evidence_ref, today):
     pic, snd = s.get('picture', {}), s.get('sound', {})
     devs = '; '.join(summary.get('deviations', []))[:400] or 'none'
     results = dict(
-        markedPicture=r(v.get('markedPicture'), 'Zero of 126 marked frames in the straight cut, the fresh starts and the seeks.',
+        markedPicture=r(v.get('markedPicture') and v.get('seeks') and v.get('subtitles', True), 'Zero of 126 marked frames in the straight cut, the fresh starts and the seeks; every seek landed on the expected kept frame.',
                         f"Marked picture shown: {devs}"),
         markedSound=r(v.get('markedSound'), 'Kept sound equals the uncut decode minus exactly the marked sample indices, so no marked sample; 0 ms of 880 Hz in 5 ms windows.',
                       f"Marked or misplaced sound: {devs}"),
