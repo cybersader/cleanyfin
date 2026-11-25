@@ -93,3 +93,12 @@ Locked 2026-11-24 (owner decisions on the [marking foundation design](../knowled
 **R17 — One person may both mark and approve.** Every approval is recorded in the audit log; a household may turn on "second reviewer required". *Source:* owner answer, recommended option.
 
 **R18 — A mark press does not pause the TV by default.** Captures are rough and are refined later. Pause-to-mark may become an opt-in setting only after a given app is measured to obey a remote pause. *Source:* owner answer, recommended option.
+
+---
+
+Locked 2026-11-25 (owner decisions on the [common formats results](../knowledge-base/01-working/common-formats-2026-11-24/01-common-formats.md)):
+
+**R19 — A subtitle line that overlaps a mark is hidden.** Any cue whose time span touches a marked interval is suppressed for filtered playback. Until the player integration can do that and it is measured, files whose default subtitle track would show such a cue stay refused. Showing words from a removed part after the cut is not acceptable. *Source:* owner answer, recommended option.
+
+**R20 — "Exact" stays strict for AAC.** Kept sound must match the uninterrupted original sample for sample; inaudible decoder differences (for example AAC noise substitution) are not accepted. AAC layouts stay refused while the next step measures how real AAC movies are encoded and looks for a path that is truly exact. *Source:* owner answer, recommended option.
+
