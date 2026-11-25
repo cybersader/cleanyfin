@@ -19,9 +19,7 @@ public class EligibilityTests
     {
         Assert.True(SchemaAccepts(Seed));
         var register = Read(Seed);
-        Assert.Collection(register.Rows.Take(5), row => Assert.Equal(EvidenceStatus.Experimental, row.Status),
-            row => Assert.Equal(EvidenceStatus.Experimental, row.Status), row => Assert.Equal(EvidenceStatus.Refused, row.Status),
-            row => Assert.Equal(EvidenceStatus.Refused, row.Status), row => Assert.Equal(EvidenceStatus.Refused, row.Status));
+        Assert.All(register.Rows.Take(5), row => Assert.Equal(EvidenceStatus.Refused, row.Status));
         // Common-format rows (format-matrix.py): desktop lab mpv only, never a TV tuple, never eligible. An exact layout is
         // experimental (lab flag only); an inexact one is refused.
         Assert.All(register.Rows.Skip(5), row =>
@@ -37,6 +35,12 @@ public class EligibilityTests
                 row.Results.MarkedSound.Outcome == Measurement.Pass && row.Results.KeptPictureAtJoin.Outcome == Measurement.Pass &&
                 row.Results.KeptSoundAtJoin.Outcome == Measurement.Pass);
             Assert.True(File.Exists(Path.Combine(RepoRoot(), row.EvidenceRef)), row.EvidenceRef);
+            if (row.Status == EvidenceStatus.Experimental)
+            {
+                Assert.Contains("24/24 positions passed", row.Observation);
+                Assert.Contains("R21: at most one extra kept sample before a fresh start or resume", row.Observation);
+                Assert.Equal(EvidenceStatus.Experimental, register.Admit(row.Tuple, ["cut"], allowExperimental: true).Value!.Status);
+            }
         });
         Assert.All(register.Rows, row => Assert.False(register.Admit(row.Tuple, ["cut"]).Accepted));
     }
@@ -124,11 +128,15 @@ public class EligibilityTests
     [Fact]
     public void ExperimentalFlagDoesNotAdmitRefusedRowsOrUncoveredFeatures()
     {
-        var register = Read(Seed);
-        var measured = register.Rows[0].Tuple;
+        var doc = Document();
+        doc["rows"]![1]!["status"] = "experimental"; // synthetic lab grant, never an active reviewed row
+        var register = Read(Bytes(doc));
+        var measured = register.Rows[1].Tuple;
         Assert.Equal(EvidenceStatus.Experimental, register.Admit(measured, ["cut"], allowExperimental: true).Value!.Status);
         Assert.Equal(RefusalCode.EvidenceFeatureUncovered, register.Admit(measured, ["mute"], allowExperimental: true).Reason);
-        Assert.Equal(RefusalCode.EvidenceRefused, register.Admit(register.Rows[4].Tuple, ["cut"], allowExperimental: true).Reason);
+        var reviewed = Read(Seed);
+        foreach (var row in reviewed.Rows.Take(2))
+            Assert.Equal(RefusalCode.EvidenceRefused, reviewed.Admit(row.Tuple, ["cut"], allowExperimental: true).Reason);
     }
 
     [Fact]

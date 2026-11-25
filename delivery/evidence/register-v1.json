@@ -49,8 +49,8 @@
       },
       "evidenceRef": "tools/playback-lab/README.md",
       "date": "2026-11-21",
-      "status": "experimental",
-      "observation": "Wholphin release 1.1.2. Authenticated real-plugin handoff: POST 200, EDL GET 200, original range 206. Forward/back seek controls saw frames 71, 301, 0. Handoff worked after server restart, but its recapture was unreadable; persisted resume not measured. Earlier no-stream probe failed before playback; stream-populated stand-in succeeded, but was a different path."
+      "status": "refused",
+      "observation": "R20/R21: refused. Historical Wholphin emulator handoff had no captured audio or frame-complete cut. The same hard-fixture MP4 AAC source requires exact kept audio and a complete position sweep; desktop retests do not qualify this client. Prior authenticated handoff and sampled video observations are retained as historical evidence. Original AAC fixture, desktop recheck: 10.11.11 8/24 (inexact); 12.4.0 8/24 (inexact)."
     },
     {
       "tuple": {
@@ -99,8 +99,8 @@
       },
       "evidenceRef": "tools/playback-lab/prototypes/exact-audio/joint-receipt-2026-11-22.json",
       "date": "2026-11-22",
-      "status": "experimental",
-      "observation": "Desktop diagnostic lab player, not a household client. Local file EDL; no Jellyfin or plugin involved, no physical output or persisted resume measurement."
+      "status": "refused",
+      "observation": "R20/R21: refused. The historical desktop diagnostic measured one straight join of this MP4 AAC source, not all cut positions or fresh/seek playback. Its straight-run comparison is historical, not evidence of admission. Original AAC fixture, desktop recheck: 10.11.11 8/24 (inexact); 12.4.0 8/24 (inexact)."
     },
     {
       "tuple": {
@@ -1575,25 +1575,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mp4-h264-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mp4-h264-aac: 2/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -1625,25 +1625,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mkv-h264-aac: 0/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -1674,26 +1674,26 @@
       ],
       "results": {
         "markedPicture": {
-          "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "markedSound": {
-          "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "keptPictureAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "keptSoundAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-ac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-h264-ac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -1724,26 +1724,26 @@
       ],
       "results": {
         "markedPicture": {
-          "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "markedSound": {
-          "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "keptPictureAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "keptSoundAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-h264-eac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -1775,25 +1775,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mkv-hevc10-aac: 0/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -1824,26 +1824,26 @@
       ],
       "results": {
         "markedPicture": {
-          "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "markedSound": {
-          "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "keptPictureAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "keptSoundAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-hevc10-eac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -1874,26 +1874,26 @@
       ],
       "results": {
         "markedPicture": {
-          "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "markedSound": {
-          "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "keptPictureAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         },
         "keptSoundAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-hdr10-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-hevc10-hdr10-eac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -1925,25 +1925,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mp4-hevc10-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mp4-hevc10-aac: 2/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -1975,25 +1975,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mp4-h264-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 4 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mp4-h264-eac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2025,25 +2025,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+          "limit": "10/24 positions passed; observed deviation types: extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+          "limit": "10/24 positions passed; observed deviation types: extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+          "limit": "10/24 positions passed; observed deviation types: extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+          "limit": "10/24 positions passed; observed deviation types: extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-flac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 3 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mkv-h264-flac: 10/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2074,26 +2074,26 @@
       ],
       "results": {
         "markedPicture": {
-          "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "17/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, unmeasured."
         },
         "markedSound": {
-          "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "17/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, unmeasured."
         },
         "keptPictureAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "17/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, unmeasured."
         },
         "keptSoundAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "outcome": "not-measured",
+          "limit": "17/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, unmeasured."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351+aac-srt, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured. R19: zero overlapping or touching text, kept cues at expected presentation times; all offered subtitle tracks tested."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-h264-eac351+aac-srt: 17/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim. R19: offered subtitle tracks tested."
     },
     {
       "tuple": {
@@ -2124,26 +2124,26 @@
       ],
       "results": {
         "markedPicture": {
-          "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+          "outcome": "not-measured",
+          "limit": "16/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation, unmeasured."
         },
         "markedSound": {
-          "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+          "outcome": "not-measured",
+          "limit": "16/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation, unmeasured."
         },
         "keptPictureAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+          "outcome": "not-measured",
+          "limit": "16/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation, unmeasured."
         },
         "keptSoundAtJoin": {
-          "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+          "outcome": "not-measured",
+          "limit": "16/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation, unmeasured."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351-ass+srt, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-h264-eac351-ass+srt: 16/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim. R19: offered subtitle tracks tested."
     },
     {
       "tuple": {
@@ -2175,25 +2175,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mp4-h264-eac351-mov_text, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 4 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured. R19: zero overlapping or touching text, kept cues at expected presentation times; all offered subtitle tracks tested."
+      "observation": "Desktop mpv lab decoded PCM only, mp4-h264-eac351-mov_text: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim. R19: offered subtitle tracks tested."
     },
     {
       "tuple": {
@@ -2225,25 +2225,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mp4-h264-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mp4-h264-aac: 2/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2275,25 +2275,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mkv-h264-aac: 0/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2325,25 +2325,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-ac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-h264-ac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2375,25 +2375,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-h264-eac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2425,25 +2425,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+          "limit": "0/24 positions passed; observed deviation types: audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mkv-hevc10-aac: 0/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2475,25 +2475,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-eac351 (and mkv-hevc10-hdr10-eac351, which this server line labels identically: same result), synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-hevc10-eac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim. Same exact tuple: mkv-hevc10-eac351 18/24; mkv-hevc10-hdr10-eac351 18/24. Every linked fixture must pass."
     },
     {
       "tuple": {
@@ -2525,25 +2525,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+          "limit": "2/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mp4-hevc10-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mp4-hevc10-aac: 2/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2575,25 +2575,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mp4-h264-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 4 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mp4-h264-eac351: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2625,25 +2625,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+          "limit": "10/24 positions passed; observed deviation types: extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+          "limit": "10/24 positions passed; observed deviation types: extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+          "limit": "10/24 positions passed; observed deviation types: extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+          "limit": "10/24 positions passed; observed deviation types: extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-flac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 3 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "Desktop mpv lab decoded PCM only, mkv-h264-flac: 10/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     },
     {
       "tuple": {
@@ -2675,25 +2675,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "17/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "17/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "17/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+          "limit": "17/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351+aac-srt, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured. R19: zero overlapping or touching text, kept cues at expected presentation times; all offered subtitle tracks tested."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-h264-eac351+aac-srt: 17/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim. R19: offered subtitle tracks tested."
     },
     {
       "tuple": {
@@ -2725,25 +2725,25 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+          "limit": "16/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+          "limit": "16/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+          "limit": "16/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+          "limit": "16/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351-ass+srt, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+      "observation": "R21 keeps Matroska Dolby refused (decoder history at the join). Desktop mpv lab decoded PCM only, mkv-h264-eac351-ass+srt: 16/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim. R19: offered subtitle tracks tested."
     },
     {
       "tuple": {
@@ -2775,25 +2775,125 @@
       "results": {
         "markedPicture": {
           "outcome": "fail",
-          "limit": "Picture, seek, or subtitle check failed: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "markedSound": {
           "outcome": "fail",
-          "limit": "Marked or misplaced sound: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptPictureAtJoin": {
           "outcome": "fail",
-          "limit": "Kept picture not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         },
         "keptSoundAtJoin": {
           "outcome": "fail",
-          "limit": "Kept sound not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+          "limit": "18/24 positions passed; observed deviation types: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost."
         }
       },
-      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
       "date": "2026-11-25",
       "status": "refused",
-      "observation": "Desktop mpv in the plugin lab, mp4-h264-eac351-mov_text, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 4 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured. R19: zero overlapping or touching text, kept cues at expected presentation times; all offered subtitle tracks tested."
+      "observation": "Desktop mpv lab decoded PCM only, mp4-h264-eac351-mov_text: 18/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim. R19: offered subtitle tracks tested."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "opus",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 7 ms, 1 audio opus 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20008
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "not-measured",
+          "limit": "0/24 positions passed; observed deviation types: unmeasured."
+        },
+        "markedSound": {
+          "outcome": "not-measured",
+          "limit": "0/24 positions passed; observed deviation types: unmeasured."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "not-measured",
+          "limit": "0/24 positions passed; observed deviation types: unmeasured."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "not-measured",
+          "limit": "0/24 positions passed; observed deviation types: unmeasured."
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv lab decoded PCM only, mkv-h264-opus: 0/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "opus",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio opus 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20008
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "not-measured",
+          "limit": "0/24 positions passed; observed deviation types: unmeasured."
+        },
+        "markedSound": {
+          "outcome": "not-measured",
+          "limit": "0/24 positions passed; observed deviation types: unmeasured."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "not-measured",
+          "limit": "0/24 positions passed; observed deviation types: unmeasured."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "not-measured",
+          "limit": "0/24 positions passed; observed deviation types: unmeasured."
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv lab decoded PCM only, mkv-h264-opus: 0/24 positions passed. R21: at most one extra kept sample before a fresh start or resume near the join (21 us at 48 kHz). No TV, HDMI, passthrough or persisted-resume claim."
     }
   ]
 }

@@ -56,7 +56,7 @@ def write_edit_lists(plan_path):
         f'source.mp4,{seconds(end)},{seconds(duration-end)}\n')
 
 
-def generate(out):
+def generate(out, *, source_only=False):
     start_sample, end_sample = (i*HZ//FPS for i in (START, END))
     if HZ % FPS or any(i % GOP == 0 for i in (START, END)) or any(
             i % AAC_SAMPLES == 0 for i in (start_sample, end_sample)):
@@ -98,8 +98,9 @@ def generate(out):
     plan_path = out/'plan.json'
     plan_path.write_text(json.dumps({'version': 0, 'source': {'sha256': digest, 'frames': len(frames),
                      'fps': FPS, 'sampleRate': HZ}, 'cuts': [cut]}, indent=2) + '\n')
-    write_cut(out, 'reference.mkv', (START, END), (start_sample, end_sample), source_samples)
-    write_edit_lists(plan_path)
+    if not source_only:
+        write_cut(out, 'reference.mkv', (START, END), (start_sample, end_sample), source_samples)
+        write_edit_lists(plan_path)
 
 
 def generate_identifiable(out):
@@ -119,12 +120,15 @@ def generate_identifiable(out):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path, metavar='NEW_DIRECTORY')
+    parser.add_argument('--source-only', action='store_true', help='write only the original and its plan, with no cut media')
     parser.add_argument('--identifiable', action='store_true', help='also create the lossless sample-ID variant')
     parser_args = parser.parse_args()
+    if parser_args.source_only and parser_args.identifiable:
+        parser.error('--source-only and --identifiable are mutually exclusive')
     out = parser_args.directory.resolve()
     try:
         out.mkdir(mode=0o700, exist_ok=False)
-        generate(out)
+        generate(out, source_only=parser_args.source_only)
         if parser_args.identifiable:
             generate_identifiable(out)
     except (OSError, ValueError, subprocess.CalledProcessError) as exc:
