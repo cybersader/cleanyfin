@@ -6,6 +6,8 @@
 
 **5 of 12 common layouts now play filtered exactly** (desktop mpv, decoded PCM, through the plugin on both Jellyfin 10.11.11 and 12.4.0, same result on both). They are the ones with Dolby sound: AC-3 5.1 and E-AC-3 5.1 in MKV (H.264 or HEVC Main 10) and E-AC-3 5.1 in MP4. They need the static player setting `cons_noisegen=1`. Every layout with AAC, FLAC or Opus sound, and the file with a default subtitle track, is refused, each for a measured reason. Getting there needed three real fixes: MKV cut lists were written on the wrong clock, Matroska frame boundaries tie, and MP4 E-AC-3 files could not be bound at all.
 
+**Demoted 2026-11-25 (branch `feat/boundary-sweep`):** every admitted common-format and subtitle row was removed from the register, because each was measured at one cut position only. A layout is admitted again only after it passes the cut-position sweep on each server line.
+
 **Update 2026-11-25:** these results hold at the one measured cut position. At other positions mpv's truncating sample rounding can put one sample wrong at a join, including the last marked sample (measured on MP4 E-AC-3; see [AAC](#aac-is-there-a-truly-exact-path-owner-decision-r20-2026-11-25)). AAC has no exact path yet.
 
 "Exact" is the same bar as the [audio-at-the-join research](../exact-audio-2026-11-22/01-audio-at-the-join.md): with picture and sound from one playback, every kept frame appears once and in order, no marked frame appears, and every kept sample on every channel equals mpv's uninterrupted decode of the same file with exactly the marked samples removed. No alignment, no tolerance. This must also hold for fresh starts before, at and after the join and for seeks across and onto it. Anything less is stated, and that layout gets no offer.
