@@ -116,7 +116,7 @@ internal sealed class GrantPipeline : IStartupFilter
             {
                 var d = MpvEdlRenderer.Render(plan, FixtureGate.Origin(c), new(UInt128.Parse(route[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture), svc.Table.SourceFor(ticket)),
                     MpvClockMapping.VerifiedSourceIdentity, noChapters:b.Shelf!=null, partitions:PointerEvidence.Partitions(b.Evidence),
-                    subtitles: b.Subtitles?.Layout(svc.Table.SubtitleFor(ticket)));
+                    subtitles: b.Subtitles?.Layout(svc.Table.SubtitleFor(ticket)), soundSampleRate: b.Evidence?.SoundRate ?? 0);
                 content = d.Value ?? throw new Refused(d.Reason!.Value);
                 var accept = ctx.Request.GetTypedHeaders().Accept;
                 if (accept is { Count: > 0 } && !accept.Any(m => (m.Quality ?? 1) > 0 && (m.MediaType.Value?.ToLowerInvariant() is "*/*" or "text/*" or "text/plain")))

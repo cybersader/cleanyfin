@@ -134,25 +134,96 @@ public class CommonFormatTests
         Assert.Equal($"# mpv EDL v0\n!no_chapters\n{Src},0.000,5.480\n{Src},10.520,9.480\n", edl);
     }
 
+    private static readonly ImmutableArray<TrackClock> MkvAc3Clocks = [new(0, "video", 1, 1000, 0, 5), new(1, "audio", 1, 1000, -5, 0)];
+
     [Fact]
-    public void SplitPartitionsMovePictureEarlierAndSoundLaterByAQuarterSample()
+    public void SplitFormPutsPictureJustBeforeAndSoundHalfASampleAfterEveryBoundary()
     {
-        var plan = MkvPlan(20000, 5480, 10520, [new(0, "video", 1, 1000, 0, 0), new(1, "audio", 1, 1000, 0, 0)]);
-        var edl = Text(MpvEdlRenderer.Render(plan, Origin, Ids, Identity, noChapters: true, partitions: MpvPartitions.SplitPictureAndSound));
+        var plan = MkvPlan(20000, 5480, 10520, [new(0, "video", 1, 12800, 0, 0), new(1, "audio", 1, 48000, 0, 0)]);
+        var edl = Text(MpvEdlRenderer.Render(plan, Origin, Ids, Identity, noChapters: true,
+            partitions: MpvPartitions.SplitPictureAndSound, soundSampleRate: 48000));
+        // Sound: every mark edge 10 us (half of 20.83 us) after its sample instant; the presentation start and the end of
+        // the file never moves. Picture: interior boundaries 2 us before the frame instant.
         Assert.Equal("# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n" +
-            $"{Src},0.000,5.479995\n{Src},10.519995,9.480005\n!new_stream\n!delay_open,media_type=audio\n" +
-            $"{Src},0.000,5.480005\n{Src},10.520005,9.479995\n", edl);
+            $"{Src},0.000,5.479998\n{Src},10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio\n" +
+            $"{Src},0.000,5.480010\n{Src},10.520010,9.479990\n", edl);
         // Joint output for a source at file zero is unchanged from adapter revision 1 (the hard-fixture golden).
         Assert.Equal(Fixture("hard-fixture.mpv.edl"), RequireBytes(MpvEdlRenderer.Render(Require(Parse(Golden())), Origin, Ids, Identity)));
     }
 
     [Fact]
-    public void MatroskaBoundariesCanSitJustBeforeTheInstant()
+    public void SplitFormHandlesAMarkAtTheStartOrTheEndAndAMatroskaClock()
     {
-        // Matroska AC-3: sound starts at -5 ms, so source [5485, 10525) is file time [5.480, 10.520), each moved 5 us earlier.
-        var plan = MkvPlan(20000, 5485, 10525, [new(0, "video", 1, 1000, 0, 5), new(1, "audio", 1, 1000, -5, 0)]);
-        var edl = Text(MpvEdlRenderer.Render(plan, Origin, Ids, Identity, noChapters: true, partitions: MpvPartitions.JointBeforeInstant));
-        Assert.Equal($"# mpv EDL v0\n!no_chapters\n{Src},0.000,5.479995\n{Src},10.519995,9.475005\n", edl);
+        // Matroska AC-3: sound starts at -5 ms, so source [0, 1005) removes file time up to 1.000 s and the
+        // presentation's own start is file time 0, not -5 ms.
+        var lead = Text(MpvEdlRenderer.Render(MkvPlan(20005, 0, 1005, MkvAc3Clocks), Origin, Ids, Identity, noChapters: true,
+            partitions: MpvPartitions.SplitPictureAndSound, soundSampleRate: 48000));
+        Assert.Equal("# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n" +
+            $"{Src},0.999998,19.000002\n!new_stream\n!delay_open,media_type=audio\n{Src},1.000010,18.999990\n", lead);
+        var tail = Text(MpvEdlRenderer.Render(MkvPlan(20005, 5485, 20005, MkvAc3Clocks), Origin, Ids, Identity, noChapters: true,
+            partitions: MpvPartitions.SplitPictureAndSound, soundSampleRate: 48000));
+        Assert.Equal("# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n" +
+            $"{Src},0.000,5.479998\n!new_stream\n!delay_open,media_type=audio\n{Src},0.000,5.480010\n", tail);
+    }
+
+    [Theory]
+    [InlineData(44100)] // a whole millisecond is not a sample instant
+    [InlineData(0)]
+    [InlineData(384000)]
+    public void SplitFormRefusesASoundRateWhoseMillisecondsAreNotSamples(int rate) =>
+        Assert.Equal(RefusalCode.UnverifiedPlayerClock, MpvEdlRenderer.Render(MkvPlan(20005, 5485, 10525, MkvAc3Clocks), Origin, Ids,
+            Identity, partitions: MpvPartitions.SplitPictureAndSound, soundSampleRate: rate).Reason);
+
+    [Theory]
+    [InlineData(1, 1000, true)]
+    [InlineData(1, 12800, true)]
+    [InlineData(1, 90000, true)]
+    [InlineData(1001, 24000, true)]
+    [InlineData(1, 1_000_000, false)] // a frame 1 us before a millisecond would be dropped by the 2 us lead
+    [InlineData(1, 500_000, false)]
+    public void SplitFormRefusesAPictureClockWithTicksInsideTheLead(long num, long den, bool clears)
+    {
+        Assert.Equal(clears, MpvEdlRenderer.PictureClockClearsLead(num, den));
+        var plan = MkvPlan(20000, 5480, 10520, [new(0, "video", num, den, 0, 0), new(1, "audio", 1, 48000, 0, 0)]);
+        Assert.Equal(clears, MpvEdlRenderer.Render(plan, Origin, Ids, Identity, partitions: MpvPartitions.SplitPictureAndSound,
+            soundSampleRate: 48000).Accepted);
+    }
+
+    [Fact]
+    public void EachCutListFormHasItsOwnEvidenceRevision()
+    {
+        string[] revisions = [MpvEdlRenderer.Revision(MpvPartitions.Joint, false), MpvEdlRenderer.Revision(MpvPartitions.Joint, true),
+            MpvEdlRenderer.Revision(MpvPartitions.SplitPictureAndSound, false), MpvEdlRenderer.Revision(MpvPartitions.SplitPictureAndSound, true)];
+        Assert.Equal(["2", "3", "4", "5"], revisions);
+        Assert.Equal([false, true, false, true], revisions.Select(MpvEdlRenderer.IsSubtitleRevision));
+    }
+
+    /// <summary>
+    /// mpv 0.40's sound boundary rule, simulated exactly as written (audio/aframe.c): an audio frame starting at time p
+    /// keeps <c>(int)((end - p) * rate)</c> samples before a segment end and skips <c>(int)((start - p) * rate)</c> after
+    /// a segment start, in double arithmetic on the EDL's decimal seconds. Frame times carry up to a nanosecond of
+    /// container error either way (Matroska stores CodecDelay in whole ns). The split form keeps exactly the samples
+    /// outside the mark at every whole-millisecond cut position; a boundary on the instant does not.
+    /// </summary>
+    [Fact]
+    public void SplitSoundBoundariesKeepExactlyTheUnmarkedSamplesAtEveryMillisecond()
+    {
+        const int rate = 48000, frame = 1536;
+        var lag = MpvEdlRenderer.SoundLagMicroseconds(rate)!.Value;
+        int jointFailures = 0;
+        foreach (var error in new[] { -1e-9, 0.0, 1e-9 })
+            for (long ms = 1; ms < 20000; ms++)
+            {
+                var sample = ms * rate / 1000; // the first sample at or after the boundary instant
+                var p = (sample / frame) * frame / (double)rate + error; // the coded frame containing it
+                var split = double.Parse(Seconds(ms * 1000 + lag), System.Globalization.CultureInfo.InvariantCulture);
+                Assert.Equal(sample - (sample / frame) * frame, (long)((split - p) * rate));
+                var joint = double.Parse(Seconds(ms * 1000), System.Globalization.CultureInfo.InvariantCulture);
+                jointFailures += (long)((joint - p) * rate) != sample - (sample / frame) * frame ? 1 : 0;
+            }
+        Assert.True(jointFailures > 0, "a boundary on the sample instant is a tie");
+
+        static string Seconds(long us) => FormattableString.Invariant($"{us / 1_000_000}.{us % 1_000_000:D6}");
     }
 
     [Fact]

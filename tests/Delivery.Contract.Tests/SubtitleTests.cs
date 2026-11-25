@@ -35,7 +35,7 @@ public class SubtitleTests
         var node = System.Text.Json.Nodes.JsonNode.Parse(bytes)!;
         for (var i = 0; i < clocks.Length; i++) node["source"]!["tracks"]![i]!["anchorPts"] = clocks[i].AnchorPts;
         var plan = Require(Parse(Bytes(node), context with { Source = context.Source with { Tracks = [..clocks] } }));
-        var text = Text(MpvSubtitleCues.Render(plan, MpvPartitions.JointBeforeInstant, EmbeddedTextCodec.SubRip, 1, 1000, [],
+        var text = Text(MpvSubtitleCues.Render(plan, MpvPartitions.SplitPictureAndSound, EmbeddedTextCodec.SubRip, 1, 1000, [],
             [Cue(1000, 1000, "left touch"), Cue(4000, 500, "right touch"), Cue(4001, 999, "kept")]));
         Assert.Equal("1\n00:00:02,001 --> 00:00:03,000\nkept\n\n", text);
     }

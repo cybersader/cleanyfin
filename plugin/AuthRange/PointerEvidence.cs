@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Cleanyfin.AuthRange;
 
-internal sealed record EvidencePermit(EvidenceTuple Tuple, EvidenceStatus Status, string RegisterHash, int AudioIndex);
+internal sealed record EvidencePermit(EvidenceTuple Tuple, EvidenceStatus Status, string RegisterHash, int AudioIndex, int SoundRate);
 
 internal static class PointerEvidence
 {
@@ -61,24 +61,26 @@ internal static class PointerEvidence
         var hasSubtitles = source.MediaStreams.Any(s => s.Type == MediaStreamType.Subtitle);
         FixtureGate.Require(!hasSubtitles || source.MediaStreams.Where(s => s.Type == MediaStreamType.Subtitle)
             .All(s => MpvSubtitleCues.ForEmbeddedTrack(described.Source.Container, s.Codec).HasValue), RefusalCode.UnsupportedSubtitle);
-        var revision = hasSubtitles ? MpvEdlRenderer.SubtitleAdapterRevision : MpvEdlRenderer.AdapterRevision;
+        // The form decides the revision: evidence measured for one cut-list form never covers another.
+        var revision = MpvEdlRenderer.Revision(Partitions(described.Source), hasSubtitles);
+        var soundRate = source.MediaStreams.SingleOrDefault(s => s.Type == MediaStreamType.Audio && s.Index == described.AudioIndex)?.SampleRate ?? 0;
         var tuple = new EvidenceTuple(MpvEdlRenderer.AdapterId, revision, binding.Client, binding.Version,
             appBuild, backend, outputMode, serverVersion, PluginBuild.Value, described.Source);
-        return Admit(ctx, binding.Config, tuple, plan, described.AudioIndex);
+        return Admit(ctx, binding.Config, tuple, plan, described.AudioIndex, soundRate);
     }
 
     /// <summary>
-    /// The cut-list form each measured layout class needs (tools/playback-lab/format-matrix.py). Sound without
-    /// inter-frame overlap (FLAC): split picture and sound partitions. Matroska with AC-3/E-AC-3: one partition, interior
-    /// boundaries just before the instant (Matroska frame times read a hair early). Everything else: one partition on
-    /// the instant. A layout this does not fit is still refused by the register; this only picks the form.
+    /// The cut-list form each layout class needs (tools/playback-lab/format-matrix.py, cut-position sweep). Sound whose
+    /// frames decode without the picture partition's seek pre-roll (AC-3, E-AC-3; FLAC has no overlap): the tie-free
+    /// split form. AAC and Opus need the joint partition's pre-roll and stay joint (and refused: no row passes the
+    /// sweep). A layout this does not fit is still refused by the register; this only picks the form.
     /// </summary>
-    internal static MpvPartitions Partitions(EvidencePermit? permit) => permit?.Tuple.Source switch
-    {
-        { AudioCodec: "flac" } => MpvPartitions.SplitPictureAndSound,
-        { Container: "mkv", AudioCodec: "ac3" or "eac3" } => MpvPartitions.JointBeforeInstant,
-        _ => MpvPartitions.Joint,
-    };
+    internal static MpvPartitions Partitions(EvidencePermit? permit) =>
+        permit is null ? MpvPartitions.Joint : Partitions(permit.Tuple.Source);
+
+    internal static MpvPartitions Partitions(EvidenceSource source) => source.AudioCodec is "ac3" or "eac3" or "flac"
+        ? MpvPartitions.SplitPictureAndSound
+        : MpvPartitions.Joint;
 
     /// <summary>The evidence source of a catalogue media source on a plan's clock, or <see cref="Refused"/>.</summary>
     internal static DescribedSource Describe(MediaSourceInfo source, PlaybackPlan plan)
@@ -98,10 +100,11 @@ internal static class PointerEvidence
         var (appBuild, outputMode) = Enrollment(binding.User);
         FixtureGate.Require(appBuild == previous.Tuple.AppBuild && outputMode == previous.Tuple.DeviceMode,
             RefusalCode.EvidenceIdentityUnavailable);
-        FixtureGate.Require(Admit(ctx, binding.Config, previous.Tuple, plan, previous.AudioIndex) == previous, RefusalCode.RevisionMismatch);
+        FixtureGate.Require(Admit(ctx, binding.Config, previous.Tuple, plan, previous.AudioIndex, previous.SoundRate) == previous, RefusalCode.RevisionMismatch);
     }
 
-    private static EvidencePermit Admit(HttpContext ctx, PluginConfiguration cfg, EvidenceTuple tuple, PlaybackPlan plan, int audioIndex)
+    private static EvidencePermit Admit(HttpContext ctx, PluginConfiguration cfg, EvidenceTuple tuple, PlaybackPlan plan, int audioIndex,
+        int soundRate)
     {
         var (register, hash) = Load(ctx);
         var lab = cfg.EnableAuthRangeLab && !cfg.EnableProductionEligibility;
@@ -118,7 +121,7 @@ internal static class PointerEvidence
         FixtureGate.Require(lab, RefusalCode.EvidenceModeUnverified);
         FixtureGate.Require(cfg.LabSourceSha256 == plan.Source.Sha256,
             RefusalCode.EvidenceTupleUnknown);
-        return new(tuple, row.Status, hash, audioIndex);
+        return new(tuple, row.Status, hash, audioIndex, soundRate);
     }
 
     private static (string AppBuild, string DeviceMode) Enrollment(Guid viewer)

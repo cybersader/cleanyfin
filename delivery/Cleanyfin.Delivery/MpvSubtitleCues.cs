@@ -27,7 +27,7 @@ public static class MpvSubtitleCues
         long timeBaseNumerator, long timeBaseDenominator, byte[] privateData, IReadOnlyList<SubtitlePacket> packets)
     {
         if (timeBaseNumerator <= 0 || timeBaseDenominator <= 0 || packets.Count > 8192 ||
-            MpvEdlRenderer.FileZeroMicroseconds(plan.Source) is not { } zero || partitions == MpvPartitions.SplitPictureAndSound)
+            MpvEdlRenderer.FileZeroMicroseconds(plan.Source) is not { } zero)
             return Decision<byte[]>.Refuse(RefusalCode.UnsupportedSubtitle);
         try
         {
@@ -35,7 +35,7 @@ public static class MpvSubtitleCues
             var tick = (BigInteger)timeBaseNumerator * 1_000_000; // rational microseconds on the file clock
             var ass = codec == EmbeddedTextCodec.Ass;
             var output = new StringBuilder(ass ? AssHeader(privateData) : "");
-            var segments = MpvEdlRenderer.FileSegments(plan, zero, MpvEdlRenderer.JointShift(partitions)).ToArray();
+            var segments = MpvEdlRenderer.FileSegments(plan, zero, MpvEdlRenderer.PictureShift(partitions)).ToArray();
             Require(segments.Length > 0 && segments.All(s => s.End > s.Start));
             var kept = 0;
             foreach (var packet in packets.OrderBy(p => p.Pts))
