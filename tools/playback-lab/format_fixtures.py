@@ -29,12 +29,19 @@ AUDIO = {
     'aac': ('aac', ['-profile:a', 'aac_low', '-b:a', '192k']),
     # Diagnostic: the same encoder with perceptual noise substitution off (the decoder then draws no random noise).
     'aacnopns': ('aac', ['-profile:a', 'aac_low', '-b:a', '192k', '-aac_pns', '0']),
+    # Fraunhofer FDK AAC-LC (scene rules name it beside qaac and Nero). It uses noise substitution only at 28-48 kbit/s
+    # per channel, so 192k stereo draws no noise and 96k stereo does. The pinned image's FDK has no SBR/PS, so HE-AAC
+    # cannot be generated here.
+    'fdkaac': ('libfdk_aac', ['-profile:a', 'aac_low', '-b:a', '192k']),
+    'fdkaaclow': ('libfdk_aac', ['-profile:a', 'aac_low', '-b:a', '96k']),
     'ac3': ('ac3', ['-b:a', '448k']),
     'eac3': ('eac3', ['-b:a', '640k']),
     'flac': ('flac', ['-sample_fmt', 's16']),
     # 60 ms frames: 20 ms Opus frames would put both cut boundaries exactly on packet edges.
     'opus': ('libopus', ['-b:a', '128k', '-frame_duration', '60']),
 }
+# ffprobe codec name of each variant above.
+CODEC_NAME = {'aacnopns': 'aac', 'fdkaac': 'aac', 'fdkaaclow': 'aac'}
 HDR10 = ('hdr10=1:colorprim=bt2020:transfer=smpte2084:colormatrix=bt2020nc:'
          'master-display=G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1):max-cll=1000,400')
 VIDEO = {
@@ -76,6 +83,13 @@ LAYOUTS = dict([
     layout('mkv', 'h264', [('eac3', 6)], [('ass', 'forced', SUBTITLES), ('srt', '0', TOUCHES)]),
     layout('mp4', 'h264', [('eac3', 6)], [('mov_text', 'default', SUBTITLES)]),
     layout('mp4', 'h264', [('aacnopns', 2)]),  # diagnostic only, never admitted
+    # Real AAC encoders (R20): FFmpeg native 5.1, FDK LC with and without noise substitution, PNS-free AAC in MKV.
+    layout('mp4', 'h264', [('aac', 6)]),
+    layout('mp4', 'h264', [('fdkaac', 2)]),
+    layout('mp4', 'h264', [('fdkaaclow', 2)]),
+    layout('mp4', 'h264', [('fdkaac', 6)]),
+    layout('mkv', 'h264', [('aacnopns', 2)]),
+    layout('mkv', 'h264', [('fdkaac', 2)]),
 ])
 
 
@@ -148,7 +162,7 @@ def check(out, file, spec):
         packets = [p for p in packets if 'duration' in p and 'pts' in p]
         inside = all(any(p['pts']*tb < Fraction(b, HZ) < (p['pts']+p['duration'])*tb for p in packets)
                      for b in (START_SAMPLE, END_SAMPLE))
-        if a['codec_name'] != codec.removesuffix('nopns') or int(a['sample_rate']) != HZ or a['channels'] != channels or not inside:
+        if a['codec_name'] != CODEC_NAME.get(codec, codec) or int(a['sample_rate']) != HZ or a['channels'] != channels or not inside:
             raise ValueError(f'{file}: audio {i} is not {codec} {channels} ch 48 kHz with the cut inside a packet')
         facts['audio'].append({k: a.get(k) for k in ('codec_name', 'profile', 'channels', 'time_base', 'start_pts')}
                               | {'packetSamples': sorted({round(p['duration']*tb*HZ) for p in packets})[-1]})
