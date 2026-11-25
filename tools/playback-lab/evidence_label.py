@@ -27,7 +27,14 @@ def describe(container, streams, tracks, duration_ms):
         kind = kinds[s['Type']]
         text = f"{s['Index']} {kind} {s['Codec']}"
         if kind == 'subtitle':
-            parts.append(text + (' default' if s.get('IsDefault') else ''))
+            if s.get('IsDefault'):
+                text += ' default'
+            if s.get('IsForced'):
+                text += ' forced'
+                lang = s.get('Language')
+                if lang and lang.lower() == (selected.get('Language') or '').lower():
+                    text += ' matches-audio'
+            parts.append(text)
             continue
         clock, = [t for t in tracks if t['index'] == s['Index'] and t['kind'] == kind]
         if s.get('Profile'):

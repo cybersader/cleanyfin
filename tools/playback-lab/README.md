@@ -116,15 +116,17 @@ Run `python3 tools/playback-lab/format-matrix.py` from the repository root (same
 - containers: MKV and MP4
 - video: H.264 8-bit, HEVC Main 10, one HDR10-tagged HEVC
 - sound: AAC-LC stereo, AC-3 5.1, E-AC-3 5.1, FLAC, Opus
-- one typical multi-track file: E-AC-3 5.1 default, AAC stereo second, a default SubRip track
+- embedded subtitles over E-AC-3 5.1: MKV with a default SubRip track and alternate AAC sound; MKV with forced English ASS and manually selectable SubRip; MP4 with default plain `mov_text`
 
 The generator refuses a layout unless the cut lies inside a GOP and inside an audio packet. For each Jellyfin line it starts one disposable loopback server and measures the layouts **one at a time**. Each measurement goes through the household verifier, a published mark, the plugin's real PlaybackInfo and the ticketed cut list, with mpv in the server's private namespace (`format_measure.py`).
 
 Every take captures picture and sound from the same playback. The exact verdict compares every channel of every sample with mpv's uncut decode of the same file, minus exactly the marked sample indices (`exact_audio.py`, now any channel count). This covers the straight cut, fresh starts before, at and after the join, and paused exact seeks across and onto it. A fresh start that emits extra samples from before the start position passes only if they are kept source samples and the unfiltered original does the same; any marked sample fails.
 
+For R19, the uncut control must display every authored cue. The filtered take must show only the safe tracks with the expected default/forced flags, hide every cue inside, across or touching a mark, and keep the other cues at the expected time (25 fps observation resolution). The runner seeks across the join, also switches to the alternate subtitle track after load, and checks that joint picture/PCM stays exact for each selection. Bitmap tracks are refused, not measured as supported.
+
 A take that times out or fails is **unmeasured**, never a pass. `--case-timeout` sets the per-take limit. `--jellyfin 10.11|12.4|both`, repeated `--layout` and `--local` (plain files, no Jellyfin) narrow a run. `--receipt` writes the full JSON (capabilities redacted) and `--rows` writes candidate register rows. The reviewed register is never edited by the runner.
 
-Results, the three cut-list forms and the reasons for each refusal are in [common formats](../../knowledge-base/01-working/common-formats-2026-11-24/01-common-formats.md). Receipts: `prototypes/common-formats/`. Desktop mpv decoding to PCM only. It says nothing about a TV app, HDMI output or passthrough.
+The original cut-list results and refusal reasons are in [common formats](../../knowledge-base/01-working/common-formats-2026-11-24/01-common-formats.md). The [R19 receipt](prototypes/common-formats/receipt-r19-2026-11-25.json) shows exact playback for all three subtitle layouts on Jellyfin 10.11.11 and 12.4.0. With each tested subtitle track selected, joint playback kept all 374 pictures and all six PCM channels exactly. Paused playback also verified an in-player switch to the alternate SubRip track. No cue inside, across or touching the cut appeared. The multi-audio MKV result measures only the default E-AC-3 sound track, not switched AAC. Across all 14 layouts, eight were exact and six stayed refused on each line. This is desktop mpv decoding to PCM, not a TV app, HDMI output or passthrough.
 
 ## Browser playback: original vs. filtered timeline
 

@@ -29,8 +29,25 @@ FRAME_MS = 1000//FPS
 SAMPLES_PER_FRAME = RATE//FPS
 CHANNEL_LAYOUT = {2: 'stereo', 6: '5.1(side)'}
 SUB_SCRIPT = '''
+local was_text = false
 mp.observe_property("sub-text", "string", function(_, t)
-    if t and t ~= "" then mp.msg.warn("SUBTEXT " .. t:gsub("\\n", " ") .. " @" .. string.format("%.3f", mp.get_property_number("time-pos") or -1)) end
+    local at = string.format("%.3f", mp.get_property_number("time-pos") or -1)
+    if t and t ~= "" then
+        mp.msg.warn("SUBTEXT " .. t:gsub("\\n", " ") .. " @" .. at)
+        was_text = true
+    elseif was_text then
+        mp.msg.warn("SUBCLEAR " .. at)
+        was_text = false
+    end
+end)
+mp.register_event("file-loaded", function()
+    local tracks = {}
+    for _, t in ipairs(mp.get_property_native("track-list") or {}) do
+        if t.type == "sub" then
+            table.insert(tracks, {id=t.id, codec=t.codec, default=t.default, forced=t.forced, selected=t.selected})
+        end
+    end
+    mp.msg.warn("SUBTRACKS " .. require("mp.utils").format_json(tracks))
 end)
 mp.observe_property("current-tracks/audio/id", "number", function(_, id) if id then mp.msg.warn("AUDIO-TRACK " .. id) end end)
 '''
@@ -138,7 +155,9 @@ class Runner:
         text = log.read_text(errors='replace') if log.exists() else ''
         subs = [l.split('SUBTEXT ', 1)[1] for l in text.splitlines() if 'SUBTEXT ' in l]
         tracks = sorted({int(l.rsplit(' ', 1)[1]) for l in text.splitlines() if 'AUDIO-TRACK ' in l})
-        return frames, wav, dict(subtitles=subs, audioTracks=tracks)
+        clears = [float(l.rsplit(' ', 1)[1]) for l in text.splitlines() if 'SUBCLEAR ' in l]
+        sub_tracks = [json.loads(l.split('SUBTRACKS ', 1)[1]) for l in text.splitlines() if 'SUBTRACKS ' in l]
+        return frames, wav, dict(subtitles=subs, subtitleClears=clears, subtitleTracks=(sub_tracks or [[]])[-1], audioTracks=tracks)
 
     def frames(self, directory, plan_path):
         r = subprocess.run([sys.executable, str(LAB/'analyze-capture.py'), '--plan', str(plan_path), '--video',
@@ -224,7 +243,7 @@ def measure(runner, *, source, control_source, probe, channels, plan_path, mpv_o
     cut_pcm = read_pcm(wav, channels)
     result['starts'] = []
     for at in starts:
-        frames, wav, _ = runner.capture(f'start-{at}', source, channels, f'--start={at:.3f}', *mpv_options)
+        frames, wav, start_extra = runner.capture(f'start-{at}', source, channels, f'--start={at:.3f}', *mpv_options)
         seq = runner.sequence(frames)
         readable = [f for f in seq if f is not None]
         first = readable[0] if readable else None
@@ -252,12 +271,12 @@ def measure(runner, *, source, control_source, probe, channels, plan_path, mpv_o
                                                == control[source_index*size:(source_index+SAMPLES_PER_FRAME)*size]), None)
         result['starts'].append(dict(startSeconds=at, firstFrame=first, markedCount=sum(START <= f < END for f in readable),
                                      pictureOk=readable == want and len(readable) == len(seq),
-                                     sound=pcm | dict(summary=summary(pcm, 'sample frames')), **extra))
+                                     sound=pcm | dict(summary=summary(pcm, 'sample frames')), **extra, **start_extra))
     return result
 
 
-def seeks(runner, source, mpv_options=(), targets=None):
-    """Paused desktop mpv driven over a scratch IPC socket: landing picture after each exact seek on the filtered clock."""
+def seeks(runner, source, mpv_options=(), targets=None, switch_sid=None):
+    """Paused desktop mpv with exact landing pictures and active text, optionally after an in-player track switch."""
     if targets is None:
         # loadfile; forward across the join; exactly onto it; back across it; onto the last kept frame; 1 ms before the
         # join (mpv shows the first frame at or after a target, so the next kept frame, never a marked one).
@@ -290,13 +309,18 @@ def seeks(runner, source, mpv_options=(), targets=None):
                     raise Unmeasured('seek socket did not become ready')
             finally:
                 os.close(fd)
-            s.settimeout(30)
+            s.settimeout(min(30, runner.timeout))
             stream = s.makefile('rb')
-            for n, (target, expected) in enumerate(targets):
-                before = set(images.glob('*.png'))
-                command = ['loadfile', source] if target is None else ['seek', target, 'absolute+exact']
-                s.sendall((json.dumps({'command': command, 'request_id': n+1})+'\n').encode())
-                deadline = time.monotonic() + 30
+            request_id = 0
+
+            def send(command):
+                nonlocal request_id
+                request_id += 1
+                s.sendall((json.dumps({'command': command, 'request_id': request_id})+'\n').encode())
+                return request_id
+
+            def wait_for(predicate):
+                deadline = time.monotonic() + min(30, runner.timeout)
                 while time.monotonic() < deadline:
                     try:
                         line = stream.readline()
@@ -304,13 +328,31 @@ def seeks(runner, source, mpv_options=(), targets=None):
                         break
                     if not line:
                         break
-                    if json.loads(line).get('event') in ('playback-restart', 'end-file'):
-                        break
+                    value = json.loads(line)
+                    if predicate(value):
+                        return value
+                raise Unmeasured('timed out waiting for mpv seek IPC')
+
+            def get(name):
+                request = send(['get_property', name])
+                return wait_for(lambda val: val.get('request_id') == request).get('data')
+
+            for target, expected in targets:
+                before = set(images.glob('*.png'))
+                send(['loadfile', source] if target is None else ['seek', target, 'absolute+exact'])
+                event = wait_for(lambda val: val.get('event') in ('playback-restart', 'end-file'))
+                if event['event'] == 'end-file':
+                    raise Unmeasured('mpv ended before a seek landing')
                 time.sleep(.3)
                 fresh = sorted(set(images.glob('*.png')) - before)
                 got = read_one(fresh[-1]) if fresh else None
                 landings.append(dict(target=target, expected=expected, landed=got,
-                                     marked=bool(fresh) and any(START <= (read_one(f) or -1) < END for f in fresh)))
+                                     marked=bool(fresh) and any(START <= (read_one(f) or -1) < END for f in fresh),
+                                     subtitle=get('sub-text'), sid=get('sid')))
+                if target is None and switch_sid is not None:
+                    request = send(['set_property', 'sid', switch_sid])
+                    if wait_for(lambda val: val.get('request_id') == request).get('error') != 'success' or get('sid') != switch_sid:
+                        raise Unmeasured('mpv refused the requested in-player subtitle switch')
     finally:
         subprocess.run(['docker', 'rm', '-f', cid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
         sock.unlink(missing_ok=True)

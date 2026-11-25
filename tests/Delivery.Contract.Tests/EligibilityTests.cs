@@ -26,7 +26,10 @@ public class EligibilityTests
         // experimental (lab flag only); an inexact one is refused.
         Assert.All(register.Rows.Skip(5), row =>
         {
-            Assert.Equal(("mpv", "mpv", MpvEdlRenderer.AdapterRevision), (row.Tuple.AppId, row.Tuple.Backend, row.Tuple.AdapterRevision));
+            Assert.Equal(("mpv", "mpv"), (row.Tuple.AppId, row.Tuple.Backend));
+            Assert.Contains(row.Tuple.AdapterRevision, new[] { MpvEdlRenderer.AdapterRevision, MpvEdlRenderer.SubtitleAdapterRevision });
+            if (row.Tuple.AdapterRevision == MpvEdlRenderer.SubtitleAdapterRevision)
+                Assert.Contains(" subtitle ", row.Tuple.Source.TrackLayout);
             Assert.StartsWith("Linux lab container, desktop mpv, decoded PCM", row.Tuple.DeviceMode);
             Assert.NotEqual(EvidenceStatus.Eligible, row.Status);
             Assert.Equal(row.Status == EvidenceStatus.Experimental, row.Results.MarkedPicture.Outcome == Measurement.Pass &&

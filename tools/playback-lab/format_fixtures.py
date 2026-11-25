@@ -46,15 +46,18 @@ VIDEO = {
 VIDEO['hevc10-hdr10'] = VIDEO['hevc10'][:-1] + [VIDEO['hevc10'][-1] + ':' + HDR10, '-color_primaries', 'bt2020',
                                                 '-color_trc', 'smpte2084', '-colorspace', 'bt2020nc']
 
-# One subtitle track, flagged default, with events before, across, inside and after the cut (SubRip, ms clock).
+# Time on the muxed file's clock, not the plan's rebased source clock. Overlap and endpoint touches are both banned.
 SUBTITLES = [(1000, 2000, 'KEPT ONE'), (5000, 6000, 'SPANS CUT START'), (7000, 8000, 'MARKED LINE'),
              (10000, 11000, 'SPANS CUT END'), (15000, 16000, 'KEPT TWO')]
+TOUCHES = [(1000, 2000, 'ALT KEPT ONE'), (4800, 5480, 'TOUCHES CUT START'), (10520, 11200, 'TOUCHES CUT END'),
+           (15000, 16000, 'ALT KEPT TWO')]
 
 
-def layout(container, video, audio, subtitles=False):
-    """audio: tuple of (codec, channels); the first track is the default one."""
+def layout(container, video, audio, subtitles=()):
+    """Audio tracks (codec, channels), default first. Subtitle tracks (codec, disposition, cues)."""
     name = f'{container}-{video}-' + '+'.join(f'{c}{"" if n == 2 else "51"}' for c, n in audio)
-    return name + ('-srt' if subtitles else ''), dict(container=container, video=video, audio=tuple(audio), subtitles=subtitles)
+    suffix = '-' + '+'.join(t[0] for t in subtitles) if subtitles else ''
+    return name + suffix, dict(container=container, video=video, audio=tuple(audio), subtitles=subtitles)
 
 
 LAYOUTS = dict([
@@ -69,7 +72,9 @@ LAYOUTS = dict([
     layout('mp4', 'h264', [('eac3', 6)]),
     layout('mkv', 'h264', [('flac', 2)]),
     layout('mkv', 'h264', [('opus', 2)]),
-    layout('mkv', 'h264', [('eac3', 6), ('aac', 2)], subtitles=True),  # typical: 5.1 default, stereo second, subtitles
+    layout('mkv', 'h264', [('eac3', 6), ('aac', 2)], [('srt', 'default', SUBTITLES)]),
+    layout('mkv', 'h264', [('eac3', 6)], [('ass', 'forced', SUBTITLES), ('srt', '0', TOUCHES)]),
+    layout('mp4', 'h264', [('eac3', 6)], [('mov_text', 'default', SUBTITLES)]),
     layout('mp4', 'h264', [('aacnopns', 2)]),  # diagnostic only, never admitted
 ])
 
@@ -80,10 +85,10 @@ def tone(level):
             f"if(lt(n,{END_SAMPLE}),880*(n-{START_SAMPLE}),660*(n-{END_SAMPLE})))/{HZ})")
 
 
-def srt():
+def srt(cues):
     def t(ms):
         return f'{ms//3600000:02}:{ms//60000%60:02}:{ms//1000%60:02},{ms%1000:03}'
-    return ''.join(f'{i}\n{t(a)} --> {t(b)}\n{text}\n\n' for i, (a, b, text) in enumerate(SUBTITLES, 1))
+    return ''.join(f'{i}\n{t(a)} --> {t(b)}\n{text}\n\n' for i, (a, b, text) in enumerate(cues, 1))
 
 
 def probe(out, name, *args):
@@ -105,16 +110,23 @@ def generate(out, name):
         encoder, options = AUDIO[codec]
         codecs += [f'-c:a:{i}', encoder] + [o if not o.startswith('-') else o.removesuffix(':a') + f':a:{i}' for o in options]
         codecs += [f'-disposition:a:{i}', 'default' if i == 0 else '0']
-    if spec['subtitles']:
-        (out/f'{name}.srt').write_text(srt())
-        inputs += ['-i', f'/lab/{name}.srt']
-        maps += ['-map', f'{len(spec["audio"])+1}:s:0']
-        codecs += ['-c:s', 'srt', '-disposition:s:0', 'default']
+    for i, (codec, flags, cues) in enumerate(spec['subtitles']):
+        path = f'{name}-{i}.srt'
+        (out/path).write_text(srt(cues))
+        inputs += ['-i', f'/lab/{path}']
+        maps += ['-map', f'{len(spec["audio"])+1+i}:s:0']
+        codecs += [f'-c:s:{i}', codec, f'-disposition:s:{i}', flags]
+    if any(flags == 'forced' for _, flags, _ in spec['subtitles']):
+        # mpv's automatic forced selection matches the playing audio language, unlike default-on selection.
+        codecs += ['-metadata:s:a:0', 'language=eng']
+        for i, (_, flags, _) in enumerate(spec['subtitles']):
+            codecs += [f'-metadata:s:s:{i}', 'language=eng' if flags == 'forced' else 'language=deu']
     extra = ['-movflags', '+faststart', '-strict', '-2'] if spec['container'] == 'mp4' else []
     try:
         media(out, 'ffmpeg', *inputs, *maps, *codecs, '-threads:v', '4', *extra, f'/lab/{file}')
     finally:
-        (out/f'{name}.srt').unlink(missing_ok=True)
+        for i in range(len(spec['subtitles'])):
+            (out/f'{name}-{i}.srt').unlink(missing_ok=True)
     return check(out, file, spec)
 
 
@@ -140,6 +152,19 @@ def check(out, file, spec):
             raise ValueError(f'{file}: audio {i} is not {codec} {channels} ch 48 kHz with the cut inside a packet')
         facts['audio'].append({k: a.get(k) for k in ('codec_name', 'profile', 'channels', 'time_base', 'start_pts')}
                               | {'packetSamples': sorted({round(p['duration']*tb*HZ) for p in packets})[-1]})
+    facts['subtitles'] = []
+    for i, (codec, flags, cues) in enumerate(spec['subtitles']):
+        result = probe(out, file, '-select_streams', f's:{i}', '-show_entries',
+                       'stream=index,codec_name,time_base:stream_disposition=default,forced:packet=pts,duration,size')
+        track, = result['streams']
+        tb = Fraction(track['time_base']) * 1000
+        spans = [(p['pts']*tb, (p['pts']+p['duration'])*tb) for p in result['packets']
+                 if codec != 'mov_text' or int(p['size']) > 2]
+        if (track['codec_name'] != ('subrip' if codec == 'srt' else codec) or
+                track['disposition'] != {f: int(f == flags) for f in ('default', 'forced')} or
+                spans != [(a, b) for a, b, _ in cues]):
+            raise ValueError(f'{file}: subtitle {i} was not muxed with the expected flags and exact cue times: {track}, {spans}')
+        facts['subtitles'].append(track)
     facts['sha256'] = hashlib.sha256((out/file).read_bytes()).hexdigest()
     facts['size'] = (out/file).stat().st_size
     return facts

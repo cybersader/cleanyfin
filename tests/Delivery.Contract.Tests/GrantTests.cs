@@ -19,7 +19,8 @@ public class GrantTests
         Assert.Null(table.Issue(owner, clock.Now.AddMinutes(1), out var slot, out var a));
         Assert.Null(table.Issue(owner, clock.Now.AddMinutes(1), out var other, out _));
         var b = table.SourceFor(a).ToString("x32");
-        Assert.NotEqual(a, b);
+        var sub = table.SubtitleFor(a).ToString("x32");
+        Assert.Equal(3, new[] { a, b, sub }.Distinct().Count());
         foreach (var method in new[] { "GET", "HEAD" })
         {
             Assert.Null(table.Check(slot, a, Leg.List, method, out var found)); Assert.Same(owner, found);
@@ -27,6 +28,11 @@ public class GrantTests
             Assert.NotNull(table.Check(slot, b, Leg.List, method, out _));
             Assert.NotNull(table.Check(slot, a, Leg.Source, method, out _));
             Assert.NotNull(table.Check(other, b, Leg.Source, method, out _));
+            Assert.Null(table.Check(slot, sub, Leg.Subtitle, method, out var subtitleOwner)); Assert.Same(owner, subtitleOwner);
+            Assert.NotNull(table.Check(slot, sub, Leg.Source, method, out _));
+            Assert.NotNull(table.Check(slot, b, Leg.Subtitle, method, out _));
+            Assert.NotNull(table.Check(slot, a, Leg.Subtitle, method, out _));
+            Assert.NotNull(table.Check(other, sub, Leg.Subtitle, method, out _));
         }
         Assert.NotNull(table.Check(slot, b, Leg.Source, "POST", out _));
         Assert.NotNull(table.Check(slot, a[..30], Leg.List, "GET", out _));

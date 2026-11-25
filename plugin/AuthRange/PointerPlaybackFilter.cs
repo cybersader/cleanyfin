@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Cleanyfin.Delivery;
+using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Model.Dlna;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.MediaInfo;
@@ -70,12 +71,17 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
                 !src.SupportsDirectPlay || src.TranscodingUrl != null || src.Id != binding.Source || (src.Path!=binding.FilePath || !DirectFile(src) || PointerEvidence.Describe(src, binding.Plan!).Source != measured) ||
                 Field("MaxStreamingBitrate") is int max && !(src.Bitrate <= max) ||
                 Field("MaxAudioChannels") is int channels && !(src.MediaStreams.Single(x=>x.Index==permit.AudioIndex).Channels <= channels)) return;
+            var subtitles = await PointerSubtitles.Prepare(binding, src,
+                ctx.RequestServices.GetRequiredService<IMediaEncoder>(), ctx.RequestAborted);
+            // The packet scan read that verified file. Recheck the edition, plan, register and user before issue.
             gate.Validate(binding,ctx);
+            binding = binding with { Subtitles = subtitles };
             var evidence = permit.Status;
             var projected = new MediaSourceInfo { Id=id.ToString("N"), Protocol=MediaProtocol.Http, IsRemote=true,
                 Name=evidence == EvidenceStatus.Experimental ? "Cleanyfin sample (experimental)" : "Cleanyfin filtered",
                 SupportsDirectPlay=true, SupportsDirectStream=false, SupportsTranscoding=false, Container=measured.Container, RunTimeTicks=ticks,
-                Bitrate=src.Bitrate, DefaultAudioStreamIndex=permit.AudioIndex, MediaStreams=PointerFixture.Streams(src), Path=gate.Issue(binding) };
+                Bitrate=src.Bitrate, DefaultAudioStreamIndex=permit.AudioIndex,
+                MediaStreams=subtitles?.Project(src) ?? PointerFixture.Streams(src), Path=gate.Issue(binding) };
             ctx.Response.Headers.Remove("X-Cleanyfin-Reason");
             ctx.Response.Headers["X-Cleanyfin-Evidence"] = evidence == EvidenceStatus.Experimental ? "experimental" : "eligible";
             executed.Result = new OkObjectResult(new PlaybackInfoResponse { MediaSources=[projected], PlaySessionId=info.PlaySessionId });

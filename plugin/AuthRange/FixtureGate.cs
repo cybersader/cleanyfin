@@ -25,7 +25,7 @@ namespace Jellyfin.Plugin.Cleanyfin.AuthRange;
 
 internal sealed class Refused(RefusalCode reason) : Exception { internal RefusalCode Reason => reason; }
 internal sealed record Binding(string Session, Guid User, string Device, string TokenHash, PluginConfiguration Config,
-    Guid? Pointer, string Client, string Version, string Item, string Source, string Digest, string Revision, string PlanHash, DateTimeOffset Expires, ShelfRow? Shelf=null, PlaybackPlan? Plan=null, string FilePath=FixtureGate.FixturePath,string? InputVersion=null, EvidencePermit? Evidence=null);
+    Guid? Pointer, string Client, string Version, string Item, string Source, string Digest, string Revision, string PlanHash, DateTimeOffset Expires, ShelfRow? Shelf=null, PlaybackPlan? Plan=null, string FilePath=FixtureGate.FixturePath,string? InputVersion=null, EvidencePermit? Evidence=null, PointerSubtitleSet? Subtitles=null);
 
 // Not a resolver. These facts are ONLY for the reviewed synthetic kit. The runner hashes the
 // generated original before exposing it as one immutable, read-only file mount at FixturePath.
@@ -85,6 +85,8 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
     internal string Issue(Binding binding)
     {
         Require(!binding.Pointer.HasValue || binding.Evidence != null, RefusalCode.EvidenceIdentityUnavailable);
+        Require((binding.Evidence?.Tuple.AdapterRevision == MpvEdlRenderer.SubtitleAdapterRevision) == (binding.Subtitles != null),
+            RefusalCode.UnsupportedSubtitle);
         var origin = Origin(binding.Config);
         var reason = grants.Table.Issue(binding, binding.Expires, out var slot, out var list);
         if (reason.HasValue) throw new Refused(reason.Value);

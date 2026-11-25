@@ -44,7 +44,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Configuration/configPage.html" />
-    <EmbeddedResource Include="../delivery/evidence/register-v1.json" LogicalName="Cleanyfin.Evidence.Register.v1" />
+    <!-- The reviewed register is installed separately: embedding it would change the DLL hash its rows attest. -->
     <EmbeddedResource Include="../delivery/evidence/review-timing-v1.json" LogicalName="Cleanyfin.Review.Timing.v1" />
     <EmbeddedResource Include="Marking/Web/*" LogicalName="Cleanyfin.Marking.Web.%(Filename)%(Extension)" />
   </ItemGroup>
