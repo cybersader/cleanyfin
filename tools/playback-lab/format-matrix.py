@@ -438,7 +438,8 @@ class FormatLab(cp.PointerLab):
                 measured['subtitleTakes'] = takes
                 measured['subtitleChecks'] = check_subtitles(spec, measured)
             measured['sweep'] = sweep(runner, fresh, ref, spec, positions, stop_on_fail,
-                                      arm=lambda s, e: self.arm(item, binding, s, e))
+                                      arm=lambda s, e, to_end: self.arm(item, binding, av + s,
+                                                                        binding['durationMs'] if to_end else av + e))
         except fm.Unmeasured as e:
             return result | dict(unmeasured=str(e))
         finally:
@@ -474,10 +475,13 @@ def sweep(runner, source, ref, spec, positions, stop_on_fail, arm=None, seek=Tru
     cut = ref['cut']
     av = cut['videoAnchorMs']
     for rel_start, rel_end in positions:
+        to_end = rel_end >= cut['durationMs'] - av
         rel_end = min(rel_end, cut['durationMs'] - av)
         mark = fm.Mark(cut, av + rel_start, av + rel_end)
         if arm:
-            arm(mark.start_ms, mark.end_ms)
+            # ms after the first picture: each caller maps them onto its own source clock (the lab's probe and the
+            # server's verified edition can differ: Jellyfin 12.4 reads Matroska priming as 0, 10.11 as -5 ms).
+            arm(rel_start, rel_end, to_end)
         seeker = (lambda targets: fm.seeks(runner, source() if callable(source) else source, PLAYER_OPTIONS, targets,
                                            marked_frames=mark.marked_frames)) if seek else None
         position = fm.sweep_position(runner, source, ref, mark, mpv_options=PLAYER_OPTIONS, seek=seeker)
@@ -512,8 +516,10 @@ def local(layouts, fixtures, case_timeout, positions, stop_on_fail):
                            plan_path=fixtures/f'{name}.plan.json', mpv_options=PLAYER_OPTIONS, ref=ref)
             r['seek'] = fm.seeks(runner, edl.name, PLAYER_OPTIONS)
 
-            def write(start_ms, end_ms):
-                edl.write_text(fm.edl_body(file, dict(cut, startMs=start_ms, endMs=end_ms), split=split))
+            def write(rel_start, rel_end, to_end):
+                av = cut['videoAnchorMs']
+                edl.write_text(fm.edl_body(file, dict(cut, startMs=av + rel_start,
+                                                      endMs=cut['durationMs'] if to_end else av + rel_end), split=split))
             r['sweep'] = sweep(runner, edl.name, ref, spec, positions, stop_on_fail, arm=write)
         except fm.Unmeasured as e:
             r = dict(unmeasured=str(e))
