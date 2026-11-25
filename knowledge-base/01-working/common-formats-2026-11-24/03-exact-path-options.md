@@ -82,7 +82,7 @@ Same mpv master `04b1afc49` (Arch build, FFmpeg from Arch), built twice from one
 | Fresh starts 0 and 0.52 s | 1 early (tolerated) | 1 early (tolerated) |
 | Paused seeks 1.55 → 0, 0.5 → 1.0007, 0.5 → 0.5 s | 1 early each | 1 early each |
 
-Every early sample is a **kept** sample immediately before the landing picture. No marked sample and no wrong picture appeared on either build. That is still not R21. A straight cut has no tolerance, and a seek inside an open EDL must land exactly. The remaining one- and two-sample offsets do not depend on clipping rounding. They follow the picture/sound landing logic on seek and at the first picture, not segment clipping. `lrint` is a correct upstream fix for its own reproducer. It is not enough for Cleanyfin's split cut list.
+Every early sample is a **kept** sample immediately before the landing picture. No marked sample and no wrong picture appeared on either build. That is still not R21. A straight cut has no tolerance, and a seek inside an open EDL must land exactly. The remaining one- and two-sample offsets survive the rounding change. The likeliest source, not yet located, is how mpv aligns sound to the landing picture on a seek and at the first picture. `lrint` is a correct upstream fix for its own reproducer. It is not enough for Cleanyfin's split cut list.
 
 Consequences:
 
