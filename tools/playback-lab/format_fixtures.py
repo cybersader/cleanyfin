@@ -21,6 +21,8 @@ _hard = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_hard)
 FRAMES, GOP, START, END = _hard.FRAMES, _hard.GOP, _hard.START, _hard.END
 START_SAMPLE, END_SAMPLE, SOURCE_SAMPLES = START*HZ//FPS, END*HZ//FPS, FRAMES*HZ//FPS
+# Channel 0 before the cut: TONE_LEVEL * sin(2 pi TONE_HZ n / HZ) of the integer sample index n.
+TONE_HZ, TONE_LEVEL = 440, 0.25
 
 # Channel order is mpv's/ffmpeg's for each layout. Levels differ so a swapped or dropped channel shows.
 CHANNELS = {2: ('stereo', (0.25, 0.20)), 6: ('5.1(side)', (0.25, 0.20, 0.15, 0.25, 0.10, 0.12))}
