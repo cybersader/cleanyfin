@@ -1544,6 +1544,1256 @@
       "date": "2026-11-25",
       "status": "refused",
       "observation": "Desktop mpv in the plugin lab, mkv-h264-opus, synthetic hard-fixture copy; decoded PCM only. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/48000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mp4-h264-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 21 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20021
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "ac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 5 ms, 1 audio ac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-ac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 5 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "hevc",
+          "audioCodec": "aac",
+          "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/1000 at 21 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20021
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718097/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +16, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 464640/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +0; start 5.48 s:"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "hevc",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/1000 at 5 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "hevc",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video hevc Main 10 10 bit HDR10 1280x720 25 fps tb 1/1000 at 5 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-hdr10-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "hevc",
+          "audioCodec": "aac",
+          "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/48000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mp4-hevc10-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mp4-h264-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 4 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "flac",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio flac 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-flac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 3 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "5",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 21 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 16 ms plays, 2 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms, 3 subtitle subrip default",
+          "durationMs": 20021
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351+aac-srt, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured. R19: zero overlapping or touching text, kept cues at expected presentation times; all offered subtitle tracks tested."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "5",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 5 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays, 2 subtitle ass forced matches-audio, 3 subtitle subrip",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351-ass+srt, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "5",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "f6b18e5551cfe6be7dca52a940a20f42a348fa1b296669d1528c0a7ba8767924",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays, 2 subtitle mov_text default",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mp4-h264-eac351-mov_text, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 4 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured. R19: zero overlapping or touching text, kept cues at expected presentation times; all offered subtitle tracks tested."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/48000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mp4-h264-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20021
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "ac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio ac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-ac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "hevc",
+          "audioCodec": "aac",
+          "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20021
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut: 1 marked frame(s), 1 kept frame(s) missing; straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB; start 5.28 s: 1 marked frame(s) or kept frames out of order; start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.48"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "hevc",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-hevc10-eac351 (and mkv-hevc10-hdr10-eac351, which this server line labels identically: same result), synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "2",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "hevc",
+          "audioCodec": "aac",
+          "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/48000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB; start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 7.0 s: 38"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mp4-hevc10-aac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mp4-h264-eac351, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 4 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "flac",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio flac 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); 20 cut position(s) not measured"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-flac, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 3 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "5",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays, 2 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms, 3 subtitle subrip default",
+          "durationMs": 20021
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; precedin"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351+aac-srt, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 7 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured. R19: zero overlapping or touching text, kept cues at expected presentation times; all offered subtitle tracks tested."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "5",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays, 2 subtitle ass forced matches-audio, 3 subtitle subrip",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB; start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; track"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mkv-h264-eac351-ass+srt, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 0 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured."
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "5",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays, 2 subtitle mov_text default",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "fail",
+          "limit": "Picture, seek, or subtitle check failed: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "markedSound": {
+          "outcome": "fail",
+          "limit": "Marked or misplaced sound: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept picture not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "Kept sound not exact: cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 e"
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json",
+      "date": "2026-11-25",
+      "status": "refused",
+      "observation": "Desktop mpv in the plugin lab, mp4-h264-eac351-mov_text, synthetic hard-fixture copy; decoded PCM only; cut-position sweep: 4 of 24 cut positions exact. Not a TV app, HDMI output or audio passthrough; resume and restart not measured. R19: zero overlapping or touching text, kept cues at expected presentation times; all offered subtitle tracks tested."
     }
   ]
 }
