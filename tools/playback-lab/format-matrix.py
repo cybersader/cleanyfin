@@ -38,6 +38,7 @@ ROOT = LAB.parents[1]
 sys.path.insert(0, str(LAB))
 import format_fixtures as ff  # noqa: E402
 import format_measure as fm  # noqa: E402
+import aac_noise  # noqa: E402
 from evidence_label import describe as describe_source  # noqa: E402
 from hard_fixture_lab import DEFAULT_JELLYFIN, JELLYFIN, media  # noqa: E402
 
@@ -49,7 +50,10 @@ _spec.loader.exec_module(cp)
 # dither whose random state differs after a join, so kept sound would differ by 1 LSB from the uncut decode.
 PLAYER_OPTIONS = ['--ad-lavc-o=cons_noisegen=1']
 DEVICE_MODE = 'Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1'
-DIAGNOSTIC = {'mp4-h264-aacnopns'}  # measured to explain a result; never a register row
+DIAGNOSTIC = {'mp4-h264-aacnopns', 'mkv-h264-aacnopns'}  # measured to explain a result; never a register row
+# Owner decision R20: real AAC encoder profiles. Not in the default run (--aac or --layout picks them).
+AAC_PROFILES = ['mp4-h264-aacnopns', 'mp4-h264-aac51', 'mp4-h264-fdkaac', 'mp4-h264-fdkaaclow', 'mp4-h264-fdkaac51',
+                'mkv-h264-aacnopns', 'mkv-h264-fdkaac']
 CONTROLS = ['straight-play', 'seek-forward', 'seek-back']
 
 
@@ -317,12 +321,14 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--jellyfin', choices=[*sorted(JELLYFIN), 'both'], default='both')
     p.add_argument('--layout', action='append', choices=sorted(ff.LAYOUTS), help='repeat to pick layouts (default: all)')
+    p.add_argument('--aac', action='store_true', help='measure the R20 AAC encoder profiles (with the AAC-LC baseline)')
     p.add_argument('--local', action='store_true', help='plain files through mpv only; no Jellyfin, no plugin')
     p.add_argument('--case-timeout', type=int, default=600, help='seconds per mpv take; a timeout is "unmeasured"')
     p.add_argument('--receipt', type=Path, help='write the full receipt JSON here (default: print a summary only)')
     p.add_argument('--rows', type=Path, help='write candidate register rows (JSON list) here')
     args = p.parse_args()
-    layouts = args.layout or [n for n in ff.LAYOUTS if n not in DIAGNOSTIC]
+    layouts = args.layout or (['mp4-h264-aac', *AAC_PROFILES] if args.aac else
+                              [n for n in ff.LAYOUTS if n not in DIAGNOSTIC and n not in AAC_PROFILES])
     scratch = ROOT/'plugin/obj'
     scratch.mkdir(exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix='formats-', dir=scratch))
@@ -332,9 +338,13 @@ def main():
     facts = {}
     for name in layouts:
         facts[name] = ff.generate(fixtures, name)
+        if ff.CODEC_NAME.get(ff.LAYOUTS[name]['audio'][0][0], ff.LAYOUTS[name]['audio'][0][0]) == 'aac':
+            # Does the default AAC track make the decoder draw random noise (PNS)? See aac_noise.py.
+            facts[name]['decoderNoise'] = aac_noise.scan(fixtures, facts[name]['file'])
         print(f"  {name}: {facts[name]['sha256'][:16]}... {facts[name]['size']} bytes", flush=True)
     receipt = dict(method=fm.__doc__.strip().splitlines()[0], playerOptions=PLAYER_OPTIONS, deviceMode=DEVICE_MODE,
-                   fixtures={n: {k: f[k] for k in ('sha256', 'size', 'video', 'audio')} for n, f in facts.items()}, runs={})
+                   fixtures={n: {k: f[k] for k in ('sha256', 'size', 'video', 'audio', 'decoderNoise') if k in f}
+                             for n, f in facts.items()}, runs={})
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     rows, ok = [], True
     try:
