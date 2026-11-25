@@ -19,9 +19,21 @@ public class EligibilityTests
     {
         Assert.True(SchemaAccepts(Seed));
         var register = Read(Seed);
-        Assert.Collection(register.Rows, row => Assert.Equal(EvidenceStatus.Experimental, row.Status),
+        Assert.Collection(register.Rows.Take(5), row => Assert.Equal(EvidenceStatus.Experimental, row.Status),
             row => Assert.Equal(EvidenceStatus.Experimental, row.Status), row => Assert.Equal(EvidenceStatus.Refused, row.Status),
             row => Assert.Equal(EvidenceStatus.Refused, row.Status), row => Assert.Equal(EvidenceStatus.Refused, row.Status));
+        // Common-format rows (format-matrix.py): desktop lab mpv only, never a TV tuple, never eligible. An exact layout is
+        // experimental (lab flag only); an inexact one is refused.
+        Assert.All(register.Rows.Skip(5), row =>
+        {
+            Assert.Equal(("mpv", "mpv", MpvEdlRenderer.AdapterRevision), (row.Tuple.AppId, row.Tuple.Backend, row.Tuple.AdapterRevision));
+            Assert.StartsWith("Linux lab container, desktop mpv, decoded PCM", row.Tuple.DeviceMode);
+            Assert.NotEqual(EvidenceStatus.Eligible, row.Status);
+            Assert.Equal(row.Status == EvidenceStatus.Experimental, row.Results.MarkedPicture.Outcome == Measurement.Pass &&
+                row.Results.MarkedSound.Outcome == Measurement.Pass && row.Results.KeptPictureAtJoin.Outcome == Measurement.Pass &&
+                row.Results.KeptSoundAtJoin.Outcome == Measurement.Pass);
+            Assert.True(File.Exists(Path.Combine(RepoRoot(), row.EvidenceRef)), row.EvidenceRef);
+        });
         Assert.All(register.Rows, row => Assert.False(register.Admit(row.Tuple, ["cut"]).Accepted));
     }
 
@@ -172,6 +184,14 @@ public class EligibilityTests
     }
 
     private static JsonObject Document() => (JsonObject)JsonNode.Parse(Seed)!;
+
+    private static string RepoRoot()
+    {
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
+            if (File.Exists(Path.Combine(dir.FullName, "delivery", "evidence", "register-v1.json")))
+                return dir.FullName;
+        throw new DirectoryNotFoundException("repository root");
+    }
     private static byte[] Bytes(JsonNode doc) => Encoding.UTF8.GetBytes(doc.ToJsonString());
     private static bool SchemaAccepts(byte[] bytes) => Schema.Evaluate(JsonNode.Parse(bytes),
         new EvaluationOptions { RequireFormatValidation = true }).IsValid;

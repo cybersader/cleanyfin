@@ -47,13 +47,16 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
                 throw new Refused(RefusalCode.EvidenceIdentityUnavailable);
             if (Field("MediaSourceId") is string selected && (!Guid.TryParse(selected,out var selectedId) || selectedId != id) ||
                 Field("LiveStreamId") != null || Field("UserId") != null || Field("EnableDirectPlay") is false ||
-                Field("AudioStreamIndex") is not (null or 1) || Field("SubtitleStreamIndex") is not (null or -1))
+                Field("AudioStreamIndex") is not (null or int) || Field("SubtitleStreamIndex") is not (null or -1))
             { action.Result = denied; return; }
             var gate = ctx.RequestServices.GetRequiredService<FixtureGate>();
             var (binding,ticks) = await gate.Prepare(ctx,id,backend); // both ACLs, immutable original, exact evidence tuple
+            var permit = binding.Evidence!; var measured = permit.Tuple.Source;
+            // Only the measured layout as it plays by itself: its own default sound track, no subtitle selection by the server.
+            if (Field("AudioStreamIndex") is int chosen && chosen != permit.AudioIndex) { action.Result = denied; return; }
             if (profile.ContainerProfiles.Length != 0 || profile.CodecProfiles.Length != 0 ||
-                !profile.DirectPlayProfiles.Any(p => p.Type == DlnaProfileType.Video && PinnedMp4Container.OfferedByProfile(p.Container) &&
-                    p.VideoCodec?.Split(',').Contains("h264") == true && p.AudioCodec?.Split(',').Contains("aac") == true))
+                !profile.DirectPlayProfiles.Any(p => p.Type == DlnaProfileType.Video && EvidenceSourceLabel.Offers(p.Container, measured.Container) &&
+                    p.VideoCodec?.Split(',').Contains(measured.VideoCodec) == true && p.AudioCodec?.Split(',').Contains(measured.AudioCodec) == true))
             { action.Result = denied; return; }
             // Run the real POST for the original, with this principal/profile/bitrate/track choice.
             // Its result never leaves MVC: replace it BEFORE inspecting or issuing a capability.
@@ -64,15 +67,15 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
             var native = executed.Result;
             executed.Result = denied;
             if (executed.Exception != null || native is not ObjectResult { Value: PlaybackInfoResponse { ErrorCode:null, MediaSources:[var src] } info } ||
-                !src.SupportsDirectPlay || src.TranscodingUrl != null || src.Id != binding.Source || (src.Path!=binding.FilePath || !PinnedAsset.Matches(src)) ||
+                !src.SupportsDirectPlay || src.TranscodingUrl != null || src.Id != binding.Source || (src.Path!=binding.FilePath || !DirectFile(src) || PointerEvidence.Describe(src, binding.Plan!).Source != measured) ||
                 Field("MaxStreamingBitrate") is int max && !(src.Bitrate <= max) ||
-                Field("MaxAudioChannels") is int channels && !(src.MediaStreams.Single(x=>x.Index==1).Channels <= channels)) return;
+                Field("MaxAudioChannels") is int channels && !(src.MediaStreams.Single(x=>x.Index==permit.AudioIndex).Channels <= channels)) return;
             gate.Validate(binding,ctx);
-            var evidence = binding.Evidence!.Status;
+            var evidence = permit.Status;
             var projected = new MediaSourceInfo { Id=id.ToString("N"), Protocol=MediaProtocol.Http, IsRemote=true,
                 Name=evidence == EvidenceStatus.Experimental ? "Cleanyfin sample (experimental)" : "Cleanyfin filtered",
-                SupportsDirectPlay=true, SupportsDirectStream=false, SupportsTranscoding=false, Container="mp4", RunTimeTicks=ticks,
-                Bitrate=src.Bitrate, DefaultAudioStreamIndex=1, MediaStreams=PointerFixture.Streams(src), Path=gate.Issue(binding) };
+                SupportsDirectPlay=true, SupportsDirectStream=false, SupportsTranscoding=false, Container=measured.Container, RunTimeTicks=ticks,
+                Bitrate=src.Bitrate, DefaultAudioStreamIndex=permit.AudioIndex, MediaStreams=PointerFixture.Streams(src), Path=gate.Issue(binding) };
             ctx.Response.Headers.Remove("X-Cleanyfin-Reason");
             ctx.Response.Headers["X-Cleanyfin-Evidence"] = evidence == EvidenceStatus.Experimental ? "experimental" : "eligible";
             executed.Result = new OkObjectResult(new PlaybackInfoResponse { MediaSources=[projected], PlaySessionId=info.PlaySessionId });
@@ -84,4 +87,9 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
             if (executed == null) action.Result = denied; else executed.Result = denied;
         }
     }
+
+    // An ordinary local file the server would play directly; the layout itself is compared through the evidence label.
+    private static bool DirectFile(MediaSourceInfo src) => src.Protocol == MediaProtocol.File && src.VideoType == MediaBrowser.Model.Entities.VideoType.VideoFile &&
+        !src.IsRemote && !src.IsInfiniteStream && !src.RequiresOpening && src.SupportsDirectPlay && src.RunTimeTicks is > 0 &&
+        src.MediaAttachments.Count == 0 && src.MediaStreams.All(s => !s.IsExternal && s.IsExternalUrl != true);
 }

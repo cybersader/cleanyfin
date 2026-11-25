@@ -17,6 +17,7 @@ import time
 from urllib.parse import urlencode
 
 sys.dont_write_bytecode = True
+from evidence_label import describe as describe_source
 from exact_audio import compare_cut, read_pcm, summary
 from hard_fixture_lab import DEFAULT_JELLYFIN, JELLYFIN
 
@@ -394,10 +395,19 @@ class PointerLab(Lab):
         row = self.wholphin['tuple']
         self.put(self.data/'profiles'/uid/'evidence-device.txt', f"{row['appBuild']}\n{row['deviceMode']}\n".encode())
 
-    def stub_register(self):
+    def measured_source(self, tracks=None, duration_ms=20000):
+        """The evidence source this build must derive for the original (independent Python mirror of the plugin)."""
+        src = self.api('/Items/'+self.item+'/PlaybackInfo', user=self.admin)['MediaSources'][0]
+        tracks = tracks or [dict(index=0, kind='video', timeBase=[1, 12800], anchorSourceMs=0),
+                            dict(index=1, kind='audio', timeBase=[1, 48000], anchorSourceMs=0)]
+        return describe_source(src['Container'], src['MediaStreams'], tracks, duration_ms)[0]
+
+    def stub_register(self, source=None):
         # This new build did not make the historical capture. Use an explicitly unmeasured,
         # disposable row to exercise the gate, never rewrite the historical evidence.
         row = json.loads(json.dumps(self.wholphin))
+        row['tuple']['source'] = source or self.measured_source()
+        row['tuple']['adapterRevision'] = '2'  # MpvEdlRenderer.AdapterRevision
         row['tuple']['pluginBuild'] = self.plugin_build
         # Exercise the gate on the server under test; the historical row names 10.11.11 only.
         row['tuple']['jellyfinVersion'] = self.server_version

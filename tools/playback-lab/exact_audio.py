@@ -9,26 +9,27 @@ FRAME = struct.Struct('<hh')
 BYTES_PER_FRAME = FRAME.size
 
 
-def read_pcm(path):
+def read_pcm(path, channels=2):
     with wave.open(str(path), 'rb') as wav:
-        if (wav.getframerate(), wav.getnchannels(), wav.getsampwidth()) != (RATE, 2, 2):
-            raise ValueError(f'{path.name}: expected 48 kHz stereo signed 16-bit WAV')
+        if (wav.getframerate(), wav.getnchannels(), wav.getsampwidth()) != (RATE, channels, 2):
+            raise ValueError(f'{path.name}: expected 48 kHz {channels}-channel signed 16-bit WAV')
         pcm = wav.readframes(wav.getnframes())
-        if len(pcm) != wav.getnframes()*BYTES_PER_FRAME:
+        if len(pcm) != wav.getnframes()*2*channels:
             raise ValueError(f'{path.name}: incomplete PCM')
         return pcm
 
 
-def kept_pcm(source, ranges):
+def kept_pcm(source, ranges, channels=2):
     """Extract half-open source sample-index ranges; require the complete reference."""
-    if len(source) % BYTES_PER_FRAME:
-        raise ValueError('incomplete source stereo PCM sample')
+    size = 2*channels
+    if len(source) % size:
+        raise ValueError('incomplete source PCM sample')
     result = []
     last = 0
     for start, end in ranges:
-        if not last <= start < end <= len(source)//BYTES_PER_FRAME:
-            raise ValueError(f'invalid kept range [{start}, {end}) for {len(source)//BYTES_PER_FRAME} samples')
-        result.append(source[start*BYTES_PER_FRAME:end*BYTES_PER_FRAME])
+        if not last <= start < end <= len(source)//size:
+            raise ValueError(f'invalid kept range [{start}, {end}) for {len(source)//size} samples')
+        result.append(source[start*size:end*size])
         last = end
     return b''.join(result)
 
@@ -42,21 +43,23 @@ def plan_frames(plan):
     return cut['startFrame']*scale, cut['endFrame']*scale, source['frames']*scale
 
 
-def compare(expected, actual, join=0):
-    """Count output sample frames that differ in either channel and report length separately."""
-    if len(expected) % BYTES_PER_FRAME or len(actual) % BYTES_PER_FRAME:
-        raise ValueError('incomplete stereo PCM sample')
+def compare(expected, actual, join=0, channels=2):
+    """Count output sample frames that differ in any channel and report length separately."""
+    size = 2*channels
+    if len(expected) % size or len(actual) % size:
+        raise ValueError('incomplete PCM sample')
+    frame = FRAME if channels == 2 else struct.Struct('<' + 'h'*channels)
     counts = [0, 0]; peak = [0, 0]; energy = [0, 0]
     runs = []; nruns = 0; last = -2
     if expected != actual:
-        for n, ((xl, xr), (yl, yr)) in enumerate(zip(FRAME.iter_unpack(expected), FRAME.iter_unpack(actual))):
-            dl, dr = xl-yl, xr-yr
-            if not (dl or dr):
+        for n, (x, y) in enumerate(zip(frame.iter_unpack(expected), frame.iter_unpack(actual))):
+            if x == y:
                 continue
+            d = [a-b for a, b in zip(x, y)]
             side = int(n >= join)
             counts[side] += 1
-            energy[side] += dl*dl + dr*dr
-            peak[side] = max(peak[side], abs(dl), abs(dr))
+            energy[side] += sum(v*v for v in d)
+            peak[side] = max(peak[side], *map(abs, d))
             if n != last+1:
                 nruns += 1
                 if nruns <= 16:
@@ -64,12 +67,12 @@ def compare(expected, actual, join=0):
             elif nruns <= 16:
                 runs[-1][1] = n
             last = n
-    delta = (len(actual)-len(expected))//BYTES_PER_FRAME
+    delta = (len(actual)-len(expected))//size
     return dict(exact=not (delta or nruns), unequalFrames=sum(counts),
                 firstUnequal=runs[0][0] if runs else None, lastUnequal=last if runs else None,
                 pre=counts[0], post=counts[1], delta=delta,
-                expectedFrames=len(expected)//BYTES_PER_FRAME, actualFrames=len(actual)//BYTES_PER_FRAME,
-                peakLRmax=peak, rmsOverUnequal=[round(math.sqrt(e/(2*c)), 4) if c else 0 for e, c in zip(energy, counts)],
+                expectedFrames=len(expected)//size, actualFrames=len(actual)//size,
+                peakLRmax=peak, rmsOverUnequal=[round(math.sqrt(e/(channels*c)), 4) if c else 0 for e, c in zip(energy, counts)],
                 runCount=nruns, firstRunsInclusive=runs,
                 expectedSHA256=hashlib.sha256(expected).hexdigest(), actualSHA256=hashlib.sha256(actual).hexdigest())
 
@@ -80,10 +83,15 @@ def compare_cut(plan, source, actual):
     return compare(kept_pcm(source, [(0, start), (end, duration)]), actual, start)
 
 
-def summary(result):
+def compare_ranges(source, actual, kept, channels=2):
+    """Exact verdict for any half-open kept source sample ranges, e.g. a plan on a shifted source clock."""
+    return compare(kept_pcm(source, kept, channels), actual, kept[0][1] - kept[0][0], channels)
+
+
+def summary(result, unit='stereo samples'):
     first, last = result['firstUnequal'], result['lastUnequal']
     extent = 'none' if first is None else f'{first}..{last}'
-    return (f'{result["actualFrames"]}/{result["expectedFrames"]} stereo samples; '
+    return (f'{result["actualFrames"]}/{result["expectedFrames"]} {unit}; '
             f'{result["unequalFrames"]} differing samples (output index range {extent}); '
             f'length delta {result["delta"]:+d}')
 
