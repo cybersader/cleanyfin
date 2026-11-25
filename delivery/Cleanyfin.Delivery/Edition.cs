@@ -179,7 +179,15 @@ public sealed record EditionLayout(string Format, long StartMicroseconds, long D
             var list = ImmutableArray.CreateBuilder<LayoutStream>(ArrayCount(streams, MaxStreams, min: 1));
             foreach (var e in streams.EnumerateArray())
             {
-                var f = ReadObject(e, "index", "codec_type", "?codec_name", "time_base", "?start_pts");
+                var f = ReadObject(e, "index", "codec_type", "?codec_name", "time_base", "?start_pts", "?side_data_list");
+                // ffprobe lists a stream's side data (e.g. E-AC-3 in MP4) as empty objects when no side data entries were
+                // requested. Empty entries carry nothing; any content means a format this reader does not know: refuse.
+                if (f.TryGetValue("side_data_list", out var side))
+                {
+                    ArrayCount(side, 16);
+                    Require(side.EnumerateArray().All(x => x.ValueKind == JsonValueKind.Object && !x.EnumerateObject().Any()),
+                        RefusalCode.UnverifiedBinding);
+                }
                 var tb = Text(f["time_base"]).Split('/');
                 long num = 0, den = 0;
                 Require(tb.Length == 2 && long.TryParse(tb[0], NumberStyles.None, CultureInfo.InvariantCulture, out num) &&

@@ -270,8 +270,24 @@ public sealed class EditionTests : IDisposable
     [InlineData("""{"streams":[{"index":0,"codec_type":"video","time_base":"1/25","start_pts":0}],"format":{"format_name":"mov","start_time":"0.0000001","duration":"1.000000"}}""")]
     [InlineData("""{"streams":[{"index":0,"codec_type":"video","time_base":"1/25","start_pts":0}],"format":{"format_name":"mov","duration":"1.000000"}}""")]
     [InlineData("""not json""")]
+    [InlineData("""{"streams":[{"index":0,"codec_type":"audio","time_base":"1/48000","start_pts":0,"side_data_list":[{"side_data_type":"x"}]}],"format":{"format_name":"mov","start_time":"0.000000","duration":"1.000000"}}""")]
+    [InlineData("""{"streams":[{"index":0,"codec_type":"audio","time_base":"1/48000","start_pts":0,"side_data_list":[1]}],"format":{"format_name":"mov","start_time":"0.000000","duration":"1.000000"}}""")]
     public void AMalformedOrUnexpectedProbeIsRefused(string json) =>
         Assert.Equal(RefusalCode.UnverifiedBinding, Assert.Throws<EditionRefused>(() => EditionLayout.ParseFfprobe(Encoding.UTF8.GetBytes(json))).Reason);
+
+    [Fact]
+    public void EAc3InMp4ProbesWithAnEmptySideDataListAndBinds()
+    {
+        // jellyfin-ffmpeg 7 on an ffmpeg-muxed MP4 with E-AC-3 5.1: an empty side-data entry nobody asked for.
+        var layout = Layout("""
+            {"programs":[],"stream_groups":[],"streams":[
+              {"index":0,"codec_name":"h264","codec_type":"video","time_base":"1/12800","start_pts":0},
+              {"index":1,"codec_name":"eac3","codec_type":"audio","time_base":"1/48000","start_pts":0,"side_data_list":[{}]}],
+             "format":{"format_name":"mov,mp4,m4a,3gp,3g2,mj2","start_time":"0.000000","duration":"20.000000"}}
+            """);
+        Assert.Equal("eac3", layout.Streams[1].Codec);
+        Assert.Equal(Layout().Canonical().Replace(" aac ", " eac3 "), layout.Canonical());
+    }
 
     [Fact]
     public void NotARegularFileIsRefused()
