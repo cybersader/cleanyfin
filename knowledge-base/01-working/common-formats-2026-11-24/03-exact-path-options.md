@@ -61,3 +61,33 @@ Use the **uncut source clock** first. Bind the response to the exact household t
 3. **[Upkeep ledger](../../../.claude/32-UPKEEP-LEDGER.md) at implementation:** bind Jellyfin/plugin build, adapter/revision, app/APK hash, libmpv and FFmpeg revision/options, original stream/clock/track evidence, backend, device/firmware and negotiated output (decoded PCM, not passthrough) to measured controls/results. Map a known bundled binary to its APK; a self-reported app name is not proof of backend/mode. If the actual mode is indistinguishable at offer time, refuse. Re-run on every changed component, track or output mode; a server-decoder exception would additionally own range regeneration, resource limits, and retention audits. No silent promotion from a desktop result.
 
 **Owner decision:** none needed for the metadata-only experiment or the already-chosen upstream filing. Keep R21 and R01; reopen R01 only if a no-storage household media service becomes an explicit product goal after the native path is measured.
+
+## Result, 2026-11-25: the rounding fix alone does not make the split path exact
+
+**With the `lrint` fix: not exact on the split path.** It removes one of the two early samples, not both. The design's next gate failed, so the 24-position sweep was not run.
+
+Same mpv master `04b1afc49` (Arch build, FFmpeg from Arch), built twice from one tree: unchanged, and with only the two `lrint` substitutions in `mp_aframe_clip_timestamps`. Same fixture and oracle as the counter test above (500 distinct pictures, sample *n* = *n*). The split EDL puts sound boundaries **on** whole-sample instants (`a.wav,0,10.999` and `a.wav,15.001,4.999`; picture −2 µs). Local files, `--network none`. Positive control on both builds: uncut seek 15 → 12 s, picture 300, PCM from 576000 exactly.
+
+| Take, mark `[10999,15001)` ms | Unchanged master | With `lrint` |
+|---|---|---|
+| Paused seek 12.549 → 10.999 s, unpause | picture 376 ✓, PCM from **721918** (2 early) | picture 376 ✓, PCM from **721919** (1 early) |
+| Paused seek 12.549 → 10.9977 s | 721918 | 721919 |
+| Paused seek 0.5 → 11.9997 s (picture 400) | 767998 (2 early) | **767998 (still 2 early)** |
+| Paused seeks to 10.9577 s and 0.5 s | exact | exact |
+| Fresh starts 10.998 / 10.999 / 11.519 s | 2 early: fails R21 | 1 preceding kept sample: R21 tolerance |
+
+| Take, mark `[0,1001)` (cut from time zero) | Unchanged master | With `lrint` |
+|---|---|---|
+| Straight play from the start | first picture 26 ✓, PCM from **49919**, expected 49920 | **same: 49919** |
+| Fresh starts 0 and 0.52 s | 1 early (tolerated) | 1 early (tolerated) |
+| Paused seeks 1.55 → 0, 0.5 → 1.0007, 0.5 → 0.5 s | 1 early each | 1 early each |
+
+Every early sample is a **kept** sample immediately before the landing picture. No marked sample and no wrong picture appeared on either build. That is still not R21. A straight cut has no tolerance, and a seek inside an open EDL must land exactly. The remaining one- and two-sample offsets do not depend on clipping rounding. They follow the picture/sound landing logic on seek and at the first picture, not segment clipping. `lrint` is a correct upstream fix for its own reproducer. It is not enough for Cleanyfin's split cut list.
+
+Consequences:
+
+- **Design gate:** "failure rejects this design" applies to *rounding as the whole fix*. Split EDL on original tracks with a stock or rounded mpv stays refused. The upstream rounding report remains worth filing on its own evidence; do not cite it as making Cleanyfin exact.
+- **Not measured, so unchanged:** the 24-position MP4 E-AC-3 (with and without `mov_text`) and PNS-free MP4 AAC sweeps (gated on this pass); MKV E-AC-3 decoder-history and pre-roll failures (`issue-2`, untouched by this patch); AAC PNS generator state; Jellyfin tickets, Wholphin/libmpv and devices.
+- **What could next distinguish causes:** locate where mpv chooses the audio start after an hr-seek inside an EDL segment (the 2-sample case at 11.9997 s and the 1-sample time-zero case), before any new player build or sweep.
+
+Images kept for re-runs: `cleanyfin-mpv:master` (unchanged) and `cleanyfin-mpv:master-lrint`. Scripts and JSON: `~/.cache/cleanyfin-scratch/lrint-experiment/` (`spec-decisive/`, `results/`).
