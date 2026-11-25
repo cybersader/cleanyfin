@@ -102,3 +102,9 @@ Locked 2026-11-25 (owner decisions on the [common formats results](../knowledge-
 
 **R20 — "Exact" stays strict for AAC.** Kept sound must match the uninterrupted original sample for sample; inaudible decoder differences (for example AAC noise substitution) are not accepted. AAC layouts stay refused while the next step measures how real AAC movies are encoded and looks for a path that is truly exact. *Source:* owner answer, recommended option.
 
+---
+
+Locked 2026-11-25 (owner decision on the [boundary sweep](../knowledge-base/01-working/common-formats-2026-11-24/02-boundary-sweep.md); closes open question S11):
+
+**R21 — Admission standard: zero marked material is absolute; one extra kept sample at a fresh start is tolerated and disclosed.** A layout is admitted only if, at every position of the cut-position sweep on that server line: no marked picture and no marked sound sample is ever presented; straight cuts and seeks keep every kept frame and every kept sample exactly; and a fresh start or resume near a join deviates from the uncut original at most by one extra *kept* sample (21 µs at 48 kHz) presented before the start point. Any other kept-sound difference (altered, lost or shifted samples, including AAC noise substitution under R20) still refuses. Docs and evidence rows state the tolerance. MKV Dolby stays refused (decoder history at joins). The owner also chose to have the upstream mpv rounding fix reported, so the tolerance can be removed once mpv rounds to the nearest sample. *Source:* owner answer, recommended option, after a timeline diagram of the extra sample.
+

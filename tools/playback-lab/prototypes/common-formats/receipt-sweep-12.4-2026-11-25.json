@@ -1,0 +1,6809 @@
+{
+ "method": "Joint picture + decoded-sound measurement of one layout through real desktop mpv (lab only).",
+ "playerOptions": [
+  "--ad-lavc-o=cons_noisegen=1"
+ ],
+ "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+ "fixtures": {
+  "mp4-h264-aac": {
+   "sha256": "5a72175dcba7bc319afe7304d11245368876bf586a2d12b9e45f18011e019f27",
+   "size": 568871,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/12800"
+   },
+   "audio": [
+    {
+     "codec_name": "aac",
+     "profile": "LC",
+     "channels": 2,
+     "time_base": "1/48000",
+     "start_pts": 0,
+     "packetSamples": 1024
+    }
+   ],
+   "subtitles": [],
+   "decoderNoise": {
+    "noise": true,
+    "framesCompared": 937,
+    "firstNoiseFrame": 2,
+    "why": "decoder noise state changes the output"
+   }
+  },
+  "mkv-h264-aac": {
+   "sha256": "462a37d04f71b5d7f1f9001f37d6927c213edf39cf94d034c706dfe42f37086a",
+   "size": 563024,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "aac",
+     "profile": "LC",
+     "channels": 2,
+     "time_base": "1/1000",
+     "start_pts": -21,
+     "packetSamples": 1008
+    }
+   ],
+   "subtitles": [],
+   "decoderNoise": {
+    "noise": true,
+    "framesCompared": 937,
+    "firstNoiseFrame": 2,
+    "why": "decoder noise state changes the output"
+   }
+  },
+  "mkv-h264-ac351": {
+   "sha256": "59ec388496aff1b2253dc7f2a12df1ff96bd41fdd5cb6d8f3fc0385833374ffb",
+   "size": 1198450,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "ac3",
+     "profile": null,
+     "channels": 6,
+     "time_base": "1/1000",
+     "start_pts": -5,
+     "packetSamples": 1536
+    }
+   ],
+   "subtitles": []
+  },
+  "mkv-h264-eac351": {
+   "sha256": "ac0d1eb354e99519d756b90043cca1f95d02e57c1127ccc3c45c912065bc0dc9",
+   "size": 1678444,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "eac3",
+     "profile": null,
+     "channels": 6,
+     "time_base": "1/1000",
+     "start_pts": -5,
+     "packetSamples": 1536
+    }
+   ],
+   "subtitles": []
+  },
+  "mkv-hevc10-aac": {
+   "sha256": "f65f0d5edbc72d8cd32c84d97869cedf951653afe221719ff3faf7ecf57b0992",
+   "size": 542102,
+   "video": {
+    "codec_name": "hevc",
+    "profile": "Main 10",
+    "pix_fmt": "yuv420p10le",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "aac",
+     "profile": "LC",
+     "channels": 2,
+     "time_base": "1/1000",
+     "start_pts": -21,
+     "packetSamples": 1008
+    }
+   ],
+   "subtitles": [],
+   "decoderNoise": {
+    "noise": true,
+    "framesCompared": 937,
+    "firstNoiseFrame": 2,
+    "why": "decoder noise state changes the output"
+   }
+  },
+  "mkv-hevc10-eac351": {
+   "sha256": "5142d6bd213cec0c6ae9154f0579ff195bcfcb721f68f012ac456df033ca6f65",
+   "size": 1657522,
+   "video": {
+    "codec_name": "hevc",
+    "profile": "Main 10",
+    "pix_fmt": "yuv420p10le",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "eac3",
+     "profile": null,
+     "channels": 6,
+     "time_base": "1/1000",
+     "start_pts": -5,
+     "packetSamples": 1536
+    }
+   ],
+   "subtitles": []
+  },
+  "mkv-hevc10-hdr10-eac351": {
+   "sha256": "c5f3b761771a05c460e1096cae18b5a474e2133e1c04b1cc4544d49396b88842",
+   "size": 1675531,
+   "video": {
+    "codec_name": "hevc",
+    "profile": "Main 10",
+    "pix_fmt": "yuv420p10le",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "eac3",
+     "profile": null,
+     "channels": 6,
+     "time_base": "1/1000",
+     "start_pts": -5,
+     "packetSamples": 1536
+    }
+   ],
+   "subtitles": []
+  },
+  "mp4-hevc10-aac": {
+   "sha256": "d7691a46ab7f80c7a8bb47756166f76434ec6ec83e927c5158fc8a2ab038ecdf",
+   "size": 548540,
+   "video": {
+    "codec_name": "hevc",
+    "profile": "Main 10",
+    "pix_fmt": "yuv420p10le",
+    "time_base": "1/12800"
+   },
+   "audio": [
+    {
+     "codec_name": "aac",
+     "profile": "LC",
+     "channels": 2,
+     "time_base": "1/48000",
+     "start_pts": 0,
+     "packetSamples": 1024
+    }
+   ],
+   "subtitles": [],
+   "decoderNoise": {
+    "noise": true,
+    "framesCompared": 937,
+    "firstNoiseFrame": 2,
+    "why": "decoder noise state changes the output"
+   }
+  },
+  "mp4-h264-eac351": {
+   "sha256": "e054d5d41114db7d25658c1318ceb3016554a46b060793c8d3e9d318e9bcb20a",
+   "size": 1684116,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/12800"
+   },
+   "audio": [
+    {
+     "codec_name": "eac3",
+     "profile": null,
+     "channels": 6,
+     "time_base": "1/48000",
+     "start_pts": 0,
+     "packetSamples": 1536
+    }
+   ],
+   "subtitles": []
+  },
+  "mkv-h264-flac": {
+   "sha256": "689f3017bd321b4905e4a420d8eae875541361587141d1b9675a62bc9be6fc06",
+   "size": 618538,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "flac",
+     "profile": null,
+     "channels": 2,
+     "time_base": "1/1000",
+     "start_pts": 0,
+     "packetSamples": 4608
+    }
+   ],
+   "subtitles": []
+  },
+  "mkv-h264-opus": {
+   "sha256": "85cf3b19a40d385331b72696ac998278634ddeaed613a4d9219c3295ee353d87",
+   "size": 396751,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "opus",
+     "profile": null,
+     "channels": 2,
+     "time_base": "1/1000",
+     "start_pts": -7,
+     "packetSamples": 2880
+    }
+   ],
+   "subtitles": []
+  },
+  "mkv-h264-eac351+aac-srt": {
+   "sha256": "6764504af939276eb0c83f2c302a84ee78f69db696367430f423a1e9c633740b",
+   "size": 2167934,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "eac3",
+     "profile": null,
+     "channels": 6,
+     "time_base": "1/1000",
+     "start_pts": -5,
+     "packetSamples": 1536
+    },
+    {
+     "codec_name": "aac",
+     "profile": "LC",
+     "channels": 2,
+     "time_base": "1/1000",
+     "start_pts": -21,
+     "packetSamples": 1008
+    }
+   ],
+   "subtitles": [
+    {
+     "index": 3,
+     "codec_name": "subrip",
+     "time_base": "1/1000",
+     "disposition": {
+      "default": 1,
+      "forced": 0
+     }
+    }
+   ]
+  },
+  "mkv-h264-eac351-ass+srt": {
+   "sha256": "877bd56aefdc0247bfcda7e977ad4a7c3fed37aa81b2f65ae370f96c216080a7",
+   "size": 1679839,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/1000"
+   },
+   "audio": [
+    {
+     "codec_name": "eac3",
+     "profile": null,
+     "channels": 6,
+     "time_base": "1/1000",
+     "start_pts": -5,
+     "packetSamples": 1536
+    }
+   ],
+   "subtitles": [
+    {
+     "index": 2,
+     "codec_name": "ass",
+     "time_base": "1/1000",
+     "disposition": {
+      "default": 0,
+      "forced": 1
+     }
+    },
+    {
+     "index": 3,
+     "codec_name": "subrip",
+     "time_base": "1/1000",
+     "disposition": {
+      "default": 0,
+      "forced": 0
+     }
+    }
+   ]
+  },
+  "mp4-h264-eac351-mov_text": {
+   "sha256": "8b03a24702b33cc0d2574a2ba8e87b6b25b1cc53fafc1d6da38bed71c6d63a76",
+   "size": 1684821,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "time_base": "1/12800"
+   },
+   "audio": [
+    {
+     "codec_name": "eac3",
+     "profile": null,
+     "channels": 6,
+     "time_base": "1/48000",
+     "start_pts": 0,
+     "packetSamples": 1536
+    }
+   ],
+   "subtitles": [
+    {
+     "index": 2,
+     "codec_name": "mov_text",
+     "time_base": "1/1000000",
+     "disposition": {
+      "default": 1,
+      "forced": 0
+     }
+    }
+   ]
+  }
+ },
+ "runs": {
+  "12.4": {
+   "mp4-h264-aac": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "2",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mp4",
+       "videoCodec": "h264",
+       "audioCodec": "aac",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/48000 at 0 ms plays",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520,9.480\n",
+     "form": "joint",
+     "cut": {
+      "videoAnchorMs": 0,
+      "startMs": 5480,
+      "endMs": 10520,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 0,
+       "1": 0
+      },
+      "zeroMs": 0
+     },
+     "channels": 2,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": false,
+       "unequalFrames": 1284,
+       "firstUnequal": 327067,
+       "lastUnequal": 718074,
+       "pre": 0,
+       "post": 1284,
+       "delta": 0,
+       "expectedFrames": 718080,
+       "actualFrames": 718080,
+       "peakLRmax": [
+        0,
+        3
+       ],
+       "rmsOverUnequal": [
+        0,
+        0.803
+       ],
+       "runCount": 884,
+       "firstRunsInclusive": [
+        [
+         327067,
+         327067
+        ],
+        [
+         327130,
+         327130
+        ],
+        [
+         327224,
+         327224
+        ],
+        [
+         327274,
+         327276
+        ],
+        [
+         327282,
+         327282
+        ],
+        [
+         327304,
+         327304
+        ],
+        [
+         327383,
+         327383
+        ],
+        [
+         327410,
+         327410
+        ],
+        [
+         327437,
+         327437
+        ],
+        [
+         327446,
+         327446
+        ],
+        [
+         327463,
+         327463
+        ],
+        [
+         327465,
+         327465
+        ],
+        [
+         327499,
+         327499
+        ],
+        [
+         327550,
+         327550
+        ],
+        [
+         327558,
+         327558
+        ],
+        [
+         327690,
+         327690
+        ]
+       ],
+       "expectedSHA256": "782f603716978e1988a4c1145f35973232c40dbb80fcfd1dfbb77ae17b96c140",
+       "actualSHA256": "c34d62d293d0802bdac1f240216e09e8575e5236b460d91cc3c872431543f1d6",
+       "playerStartBehaviour": false,
+       "leadingExtraSamples": null,
+       "leadingMissingSamples": null,
+       "summary": "718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": true
+      },
+      "soundOk": false,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 464636,
+        "firstUnequal": 0,
+        "lastUnequal": 464639,
+        "pre": 0,
+        "post": 464636,
+        "delta": 1,
+        "expectedFrames": 464640,
+        "actualFrames": 464641,
+        "peakLRmax": [
+         0,
+         6088
+        ],
+        "rmsOverUnequal": [
+         0,
+         450.3486
+        ],
+        "runCount": 5,
+        "firstRunsInclusive": [
+         [
+          0,
+          157254
+         ],
+         [
+          157256,
+          188054
+         ],
+         [
+          188056,
+          208454
+         ],
+         [
+          208456,
+          260454
+         ],
+         [
+          260456,
+          464639
+         ]
+        ],
+        "expectedSHA256": "9a91a4e6dbaa7eb42e054ea56540a7bd95057b23ab9e675739ec08130d776d39",
+        "actualSHA256": "a927f2d6c7c58ecc66cfdea6a3b8066043e8d8af327dc27cc870a268b7b2dc3e",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 1263,
+        "firstUnequal": 63684,
+        "lastUnequal": 455038,
+        "pre": 0,
+        "post": 1263,
+        "delta": 0,
+        "expectedFrames": 455040,
+        "actualFrames": 455040,
+        "peakLRmax": [
+         0,
+         3
+        ],
+        "rmsOverUnequal": [
+         0,
+         0.7976
+        ],
+        "runCount": 899,
+        "firstRunsInclusive": [
+         [
+          63684,
+          63684
+         ],
+         [
+          63796,
+          63796
+         ],
+         [
+          63799,
+          63799
+         ],
+         [
+          64045,
+          64045
+         ],
+         [
+          64090,
+          64090
+         ],
+         [
+          64118,
+          64118
+         ],
+         [
+          64184,
+          64184
+         ],
+         [
+          64200,
+          64200
+         ],
+         [
+          64231,
+          64231
+         ],
+         [
+          64234,
+          64236
+         ],
+         [
+          64242,
+          64242
+         ],
+         [
+          64283,
+          64283
+         ],
+         [
+          64406,
+          64406
+         ],
+         [
+          64419,
+          64419
+         ],
+         [
+          64458,
+          64458
+         ],
+         [
+          64510,
+          64510
+         ]
+        ],
+        "expectedSHA256": "05420746616e658cf4191d55cfbb67fd9da5af3000427ad5ac400bf392d6b03f",
+        "actualSHA256": "1f71d1b3c45c45d07da795d01f72f11f7ca2196b933ea7eda37333b3807fadb8",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 382076,
+        "firstUnequal": 0,
+        "lastUnequal": 382079,
+        "pre": 0,
+        "post": 382076,
+        "delta": 1,
+        "expectedFrames": 382080,
+        "actualFrames": 382081,
+        "peakLRmax": [
+         0,
+         1067
+        ],
+        "rmsOverUnequal": [
+         0,
+         452.8708
+        ],
+        "runCount": 5,
+        "firstRunsInclusive": [
+         [
+          0,
+          74694
+         ],
+         [
+          74696,
+          105494
+         ],
+         [
+          105496,
+          125894
+         ],
+         [
+          125896,
+          177894
+         ],
+         [
+          177896,
+          382079
+         ]
+        ],
+        "expectedSHA256": "472211fde43c84c164c4f7c04ff3e242cb010c6ae7985bf5dba6add1f45c773f",
+        "actualSHA256": "67fadf372c3df8c5657d72dc3231bc0593f42e3bc9aa86ce3c89445a61c4d933",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "382081/382080 sample frames; 382076 differing samples (output index range 0..382079); length delta +1"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": true
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0",
+        "start 5.280 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1",
+        "start 5.479 s: 455041/455040 sample frames; 455036 differing samples (output index range 0..455039); length delta +1",
+        "start 5.480 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0",
+        "start 6.000 s: 430081/430080 sample frames; 430076 differing samples (output index range 0..430079); length delta +1"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 960512,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 0
+     }
+    },
+    "summary": {
+     "layout": "mp4-h264-aac",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": false,
+      "keptPicture": true,
+      "keptSound": false,
+      "starts": false,
+      "seeks": true,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB",
+      "start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1",
+      "start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0",
+      "start 7.0 s: 382081/382080 sample frames; 382076 differing samples (output index range 0..382079); length delta +1",
+      "cut [5480, 10520) ms: straight cut: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0; start 5.280 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.479 s: 455041/455040 sample frames; 455036 differing samples (output index range 0..455039); length delta +1; start 5.480 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 6.000 s: 430081/430080 sample frames; 430076 differing samples (output index range 0..430079); length delta +1",
+      "23 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 0,
+      "measured": 1,
+      "total": 24
+     }
+    }
+   },
+   "mkv-h264-aac": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "2",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "h264",
+       "audioCodec": "aac",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+       "durationMs": 20021
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520,9.501\n",
+     "form": "joint",
+     "cut": {
+      "videoAnchorMs": 21,
+      "startMs": 5501,
+      "endMs": 10541,
+      "durationMs": 20021,
+      "anchors": {
+       "0": 21,
+       "1": 0
+      },
+      "zeroMs": -21
+     },
+     "channels": 2,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 1,
+       "missing": 1,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": false,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": false,
+       "unequalFrames": 718080,
+       "firstUnequal": 1,
+       "lastUnequal": 718080,
+       "pre": 263039,
+       "post": 455041,
+       "delta": 497,
+       "expectedFrames": 718081,
+       "actualFrames": 718578,
+       "peakLRmax": [
+        8633,
+        10516
+       ],
+       "rmsOverUnequal": [
+        4393.0647,
+        6329.4514
+       ],
+       "runCount": 1,
+       "firstRunsInclusive": [
+        [
+         1,
+         718080
+        ]
+       ],
+       "expectedSHA256": "900e65b1c4dce4f594a459cafb4f65f4ca515633c63643baf52c2e4c4390eb90",
+       "actualSHA256": "4b5af995beac40b2ddc9014edbb528fb41d55c516e9cd7490c502883bc9de9da",
+       "playerStartBehaviour": false,
+       "leadingExtraSamples": null,
+       "leadingMissingSamples": null,
+       "summary": "718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": true
+      },
+      "soundOk": false,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 1,
+       "pictureOk": false,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 464640,
+        "firstUnequal": 0,
+        "lastUnequal": 464639,
+        "pre": 0,
+        "post": 464640,
+        "delta": 481,
+        "expectedFrames": 464640,
+        "actualFrames": 465121,
+        "peakLRmax": [
+         0,
+         16571
+        ],
+        "rmsOverUnequal": [
+         0,
+         10168.491
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          464639
+         ]
+        ],
+        "expectedSHA256": "9a91a4e6dbaa7eb42e054ea56540a7bd95057b23ab9e675739ec08130d776d39",
+        "actualSHA256": "1848811aefc585dc31c241dd2b8f48c17e091dc90a64ef5cac39762bc3302739",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 264,
+       "markedCount": 0,
+       "pictureOk": false,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 453120,
+        "firstUnequal": 0,
+        "lastUnequal": 453119,
+        "pre": 0,
+        "post": 453120,
+        "delta": 481,
+        "expectedFrames": 453120,
+        "actualFrames": 453601,
+        "peakLRmax": [
+         0,
+         16572
+        ],
+        "rmsOverUnequal": [
+         0,
+         10206.6286
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          453119
+         ]
+        ],
+        "expectedSHA256": "84f9f6186cdcc543748a07595881cbf2c651f4fec603c0a1d20d9ed9f81a95f1",
+        "actualSHA256": "08dc87ffa1e90fe6e554137df2a60355cb67d266ebde1737c7b1864660dcb6c6",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "453601/453120 sample frames; 453120 differing samples (output index range 0..453119); length delta +481"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 382080,
+        "firstUnequal": 0,
+        "lastUnequal": 382079,
+        "pre": 0,
+        "post": 382080,
+        "delta": 481,
+        "expectedFrames": 382080,
+        "actualFrames": 382561,
+        "peakLRmax": [
+         0,
+         16572
+        ],
+        "rmsOverUnequal": [
+         0,
+         10206.58
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          382079
+         ]
+        ],
+        "expectedSHA256": "472211fde43c84c164c4f7c04ff3e242cb010c6ae7985bf5dba6add1f45c773f",
+        "actualSHA256": "083f451f116bad7de1b6ea2ee620a22109e6bf931ec2a4e5f4c172bf0b40c0a6",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "382561/382080 sample frames; 382080 differing samples (output index range 0..382079); length delta +481"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 264,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 137,
+        "marked": true,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": false
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: picture first 0 (want 0), 1 marked, 1 missing",
+        "straight cut: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497",
+        "start 5.280 s: picture first 132 (want 132), 1 marked, 133 missing",
+        "start 5.280 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481",
+        "start 5.479 s: picture first 137 (want 263), 1 marked, 138 missing",
+        "start 5.479 s: 455521/718081 sample frames; 455514 differing samples (output index range 0..455520); length delta -262560",
+        "start 5.480 s: picture first 264 (want 263), 0 marked, 138 missing",
+        "start 5.480 s: 453601/453120 sample frames; 453120 differing samples (output index range 0..453119); length delta +481",
+        "start 6.000 s: 430561/430080 sample frames; 430080 differing samples (output index range 0..430079); length delta +481",
+        "seek 5.48: landed on frame 264, expected 263",
+        "seek 5.4787: landed on frame 137, expected 263 (MARKED)",
+        "seek 5.48: landed on frame 264, expected 263"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 960513,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 1
+     }
+    },
+    "summary": {
+     "layout": "mkv-h264-aac",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": false,
+      "markedSound": false,
+      "keptPicture": false,
+      "keptSound": false,
+      "starts": false,
+      "seeks": false,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "straight cut: 1 marked frame(s), 1 kept frame(s) missing",
+      "straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB",
+      "start 5.28 s: 1 marked frame(s) or kept frames out of order",
+      "start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481",
+      "start 5.48 s: 0 marked frame(s) or kept frames out of order",
+      "start 5.48 s: 453601/453120 sample frames; 453120 differing samples (output index range 0..453119); length delta +481",
+      "start 7.0 s: 382561/382080 sample frames; 382080 differing samples (output index range 0..382079); length delta +481",
+      "seek 5.48: landed on frame 264, expected 263",
+      "seek 5.479: landed on frame 137, expected 263 (MARKED)",
+      "cut [5480, 10520) ms: straight cut: picture first 0 (want 0), 1 marked, 1 missing; straight cut: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497; start 5.280 s: picture first 132 (want 132), 1 marked, 133 missing; start 5.280 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.479 s: picture first 137 (want 263), 1 marked, 138 missing; start 5.479 s: 455521/718081 sample frames; 455514 differing samples (output index range 0..455520); length delta -262560; start 5.480 s: picture first 264 (want 263), 0 marked, 138 missing; start 5.480 s: 453601/453120 sample frames; 453120 differing samples (output index range 0..453119); length delta +481; start 6.000 s: 430561/430080 sample frames; 430080 differing samples (output index range 0..430079); length delta +481; seek 5.48: landed on frame 264, expected 263; seek 5.4787: landed on frame 137, expected 263 (MARKED); seek 5.48: landed on frame 264, expected 263",
+      "23 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 0,
+      "measured": 1,
+      "total": 24
+     }
+    }
+   },
+   "mkv-h264-ac351": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "4",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "h264",
+       "audioCodec": "ac3",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio ac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.479990\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 5,
+      "startMs": 5485,
+      "endMs": 10525,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 5,
+       "1": 0
+      },
+      "zeroMs": -5
+     },
+     "channels": 6,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": true,
+       "unequalFrames": 0,
+       "firstUnequal": null,
+       "lastUnequal": null,
+       "pre": 0,
+       "post": 0,
+       "delta": 0,
+       "expectedFrames": 717825,
+       "actualFrames": 717825,
+       "peakLRmax": [
+        0,
+        0
+       ],
+       "rmsOverUnequal": [
+        0,
+        0
+       ],
+       "runCount": 0,
+       "firstRunsInclusive": [],
+       "expectedSHA256": "ac4cca18ea7a514272ceaff8284d0402091c7b0e0864eaf895a77e812fe49ed2",
+       "actualSHA256": "ac4cca18ea7a514272ceaff8284d0402091c7b0e0864eaf895a77e812fe49ed2",
+       "playerStartBehaviour": false,
+       "summary": "717825/717825 sample frames; 0 differing samples (output index range none); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": false
+      },
+      "soundOk": true,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 464384,
+        "firstUnequal": 0,
+        "lastUnequal": 464383,
+        "pre": 0,
+        "post": 464384,
+        "delta": 1,
+        "expectedFrames": 464384,
+        "actualFrames": 464385,
+        "peakLRmax": [
+         0,
+         6482
+        ],
+        "rmsOverUnequal": [
+         0,
+         343.4575
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          464383
+         ]
+        ],
+        "expectedSHA256": "f4f91d2f5b3670e8e912b763a627bcb617c44ebcd0134f7d5ae6153c7a854e2a",
+        "actualSHA256": "db68540c9481649ebe4cfc9d0abccc5640d6ec821399d010cc5cb6d07c67e245",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 132,
+        "summary": "464385/464384 sample frames; 464384 differing samples (output index range 0..464383); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 454784,
+        "firstUnequal": 0,
+        "lastUnequal": 454783,
+        "pre": 0,
+        "post": 454784,
+        "delta": 1,
+        "expectedFrames": 454784,
+        "actualFrames": 454785,
+        "peakLRmax": [
+         0,
+         6482
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.1403
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          454783
+         ]
+        ],
+        "expectedSHA256": "1383863e4a5d9be7f2755711704bb0f1d10dc273aa3018a375e47c040ea7ec01",
+        "actualSHA256": "1cb197e5367bb1eda19d292c3aa8a56d587ccf49352a0f0d9a8e77bc1b8b89e2",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 263,
+        "summary": "454785/454784 sample frames; 454784 differing samples (output index range 0..454783); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 381824,
+        "firstUnequal": 0,
+        "lastUnequal": 381823,
+        "pre": 0,
+        "post": 381824,
+        "delta": 1,
+        "expectedFrames": 381824,
+        "actualFrames": 381825,
+        "peakLRmax": [
+         0,
+         783
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.2004
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          381823
+         ]
+        ],
+        "expectedSHA256": "a758b2d00d7ee5b618ab5d48a8265cc5565157cff1ab4fdd8c5c908fb1eddc4a",
+        "actualSHA256": "1bae48ec14d93ffa0ae4be5c40344c9c39f709175911075fd8a4a48c4aba127f",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 301,
+        "summary": "381825/381824 sample frames; 381824 differing samples (output index range 0..381823); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": true
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[1000, 1960) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[6000, 12000) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[2000, 2040) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[4000, 4001) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[12345, 12346) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3001, 3961) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3039, 7999) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0",
+        "start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1",
+        "start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+        "start 3.039 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 959745,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 1
+     }
+    },
+    "summary": {
+     "layout": "mkv-h264-ac351",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": true,
+      "keptPicture": true,
+      "keptSound": true,
+      "starts": true,
+      "seeks": true,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "cut [3039, 7999) ms: straight cut: 721665/721665 sample frames; 47 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 585345/585344 sample frames; 585344 differing samples (output index range 0..585343); length delta +1; start 3.038 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra); start 3.039 s: 575745/575744 sample frames; 575744 differing samples (output index range 0..575743); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+      "16 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 7,
+      "measured": 8,
+      "total": 24
+     }
+    }
+   },
+   "mkv-h264-eac351": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "4",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "h264",
+       "audioCodec": "eac3",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.479990\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 5,
+      "startMs": 5485,
+      "endMs": 10525,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 5,
+       "1": 0
+      },
+      "zeroMs": -5
+     },
+     "channels": 6,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": true,
+       "unequalFrames": 0,
+       "firstUnequal": null,
+       "lastUnequal": null,
+       "pre": 0,
+       "post": 0,
+       "delta": 0,
+       "expectedFrames": 716289,
+       "actualFrames": 716289,
+       "peakLRmax": [
+        0,
+        0
+       ],
+       "rmsOverUnequal": [
+        0,
+        0
+       ],
+       "runCount": 0,
+       "firstRunsInclusive": [],
+       "expectedSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "actualSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "playerStartBehaviour": false,
+       "summary": "716289/716289 sample frames; 0 differing samples (output index range none); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": false
+      },
+      "soundOk": true,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 462848,
+        "firstUnequal": 0,
+        "lastUnequal": 462847,
+        "pre": 0,
+        "post": 462848,
+        "delta": 1,
+        "expectedFrames": 462848,
+        "actualFrames": 462849,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         343.4115
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          462847
+         ]
+        ],
+        "expectedSHA256": "6ed95364e23a974903b6079285880411dfe1ed9863ae7b4cb6b431d3a8e6901a",
+        "actualSHA256": "fa7bf90bfa07437ddfe497155a64c88c6ea9ac926d84569cf014e1e501b0a6d5",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 132,
+        "summary": "462849/462848 sample frames; 462848 differing samples (output index range 0..462847); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 453248,
+        "firstUnequal": 0,
+        "lastUnequal": 453247,
+        "pre": 0,
+        "post": 453248,
+        "delta": 1,
+        "expectedFrames": 453248,
+        "actualFrames": 453249,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.0976
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          453247
+         ]
+        ],
+        "expectedSHA256": "5e2da719206adb1be07725e02969e0d6eed24438a9d36f6a5dd06d7f173b39ae",
+        "actualSHA256": "012de2555b6b269844a2853c6810b7562d1ac89ae48386e71e4379fddec0eedd",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 263,
+        "summary": "453249/453248 sample frames; 453248 differing samples (output index range 0..453247); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 380288,
+        "firstUnequal": 0,
+        "lastUnequal": 380287,
+        "pre": 0,
+        "post": 380288,
+        "delta": 1,
+        "expectedFrames": 380288,
+        "actualFrames": 380289,
+        "peakLRmax": [
+         0,
+         783
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.1591
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          380287
+         ]
+        ],
+        "expectedSHA256": "bb1d4f4c915f31824cadc4ccfa60253a9cb66fe66aaa21fe341775fcb8e084e2",
+        "actualSHA256": "245b17adb63a4b14a439abdecdce37ada03df49f8c5c93bdd4d393a8337319a7",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 301,
+        "summary": "380289/380288 sample frames; 380288 differing samples (output index range 0..380287); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": true
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[1000, 1960) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[6000, 12000) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[2000, 2040) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[4000, 4001) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[12345, 12346) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3001, 3961) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3039, 7999) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0",
+        "start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1",
+        "start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+        "start 3.039 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 958209,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 1
+     }
+    },
+    "summary": {
+     "layout": "mkv-h264-eac351",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": true,
+      "keptPicture": true,
+      "keptSound": true,
+      "starts": true,
+      "seeks": true,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra); start 3.039 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+      "16 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 7,
+      "measured": 8,
+      "total": 24
+     }
+    }
+   },
+   "mkv-hevc10-aac": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "2",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "hevc",
+       "audioCodec": "aac",
+       "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+       "durationMs": 20021
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520,9.501\n",
+     "form": "joint",
+     "cut": {
+      "videoAnchorMs": 21,
+      "startMs": 5501,
+      "endMs": 10541,
+      "durationMs": 20021,
+      "anchors": {
+       "0": 21,
+       "1": 0
+      },
+      "zeroMs": -21
+     },
+     "channels": 2,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 1,
+       "missing": 1,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": false,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": false,
+       "unequalFrames": 718080,
+       "firstUnequal": 1,
+       "lastUnequal": 718080,
+       "pre": 263039,
+       "post": 455041,
+       "delta": 497,
+       "expectedFrames": 718081,
+       "actualFrames": 718578,
+       "peakLRmax": [
+        8633,
+        10516
+       ],
+       "rmsOverUnequal": [
+        4393.0647,
+        6329.4514
+       ],
+       "runCount": 1,
+       "firstRunsInclusive": [
+        [
+         1,
+         718080
+        ]
+       ],
+       "expectedSHA256": "900e65b1c4dce4f594a459cafb4f65f4ca515633c63643baf52c2e4c4390eb90",
+       "actualSHA256": "4b5af995beac40b2ddc9014edbb528fb41d55c516e9cd7490c502883bc9de9da",
+       "playerStartBehaviour": false,
+       "leadingExtraSamples": null,
+       "leadingMissingSamples": null,
+       "summary": "718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": true
+      },
+      "soundOk": false,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 1,
+       "pictureOk": false,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 464640,
+        "firstUnequal": 0,
+        "lastUnequal": 464639,
+        "pre": 0,
+        "post": 464640,
+        "delta": 481,
+        "expectedFrames": 464640,
+        "actualFrames": 465121,
+        "peakLRmax": [
+         0,
+         16571
+        ],
+        "rmsOverUnequal": [
+         0,
+         10168.491
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          464639
+         ]
+        ],
+        "expectedSHA256": "9a91a4e6dbaa7eb42e054ea56540a7bd95057b23ab9e675739ec08130d776d39",
+        "actualSHA256": "1848811aefc585dc31c241dd2b8f48c17e091dc90a64ef5cac39762bc3302739",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 264,
+       "markedCount": 0,
+       "pictureOk": false,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 453120,
+        "firstUnequal": 0,
+        "lastUnequal": 453119,
+        "pre": 0,
+        "post": 453120,
+        "delta": 481,
+        "expectedFrames": 453120,
+        "actualFrames": 453601,
+        "peakLRmax": [
+         0,
+         16572
+        ],
+        "rmsOverUnequal": [
+         0,
+         10206.6286
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          453119
+         ]
+        ],
+        "expectedSHA256": "84f9f6186cdcc543748a07595881cbf2c651f4fec603c0a1d20d9ed9f81a95f1",
+        "actualSHA256": "08dc87ffa1e90fe6e554137df2a60355cb67d266ebde1737c7b1864660dcb6c6",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "453601/453120 sample frames; 453120 differing samples (output index range 0..453119); length delta +481"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 382080,
+        "firstUnequal": 0,
+        "lastUnequal": 382079,
+        "pre": 0,
+        "post": 382080,
+        "delta": 481,
+        "expectedFrames": 382080,
+        "actualFrames": 382561,
+        "peakLRmax": [
+         0,
+         16572
+        ],
+        "rmsOverUnequal": [
+         0,
+         10206.58
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          382079
+         ]
+        ],
+        "expectedSHA256": "472211fde43c84c164c4f7c04ff3e242cb010c6ae7985bf5dba6add1f45c773f",
+        "actualSHA256": "083f451f116bad7de1b6ea2ee620a22109e6bf931ec2a4e5f4c172bf0b40c0a6",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "382561/382080 sample frames; 382080 differing samples (output index range 0..382079); length delta +481"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 264,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 137,
+        "marked": true,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": false
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: picture first 0 (want 0), 1 marked, 1 missing",
+        "straight cut: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497",
+        "start 5.280 s: picture first 132 (want 132), 1 marked, 133 missing",
+        "start 5.280 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481",
+        "start 5.479 s: picture first 137 (want 263), 1 marked, 138 missing",
+        "start 5.479 s: 455521/718081 sample frames; 455514 differing samples (output index range 0..455520); length delta -262560",
+        "start 5.480 s: picture first 264 (want 263), 0 marked, 138 missing",
+        "start 5.480 s: 453601/453120 sample frames; 453120 differing samples (output index range 0..453119); length delta +481",
+        "start 6.000 s: 430561/430080 sample frames; 430080 differing samples (output index range 0..430079); length delta +481",
+        "seek 5.48: landed on frame 264, expected 263",
+        "seek 5.4787: landed on frame 137, expected 263 (MARKED)",
+        "seek 5.48: landed on frame 264, expected 263"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 960513,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 1
+     }
+    },
+    "summary": {
+     "layout": "mkv-hevc10-aac",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": false,
+      "markedSound": false,
+      "keptPicture": false,
+      "keptSound": false,
+      "starts": false,
+      "seeks": false,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "straight cut: 1 marked frame(s), 1 kept frame(s) missing",
+      "straight cut sound: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497, peak difference 10516 LSB",
+      "start 5.28 s: 1 marked frame(s) or kept frames out of order",
+      "start 5.28 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481",
+      "start 5.48 s: 0 marked frame(s) or kept frames out of order",
+      "start 5.48 s: 453601/453120 sample frames; 453120 differing samples (output index range 0..453119); length delta +481",
+      "start 7.0 s: 382561/382080 sample frames; 382080 differing samples (output index range 0..382079); length delta +481",
+      "seek 5.48: landed on frame 264, expected 263",
+      "seek 5.479: landed on frame 137, expected 263 (MARKED)",
+      "cut [5480, 10520) ms: straight cut: picture first 0 (want 0), 1 marked, 1 missing; straight cut: 718578/718081 sample frames; 718080 differing samples (output index range 1..718080); length delta +497; start 5.280 s: picture first 132 (want 132), 1 marked, 133 missing; start 5.280 s: 465121/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +481; start 5.479 s: picture first 137 (want 263), 1 marked, 138 missing; start 5.479 s: 455521/718081 sample frames; 455514 differing samples (output index range 0..455520); length delta -262560; start 5.480 s: picture first 264 (want 263), 0 marked, 138 missing; start 5.480 s: 453601/453120 sample frames; 453120 differing samples (output index range 0..453119); length delta +481; start 6.000 s: 430561/430080 sample frames; 430080 differing samples (output index range 0..430079); length delta +481; seek 5.48: landed on frame 264, expected 263; seek 5.4787: landed on frame 137, expected 263 (MARKED); seek 5.48: landed on frame 264, expected 263",
+      "23 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 0,
+      "measured": 1,
+      "total": 24
+     }
+    }
+   },
+   "mkv-hevc10-eac351": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "4",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "hevc",
+       "audioCodec": "eac3",
+       "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.479990\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 5,
+      "startMs": 5485,
+      "endMs": 10525,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 5,
+       "1": 0
+      },
+      "zeroMs": -5
+     },
+     "channels": 6,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": true,
+       "unequalFrames": 0,
+       "firstUnequal": null,
+       "lastUnequal": null,
+       "pre": 0,
+       "post": 0,
+       "delta": 0,
+       "expectedFrames": 716289,
+       "actualFrames": 716289,
+       "peakLRmax": [
+        0,
+        0
+       ],
+       "rmsOverUnequal": [
+        0,
+        0
+       ],
+       "runCount": 0,
+       "firstRunsInclusive": [],
+       "expectedSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "actualSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "playerStartBehaviour": false,
+       "summary": "716289/716289 sample frames; 0 differing samples (output index range none); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": false
+      },
+      "soundOk": true,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 462848,
+        "firstUnequal": 0,
+        "lastUnequal": 462847,
+        "pre": 0,
+        "post": 462848,
+        "delta": 1,
+        "expectedFrames": 462848,
+        "actualFrames": 462849,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         343.4115
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          462847
+         ]
+        ],
+        "expectedSHA256": "6ed95364e23a974903b6079285880411dfe1ed9863ae7b4cb6b431d3a8e6901a",
+        "actualSHA256": "fa7bf90bfa07437ddfe497155a64c88c6ea9ac926d84569cf014e1e501b0a6d5",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 132,
+        "summary": "462849/462848 sample frames; 462848 differing samples (output index range 0..462847); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 453248,
+        "firstUnequal": 0,
+        "lastUnequal": 453247,
+        "pre": 0,
+        "post": 453248,
+        "delta": 1,
+        "expectedFrames": 453248,
+        "actualFrames": 453249,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.0976
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          453247
+         ]
+        ],
+        "expectedSHA256": "5e2da719206adb1be07725e02969e0d6eed24438a9d36f6a5dd06d7f173b39ae",
+        "actualSHA256": "012de2555b6b269844a2853c6810b7562d1ac89ae48386e71e4379fddec0eedd",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 263,
+        "summary": "453249/453248 sample frames; 453248 differing samples (output index range 0..453247); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 380288,
+        "firstUnequal": 0,
+        "lastUnequal": 380287,
+        "pre": 0,
+        "post": 380288,
+        "delta": 1,
+        "expectedFrames": 380288,
+        "actualFrames": 380289,
+        "peakLRmax": [
+         0,
+         783
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.1591
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          380287
+         ]
+        ],
+        "expectedSHA256": "bb1d4f4c915f31824cadc4ccfa60253a9cb66fe66aaa21fe341775fcb8e084e2",
+        "actualSHA256": "245b17adb63a4b14a439abdecdce37ada03df49f8c5c93bdd4d393a8337319a7",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 301,
+        "summary": "380289/380288 sample frames; 380288 differing samples (output index range 0..380287); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": true
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[1000, 1960) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[6000, 12000) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[2000, 2040) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[4000, 4001) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[12345, 12346) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3001, 3961) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3039, 7999) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0",
+        "start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1",
+        "start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+        "start 3.039 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 958209,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 1
+     }
+    },
+    "summary": {
+     "layout": "mkv-hevc10-eac351",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": true,
+      "keptPicture": true,
+      "keptSound": true,
+      "starts": true,
+      "seeks": true,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra); start 3.039 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+      "16 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 7,
+      "measured": 8,
+      "total": 24
+     }
+    }
+   },
+   "mkv-hevc10-hdr10-eac351": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "4",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "hevc",
+       "audioCodec": "eac3",
+       "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.479990\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 5,
+      "startMs": 5485,
+      "endMs": 10525,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 5,
+       "1": 0
+      },
+      "zeroMs": -5
+     },
+     "channels": 6,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": true,
+       "unequalFrames": 0,
+       "firstUnequal": null,
+       "lastUnequal": null,
+       "pre": 0,
+       "post": 0,
+       "delta": 0,
+       "expectedFrames": 716289,
+       "actualFrames": 716289,
+       "peakLRmax": [
+        0,
+        0
+       ],
+       "rmsOverUnequal": [
+        0,
+        0
+       ],
+       "runCount": 0,
+       "firstRunsInclusive": [],
+       "expectedSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "actualSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "playerStartBehaviour": false,
+       "summary": "716289/716289 sample frames; 0 differing samples (output index range none); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": false
+      },
+      "soundOk": true,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 462848,
+        "firstUnequal": 0,
+        "lastUnequal": 462847,
+        "pre": 0,
+        "post": 462848,
+        "delta": 1,
+        "expectedFrames": 462848,
+        "actualFrames": 462849,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         343.4115
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          462847
+         ]
+        ],
+        "expectedSHA256": "6ed95364e23a974903b6079285880411dfe1ed9863ae7b4cb6b431d3a8e6901a",
+        "actualSHA256": "fa7bf90bfa07437ddfe497155a64c88c6ea9ac926d84569cf014e1e501b0a6d5",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 132,
+        "summary": "462849/462848 sample frames; 462848 differing samples (output index range 0..462847); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 453248,
+        "firstUnequal": 0,
+        "lastUnequal": 453247,
+        "pre": 0,
+        "post": 453248,
+        "delta": 1,
+        "expectedFrames": 453248,
+        "actualFrames": 453249,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.0976
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          453247
+         ]
+        ],
+        "expectedSHA256": "5e2da719206adb1be07725e02969e0d6eed24438a9d36f6a5dd06d7f173b39ae",
+        "actualSHA256": "012de2555b6b269844a2853c6810b7562d1ac89ae48386e71e4379fddec0eedd",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 263,
+        "summary": "453249/453248 sample frames; 453248 differing samples (output index range 0..453247); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 380288,
+        "firstUnequal": 0,
+        "lastUnequal": 380287,
+        "pre": 0,
+        "post": 380288,
+        "delta": 1,
+        "expectedFrames": 380288,
+        "actualFrames": 380289,
+        "peakLRmax": [
+         0,
+         783
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.1591
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          380287
+         ]
+        ],
+        "expectedSHA256": "bb1d4f4c915f31824cadc4ccfa60253a9cb66fe66aaa21fe341775fcb8e084e2",
+        "actualSHA256": "245b17adb63a4b14a439abdecdce37ada03df49f8c5c93bdd4d393a8337319a7",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 301,
+        "summary": "380289/380288 sample frames; 380288 differing samples (output index range 0..380287); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": true
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[1000, 1960) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[6000, 12000) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[2000, 2040) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[4000, 4001) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[12345, 12346) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3001, 3961) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3039, 7999) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0",
+        "start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1",
+        "start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+        "start 3.039 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 958209,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 1
+     }
+    },
+    "summary": {
+     "layout": "mkv-hevc10-hdr10-eac351",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": true,
+      "keptPicture": true,
+      "keptSound": true,
+      "starts": true,
+      "seeks": true,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra); start 3.039 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+      "16 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 7,
+      "measured": 8,
+      "total": 24
+     }
+    }
+   },
+   "mp4-hevc10-aac": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "2",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mp4",
+       "videoCodec": "hevc",
+       "audioCodec": "aac",
+       "trackLayout": "0 video hevc Main 10 10 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio aac LC 2 ch 48000 Hz tb 1/48000 at 0 ms plays",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520,9.480\n",
+     "form": "joint",
+     "cut": {
+      "videoAnchorMs": 0,
+      "startMs": 5480,
+      "endMs": 10520,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 0,
+       "1": 0
+      },
+      "zeroMs": 0
+     },
+     "channels": 2,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": false,
+       "unequalFrames": 1284,
+       "firstUnequal": 327067,
+       "lastUnequal": 718074,
+       "pre": 0,
+       "post": 1284,
+       "delta": 0,
+       "expectedFrames": 718080,
+       "actualFrames": 718080,
+       "peakLRmax": [
+        0,
+        3
+       ],
+       "rmsOverUnequal": [
+        0,
+        0.803
+       ],
+       "runCount": 884,
+       "firstRunsInclusive": [
+        [
+         327067,
+         327067
+        ],
+        [
+         327130,
+         327130
+        ],
+        [
+         327224,
+         327224
+        ],
+        [
+         327274,
+         327276
+        ],
+        [
+         327282,
+         327282
+        ],
+        [
+         327304,
+         327304
+        ],
+        [
+         327383,
+         327383
+        ],
+        [
+         327410,
+         327410
+        ],
+        [
+         327437,
+         327437
+        ],
+        [
+         327446,
+         327446
+        ],
+        [
+         327463,
+         327463
+        ],
+        [
+         327465,
+         327465
+        ],
+        [
+         327499,
+         327499
+        ],
+        [
+         327550,
+         327550
+        ],
+        [
+         327558,
+         327558
+        ],
+        [
+         327690,
+         327690
+        ]
+       ],
+       "expectedSHA256": "782f603716978e1988a4c1145f35973232c40dbb80fcfd1dfbb77ae17b96c140",
+       "actualSHA256": "c34d62d293d0802bdac1f240216e09e8575e5236b460d91cc3c872431543f1d6",
+       "playerStartBehaviour": false,
+       "leadingExtraSamples": null,
+       "leadingMissingSamples": null,
+       "summary": "718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": true
+      },
+      "soundOk": false,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 464636,
+        "firstUnequal": 0,
+        "lastUnequal": 464639,
+        "pre": 0,
+        "post": 464636,
+        "delta": 1,
+        "expectedFrames": 464640,
+        "actualFrames": 464641,
+        "peakLRmax": [
+         0,
+         6088
+        ],
+        "rmsOverUnequal": [
+         0,
+         450.3486
+        ],
+        "runCount": 5,
+        "firstRunsInclusive": [
+         [
+          0,
+          157254
+         ],
+         [
+          157256,
+          188054
+         ],
+         [
+          188056,
+          208454
+         ],
+         [
+          208456,
+          260454
+         ],
+         [
+          260456,
+          464639
+         ]
+        ],
+        "expectedSHA256": "9a91a4e6dbaa7eb42e054ea56540a7bd95057b23ab9e675739ec08130d776d39",
+        "actualSHA256": "a927f2d6c7c58ecc66cfdea6a3b8066043e8d8af327dc27cc870a268b7b2dc3e",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 1263,
+        "firstUnequal": 63684,
+        "lastUnequal": 455038,
+        "pre": 0,
+        "post": 1263,
+        "delta": 0,
+        "expectedFrames": 455040,
+        "actualFrames": 455040,
+        "peakLRmax": [
+         0,
+         3
+        ],
+        "rmsOverUnequal": [
+         0,
+         0.7976
+        ],
+        "runCount": 899,
+        "firstRunsInclusive": [
+         [
+          63684,
+          63684
+         ],
+         [
+          63796,
+          63796
+         ],
+         [
+          63799,
+          63799
+         ],
+         [
+          64045,
+          64045
+         ],
+         [
+          64090,
+          64090
+         ],
+         [
+          64118,
+          64118
+         ],
+         [
+          64184,
+          64184
+         ],
+         [
+          64200,
+          64200
+         ],
+         [
+          64231,
+          64231
+         ],
+         [
+          64234,
+          64236
+         ],
+         [
+          64242,
+          64242
+         ],
+         [
+          64283,
+          64283
+         ],
+         [
+          64406,
+          64406
+         ],
+         [
+          64419,
+          64419
+         ],
+         [
+          64458,
+          64458
+         ],
+         [
+          64510,
+          64510
+         ]
+        ],
+        "expectedSHA256": "05420746616e658cf4191d55cfbb67fd9da5af3000427ad5ac400bf392d6b03f",
+        "actualSHA256": "1f71d1b3c45c45d07da795d01f72f11f7ca2196b933ea7eda37333b3807fadb8",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 382076,
+        "firstUnequal": 0,
+        "lastUnequal": 382079,
+        "pre": 0,
+        "post": 382076,
+        "delta": 1,
+        "expectedFrames": 382080,
+        "actualFrames": 382081,
+        "peakLRmax": [
+         0,
+         1067
+        ],
+        "rmsOverUnequal": [
+         0,
+         452.8708
+        ],
+        "runCount": 5,
+        "firstRunsInclusive": [
+         [
+          0,
+          74694
+         ],
+         [
+          74696,
+          105494
+         ],
+         [
+          105496,
+          125894
+         ],
+         [
+          125896,
+          177894
+         ],
+         [
+          177896,
+          382079
+         ]
+        ],
+        "expectedSHA256": "472211fde43c84c164c4f7c04ff3e242cb010c6ae7985bf5dba6add1f45c773f",
+        "actualSHA256": "67fadf372c3df8c5657d72dc3231bc0593f42e3bc9aa86ce3c89445a61c4d933",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "382081/382080 sample frames; 382076 differing samples (output index range 0..382079); length delta +1"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": true
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0",
+        "start 5.280 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1",
+        "start 5.479 s: 455041/455040 sample frames; 455036 differing samples (output index range 0..455039); length delta +1",
+        "start 5.480 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0",
+        "start 6.000 s: 430081/430080 sample frames; 430076 differing samples (output index range 0..430079); length delta +1"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 960512,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 0
+     }
+    },
+    "summary": {
+     "layout": "mp4-hevc10-aac",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": false,
+      "keptPicture": true,
+      "keptSound": false,
+      "starts": false,
+      "seeks": true,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "straight cut sound: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0, peak difference 3 LSB",
+      "start 5.28 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1",
+      "start 5.48 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0",
+      "start 7.0 s: 382081/382080 sample frames; 382076 differing samples (output index range 0..382079); length delta +1",
+      "cut [5480, 10520) ms: straight cut: 718080/718080 sample frames; 1284 differing samples (output index range 327067..718074); length delta +0; start 5.280 s: 464641/464640 sample frames; 464636 differing samples (output index range 0..464639); length delta +1; start 5.479 s: 455041/455040 sample frames; 455036 differing samples (output index range 0..455039); length delta +1; start 5.480 s: 455040/455040 sample frames; 1263 differing samples (output index range 63684..455038); length delta +0; start 6.000 s: 430081/430080 sample frames; 430076 differing samples (output index range 0..430079); length delta +1",
+      "23 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 0,
+      "measured": 1,
+      "total": 24
+     }
+    }
+   },
+   "mp4-h264-eac351": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "4",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mp4",
+       "videoCodec": "h264",
+       "audioCodec": "eac3",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.479990\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 0,
+      "startMs": 5480,
+      "endMs": 10520,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 0,
+       "1": 0
+      },
+      "zeroMs": 0
+     },
+     "channels": 6,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": true,
+       "unequalFrames": 0,
+       "firstUnequal": null,
+       "lastUnequal": null,
+       "pre": 0,
+       "post": 0,
+       "delta": 0,
+       "expectedFrames": 717824,
+       "actualFrames": 717824,
+       "peakLRmax": [
+        0,
+        0
+       ],
+       "rmsOverUnequal": [
+        0,
+        0
+       ],
+       "runCount": 0,
+       "firstRunsInclusive": [],
+       "expectedSHA256": "98846ece3091e30bd38e0ad97a42f132a7881d896bce21601e82fcfac3e9d39b",
+       "actualSHA256": "98846ece3091e30bd38e0ad97a42f132a7881d896bce21601e82fcfac3e9d39b",
+       "playerStartBehaviour": false,
+       "summary": "717824/717824 sample frames; 0 differing samples (output index range none); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": false
+      },
+      "soundOk": true,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 464384,
+        "firstUnequal": 0,
+        "lastUnequal": 464383,
+        "pre": 0,
+        "post": 464384,
+        "delta": 1,
+        "expectedFrames": 464384,
+        "actualFrames": 464385,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         343.4516
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          464383
+         ]
+        ],
+        "expectedSHA256": "e1bae9ef106a5bba36354abb3c8dafcdc16a0f1fe1519028b5db80773a4ccc30",
+        "actualSHA256": "9b040f5359c00d2322ae9392dc0186a114acb05e51aac0c2fe2916c8759a389a",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 132,
+        "summary": "464385/464384 sample frames; 464384 differing samples (output index range 0..464383); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 454784,
+        "firstUnequal": 0,
+        "lastUnequal": 454783,
+        "pre": 0,
+        "post": 454784,
+        "delta": 1,
+        "expectedFrames": 454784,
+        "actualFrames": 454785,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.1326
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          454783
+         ]
+        ],
+        "expectedSHA256": "7bb3e752e18aac08377acea7331bbe48efbbd784a54ebdcaef71410ee5f0ae38",
+        "actualSHA256": "4d77f244e864949b84addac071417a7ede167d2b48e2004e9b0e3c62d3071d42",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 263,
+        "summary": "454785/454784 sample frames; 454784 differing samples (output index range 0..454783); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": true,
+        "unequalFrames": 0,
+        "firstUnequal": null,
+        "lastUnequal": null,
+        "pre": 0,
+        "post": 0,
+        "delta": 0,
+        "expectedFrames": 381824,
+        "actualFrames": 381824,
+        "peakLRmax": [
+         0,
+         0
+        ],
+        "rmsOverUnequal": [
+         0,
+         0
+        ],
+        "runCount": 0,
+        "firstRunsInclusive": [],
+        "expectedSHA256": "67b83a809e6acf03c15ee9beb032e70ec9891ad970abd5cf10518cdc8bf06295",
+        "actualSHA256": "67b83a809e6acf03c15ee9beb032e70ec9891ad970abd5cf10518cdc8bf06295",
+        "playerStartBehaviour": false,
+        "summary": "381824/381824 sample frames; 0 differing samples (output index range none); length delta +0"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": true
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[1000, 1960) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[6000, 12000) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[2000, 2040) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[4000, 4001) ms",
+       "exact": false,
+       "deviations": [
+        "start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra)",
+        "start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra)"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 959744,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 0
+     }
+    },
+    "summary": {
+     "layout": "mp4-h264-eac351",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": true,
+      "keptPicture": true,
+      "keptSound": true,
+      "starts": true,
+      "seeks": true,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra)",
+      "19 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 4,
+      "measured": 5,
+      "total": 24
+     }
+    }
+   },
+   "mkv-h264-flac": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "4",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "h264",
+       "audioCodec": "flac",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio flac 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.479990\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 0,
+      "startMs": 5480,
+      "endMs": 10520,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 0,
+       "1": 0
+      },
+      "zeroMs": 0
+     },
+     "channels": 2,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": true,
+       "unequalFrames": 0,
+       "firstUnequal": null,
+       "lastUnequal": null,
+       "pre": 0,
+       "post": 0,
+       "delta": 0,
+       "expectedFrames": 718080,
+       "actualFrames": 718080,
+       "peakLRmax": [
+        0,
+        0
+       ],
+       "rmsOverUnequal": [
+        0,
+        0
+       ],
+       "runCount": 0,
+       "firstRunsInclusive": [],
+       "expectedSHA256": "4f0890a116a2084678286bff3ff43f363b3427fcaf0858b28b3b36c6c0dab6c0",
+       "actualSHA256": "4f0890a116a2084678286bff3ff43f363b3427fcaf0858b28b3b36c6c0dab6c0",
+       "playerStartBehaviour": false,
+       "summary": "718080/718080 sample frames; 0 differing samples (output index range none); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": true
+      },
+      "soundOk": true,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 464640,
+        "firstUnequal": 0,
+        "lastUnequal": 464639,
+        "pre": 0,
+        "post": 464640,
+        "delta": 1,
+        "expectedFrames": 464640,
+        "actualFrames": 464641,
+        "peakLRmax": [
+         0,
+         7632
+        ],
+        "rmsOverUnequal": [
+         0,
+         450.5397
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          464639
+         ]
+        ],
+        "expectedSHA256": "4eb42db96b79bb663d472175352de8fb4dee48102f3ed58c7aaba2116641b861",
+        "actualSHA256": "e447a27a2632de1ffd8eea33f0d2ac9dcad31ae7ecc0fffd90e54c6228d23243",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 132,
+        "summary": "464641/464640 sample frames; 464640 differing samples (output index range 0..464639); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 455040,
+        "firstUnequal": 0,
+        "lastUnequal": 455039,
+        "pre": 0,
+        "post": 455040,
+        "delta": 1,
+        "expectedFrames": 455040,
+        "actualFrames": 455041,
+        "peakLRmax": [
+         0,
+         7632
+        ],
+        "rmsOverUnequal": [
+         0,
+         453.1483
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          455039
+         ]
+        ],
+        "expectedSHA256": "649bedf30464966a1e50f5a6d653acad8568a199d3f2dc93bd2801f759158158",
+        "actualSHA256": "44bc0c48fd480e413c9caa227dab7557eafd5a67a1c3eafb59d23ea9d6880bab",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 263,
+        "summary": "455041/455040 sample frames; 455040 differing samples (output index range 0..455039); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": true,
+        "unequalFrames": 0,
+        "firstUnequal": null,
+        "lastUnequal": null,
+        "pre": 0,
+        "post": 0,
+        "delta": 0,
+        "expectedFrames": 382080,
+        "actualFrames": 382080,
+        "peakLRmax": [
+         0,
+         0
+        ],
+        "rmsOverUnequal": [
+         0,
+         0
+        ],
+        "runCount": 0,
+        "firstRunsInclusive": [],
+        "expectedSHA256": "7f92f401cf9d399e662b06036078d60596d61c874a81bccd720812cb8f0dc400",
+        "actualSHA256": "7f92f401cf9d399e662b06036078d60596d61c874a81bccd720812cb8f0dc400",
+        "playerStartBehaviour": false,
+        "summary": "382080/382080 sample frames; 0 differing samples (output index range none); length delta +0"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [],
+       "subtitleClears": [],
+       "subtitleTracks": [],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": null,
+        "sid": false
+       }
+      ],
+      "ok": true
+     },
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[1000, 1960) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[6000, 12000) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[2000, 2040) ms",
+       "exact": false,
+       "deviations": [
+        "start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra)"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 960000,
+      "subtitles": [],
+      "subtitleClears": [],
+      "subtitleTracks": [],
+      "audioTracks": [
+       1
+      ],
+      "lead": 0
+     }
+    },
+    "summary": {
+     "layout": "mkv-h264-flac",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": true,
+      "keptPicture": true,
+      "keptSound": true,
+      "starts": true,
+      "seeks": true,
+      "exact": false,
+      "sweep": false
+     },
+     "deviations": [
+      "cut [2000, 2040) ms: start 2.000 s: 862081/862080 sample frames; 862080 differing samples (output index range 0..862079); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra)",
+      "20 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 3,
+      "measured": 4,
+      "total": 24
+     }
+    }
+   },
+   "mkv-h264-opus": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "2",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "h264",
+       "audioCodec": "opus",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio opus 2 ch 48000 Hz tb 1/1000 at 0 ms plays",
+       "durationMs": 20008
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520,9.488\n",
+     "form": "joint",
+     "unmeasured": "uncut control is not the fixture tone on a whole-sample clock (offset 0.096, amplitude 0.250)"
+    },
+    "summary": {
+     "layout": "mkv-h264-opus",
+     "result": "unmeasured",
+     "why": "uncut control is not the fixture tone on a whole-sample clock (offset 0.096, amplitude 0.250)"
+    }
+   },
+   "mkv-h264-eac351+aac-srt": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "5",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "h264",
+       "audioCodec": "eac3",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays, 2 audio aac LC 2 ch 48000 Hz tb 1/1000 at 0 ms, 3 subtitle subrip default",
+       "durationMs": 20021
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video,codec=h264\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.501002\n!new_stream\n!delay_open,media_type=audio,codec=eac3\n!track_meta,flags=default\n!delay_open,media_type=audio,codec=aac\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.500990\n!new_stream\n!delay_open,media_type=sub,codec=subrip\n!track_meta,flags=default\n%n%<origin>/Cleanyfin/play/<slot>/subtitle-3.srt?t=<ticket>,0,14.981\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 21,
+      "startMs": 5501,
+      "endMs": 10541,
+      "durationMs": 20021,
+      "anchors": {
+       "0": 21,
+       "1": 16,
+       "2": 0
+      },
+      "zeroMs": -21
+     },
+     "channels": 6,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": true,
+       "unequalFrames": 0,
+       "firstUnequal": null,
+       "lastUnequal": null,
+       "pre": 0,
+       "post": 0,
+       "delta": 0,
+       "expectedFrames": 716289,
+       "actualFrames": 716289,
+       "peakLRmax": [
+        0,
+        0
+       ],
+       "rmsOverUnequal": [
+        0,
+        0
+       ],
+       "runCount": 0,
+       "firstRunsInclusive": [],
+       "expectedSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "actualSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "playerStartBehaviour": false,
+       "summary": "716289/716289 sample frames; 0 differing samples (output index range none); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": false
+      },
+      "soundOk": true,
+      "subtitles": [
+       "KEPT ONE @1.000",
+       "KEPT TWO @9.960"
+      ],
+      "subtitleClears": [
+       2.0,
+       10.96
+      ],
+      "subtitleTracks": [
+       {
+        "id": 1,
+        "selected": true,
+        "default": true,
+        "codec": "subrip",
+        "forced": false
+       }
+      ],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 462848,
+        "firstUnequal": 0,
+        "lastUnequal": 462847,
+        "pre": 0,
+        "post": 462848,
+        "delta": 1,
+        "expectedFrames": 462848,
+        "actualFrames": 462849,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         343.4115
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          462847
+         ]
+        ],
+        "expectedSHA256": "6ed95364e23a974903b6079285880411dfe1ed9863ae7b4cb6b431d3a8e6901a",
+        "actualSHA256": "fa7bf90bfa07437ddfe497155a64c88c6ea9ac926d84569cf014e1e501b0a6d5",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 132,
+        "summary": "462849/462848 sample frames; 462848 differing samples (output index range 0..462847); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "codec": "subrip",
+         "default": true,
+         "forced": false,
+         "selected": true,
+         "id": 1
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 453248,
+        "firstUnequal": 0,
+        "lastUnequal": 453247,
+        "pre": 0,
+        "post": 453248,
+        "delta": 1,
+        "expectedFrames": 453248,
+        "actualFrames": 453249,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.0976
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          453247
+         ]
+        ],
+        "expectedSHA256": "5e2da719206adb1be07725e02969e0d6eed24438a9d36f6a5dd06d7f173b39ae",
+        "actualSHA256": "012de2555b6b269844a2853c6810b7562d1ac89ae48386e71e4379fddec0eedd",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 263,
+        "summary": "453249/453248 sample frames; 453248 differing samples (output index range 0..453247); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "forced": false,
+         "default": true,
+         "codec": "subrip",
+         "selected": true,
+         "id": 1
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 380288,
+        "firstUnequal": 0,
+        "lastUnequal": 380287,
+        "pre": 0,
+        "post": 380288,
+        "delta": 1,
+        "expectedFrames": 380288,
+        "actualFrames": 380289,
+        "peakLRmax": [
+         0,
+         783
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.1591
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          380287
+         ]
+        ],
+        "expectedSHA256": "bb1d4f4c915f31824cadc4ccfa60253a9cb66fe66aaa21fe341775fcb8e084e2",
+        "actualSHA256": "245b17adb63a4b14a439abdecdce37ada03df49f8c5c93bdd4d393a8337319a7",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 301,
+        "summary": "380289/380288 sample frames; 380288 differing samples (output index range 0..380287); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "selected": true,
+         "default": true,
+         "codec": "subrip",
+         "forced": false,
+         "id": 1
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       }
+      ],
+      "ok": true
+     },
+     "subtitleRoutes": {
+      "tracks": 1,
+      "ticketScoped": true,
+      "noStore": true,
+      "nativeSubtitleRefused": true
+     },
+     "subtitleTakes": [
+      {
+       "control": {
+        "subtitles": [
+         "KEPT ONE @1.000",
+         "SPANS CUT START @5.000",
+         "MARKED LINE @7.000",
+         "SPANS CUT END @10.000",
+         "KEPT TWO @15.000"
+        ],
+        "subtitleTracks": [
+         {
+          "forced": false,
+          "id": 1,
+          "codec": "subrip",
+          "selected": true,
+          "default": true
+         }
+        ],
+        "subtitleClears": [
+         2.0,
+         6.0,
+         8.0,
+         11.0,
+         16.0
+        ]
+       },
+       "straight": {
+        "subtitles": [
+         "KEPT ONE @1.000",
+         "KEPT TWO @9.960"
+        ],
+        "subtitleTracks": [
+         {
+          "id": 1,
+          "selected": true,
+          "default": true,
+          "codec": "subrip",
+          "forced": false
+         }
+        ],
+        "subtitleClears": [
+         2.0,
+         10.96
+        ]
+       },
+       "starts": [
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "codec": "subrip",
+           "default": true,
+           "forced": false,
+           "selected": true,
+           "id": 1
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        },
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "forced": false,
+           "default": true,
+           "codec": "subrip",
+           "selected": true,
+           "id": 1
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        },
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "selected": true,
+           "default": true,
+           "codec": "subrip",
+           "forced": false,
+           "id": 1
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        }
+       ],
+       "subtitleSeek": {
+        "landings": [
+         {
+          "target": null,
+          "expected": 0,
+          "landed": 0,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 1.24,
+          "expected": 31,
+          "landed": 31,
+          "marked": false,
+          "subtitle": "KEPT ONE",
+          "sid": 1
+         },
+         {
+          "target": 2.24,
+          "expected": 56,
+          "landed": 56,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.44,
+          "expected": 136,
+          "landed": 136,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.48,
+          "expected": 263,
+          "landed": 263,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.68,
+          "expected": 268,
+          "landed": 268,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 10.12,
+          "expected": 379,
+          "landed": 379,
+          "marked": false,
+          "subtitle": "KEPT TWO",
+          "sid": 1
+         },
+         {
+          "target": 11.2,
+          "expected": 406,
+          "landed": 406,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 1.56,
+          "expected": 39,
+          "landed": 39,
+          "marked": false,
+          "subtitle": "KEPT ONE",
+          "sid": 1
+         }
+        ],
+        "ok": true
+       },
+       "jointVerdict": {
+        "markedPicture": true,
+        "markedSound": true,
+        "keptPicture": true,
+        "keptSound": true,
+        "starts": true,
+        "seeks": true,
+        "exact": true
+       },
+       "straightPicture": {
+        "frames": 374,
+        "unreadable": 0,
+        "markedCount": 0,
+        "missing": 0,
+        "duplicates": 0,
+        "monotonic": true,
+        "ok": true,
+        "firstFrame": 0,
+        "expectedFirstFrame": 0
+       },
+       "straightSound": {
+        "exact": true,
+        "unequalFrames": 0,
+        "firstUnequal": null,
+        "lastUnequal": null,
+        "pre": 0,
+        "post": 0,
+        "delta": 0,
+        "expectedFrames": 716289,
+        "actualFrames": 716289,
+        "peakLRmax": [
+         0,
+         0
+        ],
+        "rmsOverUnequal": [
+         0,
+         0
+        ],
+        "runCount": 0,
+        "firstRunsInclusive": [],
+        "expectedSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+        "actualSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+        "playerStartBehaviour": false,
+        "summary": "716289/716289 sample frames; 0 differing samples (output index range none); length delta +0"
+       }
+      }
+     ],
+     "subtitleChecks": [],
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[1000, 1960) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[6000, 12000) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[2000, 2040) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[4000, 4001) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[12345, 12346) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3001, 3961) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[3039, 7999) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0",
+        "start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1",
+        "start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+        "start 3.039 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 958209,
+      "subtitles": [
+       "KEPT ONE @1.000",
+       "SPANS CUT START @5.000",
+       "MARKED LINE @7.000",
+       "SPANS CUT END @10.000",
+       "KEPT TWO @15.000"
+      ],
+      "subtitleClears": [
+       2.0,
+       6.0,
+       8.0,
+       11.0,
+       16.0
+      ],
+      "subtitleTracks": [
+       {
+        "forced": false,
+        "id": 1,
+        "codec": "subrip",
+        "selected": true,
+        "default": true
+       }
+      ],
+      "audioTracks": [
+       1
+      ],
+      "lead": 1
+     }
+    },
+    "summary": {
+     "layout": "mkv-h264-eac351+aac-srt",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": true,
+      "keptPicture": true,
+      "keptSound": true,
+      "starts": true,
+      "seeks": true,
+      "exact": false,
+      "subtitles": true,
+      "sweep": false
+     },
+     "deviations": [
+      "cut [3039, 7999) ms: straight cut: 720129/720129 sample frames; 48 differing samples (output index range 145873..145920); length delta +0; start 2.839 s: 583809/583808 sample frames; 583808 differing samples (output index range 0..583807); length delta +1; start 3.038 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra); start 3.039 s: 574209/574208 sample frames; 574208 differing samples (output index range 0..574207); length delta +1 (1 extra leading; preceding kept: False; original at that picture: None extra)",
+      "16 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 7,
+      "measured": 8,
+      "total": 24
+     }
+    }
+   },
+   "mkv-h264-eac351-ass+srt": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "5",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mkv",
+       "videoCodec": "h264",
+       "audioCodec": "eac3",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays, 2 subtitle ass forced matches-audio, 3 subtitle subrip",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video,codec=h264\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio,codec=eac3\n!track_meta,flags=default,lang=%3%eng\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.479990\n!new_stream\n!delay_open,media_type=sub,codec=ass\n!track_meta,flags=forced,lang=%3%eng\n%n%<origin>/Cleanyfin/play/<slot>/subtitle-2.ass?t=<ticket>,0,14.960\n!new_stream\n!delay_open,media_type=sub,codec=subrip\n!track_meta,lang=%3%deu\n%n%<origin>/Cleanyfin/play/<slot>/subtitle-3.srt?t=<ticket>,0,14.960\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 5,
+      "startMs": 5485,
+      "endMs": 10525,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 5,
+       "1": 0
+      },
+      "zeroMs": -5
+     },
+     "channels": 6,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": false,
+       "unequalFrames": 453120,
+       "firstUnequal": 263041,
+       "lastUnequal": 716160,
+       "pre": 0,
+       "post": 453120,
+       "delta": -128,
+       "expectedFrames": 716289,
+       "actualFrames": 716161,
+       "peakLRmax": [
+        0,
+        12714
+       ],
+       "rmsOverUnequal": [
+        0,
+        5504.505
+       ],
+       "runCount": 1,
+       "firstRunsInclusive": [
+        [
+         263041,
+         716160
+        ]
+       ],
+       "expectedSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+       "actualSHA256": "a037a296ddba9b3b7a4ca1bb810d3674297c9039beeebb1e3e40a8d55015abb1",
+       "playerStartBehaviour": false,
+       "leadingExtraSamples": null,
+       "leadingMissingSamples": null,
+       "summary": "716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": false
+      },
+      "soundOk": false,
+      "subtitles": [
+       "KEPT ONE @1.000",
+       "KEPT TWO @9.960"
+      ],
+      "subtitleClears": [
+       2.0,
+       10.96
+      ],
+      "subtitleTracks": [
+       {
+        "codec": "ass",
+        "default": false,
+        "selected": true,
+        "forced": true,
+        "id": 1
+       },
+       {
+        "codec": "subrip",
+        "default": false,
+        "selected": false,
+        "forced": false,
+        "id": 2
+       }
+      ],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 462721,
+        "firstUnequal": 0,
+        "lastUnequal": 462720,
+        "pre": 0,
+        "post": 462721,
+        "delta": -127,
+        "expectedFrames": 462848,
+        "actualFrames": 462721,
+        "peakLRmax": [
+         0,
+         13228
+        ],
+        "rmsOverUnequal": [
+         0,
+         5687.0721
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          462720
+         ]
+        ],
+        "expectedSHA256": "6ed95364e23a974903b6079285880411dfe1ed9863ae7b4cb6b431d3a8e6901a",
+        "actualSHA256": "5db16378e9811f94a0ade8219648eb9e21327026dcd4080bc6f8f27990379384",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "selected": true,
+         "id": 1,
+         "codec": "ass",
+         "forced": true,
+         "default": false
+        },
+        {
+         "selected": false,
+         "id": 2,
+         "codec": "subrip",
+         "forced": false,
+         "default": false
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 453121,
+        "firstUnequal": 0,
+        "lastUnequal": 453120,
+        "pre": 0,
+        "post": 453121,
+        "delta": -127,
+        "expectedFrames": 453248,
+        "actualFrames": 453121,
+        "peakLRmax": [
+         0,
+         13228
+        ],
+        "rmsOverUnequal": [
+         0,
+         5746.8843
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          453120
+         ]
+        ],
+        "expectedSHA256": "5e2da719206adb1be07725e02969e0d6eed24438a9d36f6a5dd06d7f173b39ae",
+        "actualSHA256": "72e17707e0d99e16671cbba9bcea1e1ce6f3948a0f7fef9e39e9da52087690bc",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": false,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "selected": true,
+         "codec": "ass",
+         "id": 1,
+         "forced": true,
+         "default": false
+        },
+        {
+         "selected": false,
+         "codec": "subrip",
+         "id": 2,
+         "forced": false,
+         "default": false
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 380288,
+        "firstUnequal": 0,
+        "lastUnequal": 380287,
+        "pre": 0,
+        "post": 380288,
+        "delta": 1,
+        "expectedFrames": 380288,
+        "actualFrames": 380289,
+        "peakLRmax": [
+         0,
+         783
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.1591
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          380287
+         ]
+        ],
+        "expectedSHA256": "bb1d4f4c915f31824cadc4ccfa60253a9cb66fe66aaa21fe341775fcb8e084e2",
+        "actualSHA256": "245b17adb63a4b14a439abdecdce37ada03df49f8c5c93bdd4d393a8337319a7",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 301,
+        "summary": "380289/380288 sample frames; 380288 differing samples (output index range 0..380287); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "selected": true,
+         "codec": "ass",
+         "id": 1,
+         "default": false,
+         "forced": true
+        },
+        {
+         "selected": false,
+         "codec": "subrip",
+         "id": 2,
+         "default": false,
+         "forced": false
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       }
+      ],
+      "ok": true
+     },
+     "subtitleRoutes": {
+      "tracks": 2,
+      "ticketScoped": true,
+      "noStore": true,
+      "nativeSubtitleRefused": true
+     },
+     "subtitleTakes": [
+      {
+       "control": {
+        "subtitles": [
+         "KEPT ONE @1.000",
+         "SPANS CUT START @5.000",
+         "MARKED LINE @7.000",
+         "SPANS CUT END @10.000",
+         "KEPT TWO @15.000"
+        ],
+        "subtitleTracks": [
+         {
+          "default": false,
+          "codec": "ass",
+          "forced": true,
+          "selected": true,
+          "id": 1
+         },
+         {
+          "default": false,
+          "codec": "subrip",
+          "forced": false,
+          "selected": false,
+          "id": 2
+         }
+        ],
+        "subtitleClears": [
+         2.0,
+         6.0,
+         8.0,
+         11.0,
+         16.0
+        ]
+       },
+       "straight": {
+        "subtitles": [
+         "KEPT ONE @1.000",
+         "KEPT TWO @9.960"
+        ],
+        "subtitleTracks": [
+         {
+          "codec": "ass",
+          "default": false,
+          "selected": true,
+          "forced": true,
+          "id": 1
+         },
+         {
+          "codec": "subrip",
+          "default": false,
+          "selected": false,
+          "forced": false,
+          "id": 2
+         }
+        ],
+        "subtitleClears": [
+         2.0,
+         10.96
+        ]
+       },
+       "starts": [
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "selected": true,
+           "id": 1,
+           "codec": "ass",
+           "forced": true,
+           "default": false
+          },
+          {
+           "selected": false,
+           "id": 2,
+           "codec": "subrip",
+           "forced": false,
+           "default": false
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        },
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "selected": true,
+           "codec": "ass",
+           "id": 1,
+           "forced": true,
+           "default": false
+          },
+          {
+           "selected": false,
+           "codec": "subrip",
+           "id": 2,
+           "forced": false,
+           "default": false
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        },
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "selected": true,
+           "codec": "ass",
+           "id": 1,
+           "default": false,
+           "forced": true
+          },
+          {
+           "selected": false,
+           "codec": "subrip",
+           "id": 2,
+           "default": false,
+           "forced": false
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        }
+       ],
+       "subtitleSeek": {
+        "landings": [
+         {
+          "target": null,
+          "expected": 0,
+          "landed": 0,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 1.24,
+          "expected": 31,
+          "landed": 31,
+          "marked": false,
+          "subtitle": "KEPT ONE",
+          "sid": 1
+         },
+         {
+          "target": 2.24,
+          "expected": 56,
+          "landed": 56,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.44,
+          "expected": 136,
+          "landed": 136,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.48,
+          "expected": 263,
+          "landed": 263,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.68,
+          "expected": 268,
+          "landed": 268,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 10.12,
+          "expected": 379,
+          "landed": 379,
+          "marked": false,
+          "subtitle": "KEPT TWO",
+          "sid": 1
+         },
+         {
+          "target": 11.2,
+          "expected": 406,
+          "landed": 406,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 1.56,
+          "expected": 39,
+          "landed": 39,
+          "marked": false,
+          "subtitle": "KEPT ONE",
+          "sid": 1
+         }
+        ],
+        "ok": true
+       },
+       "jointVerdict": {
+        "markedPicture": true,
+        "markedSound": false,
+        "keptPicture": true,
+        "keptSound": false,
+        "starts": false,
+        "seeks": true,
+        "exact": false
+       },
+       "straightPicture": {
+        "frames": 374,
+        "unreadable": 0,
+        "markedCount": 0,
+        "missing": 0,
+        "duplicates": 0,
+        "monotonic": true,
+        "ok": true,
+        "firstFrame": 0,
+        "expectedFirstFrame": 0
+       },
+       "straightSound": {
+        "exact": false,
+        "unequalFrames": 453120,
+        "firstUnequal": 263041,
+        "lastUnequal": 716160,
+        "pre": 0,
+        "post": 453120,
+        "delta": -128,
+        "expectedFrames": 716289,
+        "actualFrames": 716161,
+        "peakLRmax": [
+         0,
+         12714
+        ],
+        "rmsOverUnequal": [
+         0,
+         5504.505
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          263041,
+          716160
+         ]
+        ],
+        "expectedSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+        "actualSHA256": "a037a296ddba9b3b7a4ca1bb810d3674297c9039beeebb1e3e40a8d55015abb1",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128"
+       }
+      },
+      {
+       "control": {
+        "subtitles": [
+         "ALT KEPT ONE @1.000",
+         "TOUCHES CUT START @4.800",
+         "TOUCHES CUT END @10.520",
+         "ALT KEPT TWO @15.000"
+        ],
+        "subtitleTracks": [
+         {
+          "default": false,
+          "codec": "ass",
+          "id": 1,
+          "forced": true,
+          "selected": false
+         },
+         {
+          "default": false,
+          "codec": "subrip",
+          "id": 2,
+          "forced": false,
+          "selected": true
+         }
+        ],
+        "subtitleClears": [
+         2.0,
+         5.48,
+         11.2,
+         16.0
+        ]
+       },
+       "straight": {
+        "subtitles": [
+         "ALT KEPT ONE @1.000",
+         "ALT KEPT TWO @9.960"
+        ],
+        "subtitleTracks": [
+         {
+          "codec": "ass",
+          "forced": true,
+          "id": 1,
+          "selected": false,
+          "default": false
+         },
+         {
+          "codec": "subrip",
+          "forced": false,
+          "id": 2,
+          "selected": true,
+          "default": false
+         }
+        ],
+        "subtitleClears": [
+         2.0,
+         10.96
+        ]
+       },
+       "starts": [
+        {
+         "subtitles": [
+          "ALT KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "selected": false,
+           "id": 1,
+           "codec": "ass",
+           "forced": true,
+           "default": false
+          },
+          {
+           "selected": true,
+           "id": 2,
+           "codec": "subrip",
+           "forced": false,
+           "default": false
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        },
+        {
+         "subtitles": [
+          "ALT KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "id": 1,
+           "codec": "ass",
+           "forced": true,
+           "default": false,
+           "selected": false
+          },
+          {
+           "id": 2,
+           "codec": "subrip",
+           "forced": false,
+           "default": false,
+           "selected": true
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        },
+        {
+         "subtitles": [
+          "ALT KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "id": 1,
+           "selected": false,
+           "default": false,
+           "codec": "ass",
+           "forced": true
+          },
+          {
+           "id": 2,
+           "selected": true,
+           "default": false,
+           "codec": "subrip",
+           "forced": false
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        }
+       ],
+       "subtitleSeek": {
+        "landings": [
+         {
+          "target": null,
+          "expected": 0,
+          "landed": 0,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 1.24,
+          "expected": 31,
+          "landed": 31,
+          "marked": false,
+          "subtitle": "ALT KEPT ONE",
+          "sid": 2
+         },
+         {
+          "target": 2.24,
+          "expected": 56,
+          "landed": 56,
+          "marked": false,
+          "subtitle": "",
+          "sid": 2
+         },
+         {
+          "target": 5.44,
+          "expected": 136,
+          "landed": 136,
+          "marked": false,
+          "subtitle": "",
+          "sid": 2
+         },
+         {
+          "target": 5.48,
+          "expected": 263,
+          "landed": 263,
+          "marked": false,
+          "subtitle": "",
+          "sid": 2
+         },
+         {
+          "target": 5.68,
+          "expected": 268,
+          "landed": 268,
+          "marked": false,
+          "subtitle": "",
+          "sid": 2
+         },
+         {
+          "target": 10.12,
+          "expected": 379,
+          "landed": 379,
+          "marked": false,
+          "subtitle": "ALT KEPT TWO",
+          "sid": 2
+         },
+         {
+          "target": 11.2,
+          "expected": 406,
+          "landed": 406,
+          "marked": false,
+          "subtitle": "",
+          "sid": 2
+         },
+         {
+          "target": 1.56,
+          "expected": 39,
+          "landed": 39,
+          "marked": false,
+          "subtitle": "ALT KEPT ONE",
+          "sid": 2
+         }
+        ],
+        "ok": true
+       },
+       "jointVerdict": {
+        "markedPicture": true,
+        "markedSound": false,
+        "keptPicture": true,
+        "keptSound": false,
+        "starts": false,
+        "seeks": true,
+        "exact": false
+       },
+       "straightPicture": {
+        "frames": 374,
+        "unreadable": 0,
+        "markedCount": 0,
+        "missing": 0,
+        "duplicates": 0,
+        "monotonic": true,
+        "ok": true,
+        "firstFrame": 0,
+        "expectedFirstFrame": 0
+       },
+       "straightSound": {
+        "exact": false,
+        "unequalFrames": 453120,
+        "firstUnequal": 263041,
+        "lastUnequal": 716160,
+        "pre": 0,
+        "post": 453120,
+        "delta": -128,
+        "expectedFrames": 716289,
+        "actualFrames": 716161,
+        "peakLRmax": [
+         0,
+         12714
+        ],
+        "rmsOverUnequal": [
+         0,
+         5504.505
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          263041,
+          716160
+         ]
+        ],
+        "expectedSHA256": "80d349e66c6cba743bf69583ed7f5a0cdd67fcf8d03a155c18f8b895d76c8434",
+        "actualSHA256": "a037a296ddba9b3b7a4ca1bb810d3674297c9039beeebb1e3e40a8d55015abb1",
+        "playerStartBehaviour": false,
+        "leadingExtraSamples": null,
+        "leadingMissingSamples": null,
+        "summary": "716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128"
+       }
+      }
+     ],
+     "subtitleChecks": [
+      "track 1: selected-track picture/sound was not exact",
+      "track 2: selected-track picture/sound was not exact"
+     ],
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": false,
+       "deviations": [
+        "straight cut: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128",
+        "start 5.280 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127",
+        "start 5.479 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127",
+        "start 5.480 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 958209,
+      "subtitles": [
+       "KEPT ONE @1.000",
+       "SPANS CUT START @5.000",
+       "MARKED LINE @7.000",
+       "SPANS CUT END @10.000",
+       "KEPT TWO @15.000"
+      ],
+      "subtitleClears": [
+       2.0,
+       6.0,
+       8.0,
+       11.0,
+       16.0
+      ],
+      "subtitleTracks": [
+       {
+        "default": false,
+        "codec": "ass",
+        "forced": true,
+        "selected": true,
+        "id": 1
+       },
+       {
+        "default": false,
+        "codec": "subrip",
+        "forced": false,
+        "selected": false,
+        "id": 2
+       }
+      ],
+      "audioTracks": [
+       1
+      ],
+      "lead": 1
+     }
+    },
+    "summary": {
+     "layout": "mkv-h264-eac351-ass+srt",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": false,
+      "keptPicture": true,
+      "keptSound": false,
+      "starts": false,
+      "seeks": true,
+      "exact": false,
+      "subtitles": false,
+      "sweep": false
+     },
+     "deviations": [
+      "straight cut sound: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128, peak difference 12714 LSB",
+      "start 5.28 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127",
+      "start 5.48 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127",
+      "track 1: selected-track picture/sound was not exact",
+      "track 2: selected-track picture/sound was not exact",
+      "cut [5480, 10520) ms: straight cut: 716161/716289 sample frames; 453120 differing samples (output index range 263041..716160); length delta -128; start 5.280 s: 462721/462848 sample frames; 462721 differing samples (output index range 0..462720); length delta -127; start 5.479 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127; start 5.480 s: 453121/453248 sample frames; 453121 differing samples (output index range 0..453120); length delta -127",
+      "23 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 0,
+      "measured": 1,
+      "total": 24
+     }
+    }
+   },
+   "mp4-h264-eac351-mov_text": {
+    "result": {
+     "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "5",
+      "appId": "mpv",
+      "appVersion": "0.40.0",
+      "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+      "backend": "mpv",
+      "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84",
+      "source": {
+       "container": "mp4",
+       "videoCodec": "h264",
+       "audioCodec": "eac3",
+       "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays, 2 subtitle mov_text default",
+       "durationMs": 20000
+      }
+     },
+     "audioIndex": 1,
+     "projectedAudioIndex": 1,
+     "edl": "# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video,codec=h264\n!track_meta,lang=%3%und\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.479998\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.519998,9.480002\n!new_stream\n!delay_open,media_type=audio,codec=eac3\n!track_meta,flags=default,lang=%3%und\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,0.000,5.480010\n%n%<origin>/Cleanyfin/play/<slot>/source?t=<ticket>,10.520010,9.479990\n!new_stream\n!delay_open,media_type=sub,codec=subrip\n!track_meta,flags=default,lang=%3%und\n%n%<origin>/Cleanyfin/play/<slot>/subtitle-2.srt?t=<ticket>,0,14.960\n",
+     "form": "split",
+     "cut": {
+      "videoAnchorMs": 0,
+      "startMs": 5480,
+      "endMs": 10520,
+      "durationMs": 20000,
+      "anchors": {
+       "0": 0,
+       "1": 0
+      },
+      "zeroMs": 0
+     },
+     "channels": 6,
+     "mpvOptions": [
+      "--ad-lavc-o=cons_noisegen=1"
+     ],
+     "straight": {
+      "picture": {
+       "frames": 374,
+       "unreadable": 0,
+       "markedCount": 0,
+       "missing": 0,
+       "duplicates": 0,
+       "monotonic": true,
+       "ok": true,
+       "firstFrame": 0,
+       "expectedFirstFrame": 0
+      },
+      "sound": {
+       "exact": true,
+       "unequalFrames": 0,
+       "firstUnequal": null,
+       "lastUnequal": null,
+       "pre": 0,
+       "post": 0,
+       "delta": 0,
+       "expectedFrames": 717824,
+       "actualFrames": 717824,
+       "peakLRmax": [
+        0,
+        0
+       ],
+       "rmsOverUnequal": [
+        0,
+        0
+       ],
+       "runCount": 0,
+       "firstRunsInclusive": [],
+       "expectedSHA256": "98846ece3091e30bd38e0ad97a42f132a7881d896bce21601e82fcfac3e9d39b",
+       "actualSHA256": "98846ece3091e30bd38e0ad97a42f132a7881d896bce21601e82fcfac3e9d39b",
+       "playerStartBehaviour": false,
+       "summary": "717824/717824 sample frames; 0 differing samples (output index range none); length delta +0"
+      },
+      "tone": {
+       "markedToneMs": 0,
+       "ok": false
+      },
+      "soundOk": true,
+      "subtitles": [
+       "KEPT ONE @1.000",
+       "KEPT TWO @9.960"
+      ],
+      "subtitleClears": [
+       2.0,
+       10.96
+      ],
+      "subtitleTracks": [
+       {
+        "default": true,
+        "forced": false,
+        "codec": "subrip",
+        "selected": true,
+        "id": 1
+       }
+      ],
+      "audioTracks": [
+       1
+      ]
+     },
+     "starts": [
+      {
+       "startSeconds": 5.28,
+       "firstFrame": 132,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 464384,
+        "firstUnequal": 0,
+        "lastUnequal": 464383,
+        "pre": 0,
+        "post": 464384,
+        "delta": 1,
+        "expectedFrames": 464384,
+        "actualFrames": 464385,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         343.4516
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          464383
+         ]
+        ],
+        "expectedSHA256": "e1bae9ef106a5bba36354abb3c8dafcdc16a0f1fe1519028b5db80773a4ccc30",
+        "actualSHA256": "9b040f5359c00d2322ae9392dc0186a114acb05e51aac0c2fe2916c8759a389a",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 132,
+        "summary": "464385/464384 sample frames; 464384 differing samples (output index range 0..464383); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "selected": true,
+         "default": true,
+         "forced": false,
+         "id": 1,
+         "codec": "subrip"
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 5.48,
+       "firstFrame": 263,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": false,
+        "unequalFrames": 454784,
+        "firstUnequal": 0,
+        "lastUnequal": 454783,
+        "pre": 0,
+        "post": 454784,
+        "delta": 1,
+        "expectedFrames": 454784,
+        "actualFrames": 454785,
+        "peakLRmax": [
+         0,
+         6145
+        ],
+        "rmsOverUnequal": [
+         0,
+         345.1326
+        ],
+        "runCount": 1,
+        "firstRunsInclusive": [
+         [
+          0,
+          454783
+         ]
+        ],
+        "expectedSHA256": "7bb3e752e18aac08377acea7331bbe48efbbd784a54ebdcaef71410ee5f0ae38",
+        "actualSHA256": "4d77f244e864949b84addac071417a7ede167d2b48e2004e9b0e3c62d3071d42",
+        "playerStartBehaviour": true,
+        "leadingExtraSamples": 1,
+        "leadingMissingSamples": null,
+        "extraMarked": false,
+        "extraArePreceding": true,
+        "extraAmbiguous": false,
+        "originalStartLead": 1,
+        "originalFirstFrame": 263,
+        "summary": "454785/454784 sample frames; 454784 differing samples (output index range 0..454783); length delta +1"
+       },
+       "leadingExtraSamples": 1,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "codec": "subrip",
+         "id": 1,
+         "default": true,
+         "selected": true,
+         "forced": false
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      },
+      {
+       "startSeconds": 7.0,
+       "firstFrame": 301,
+       "markedCount": 0,
+       "pictureOk": true,
+       "sound": {
+        "exact": true,
+        "unequalFrames": 0,
+        "firstUnequal": null,
+        "lastUnequal": null,
+        "pre": 0,
+        "post": 0,
+        "delta": 0,
+        "expectedFrames": 381824,
+        "actualFrames": 381824,
+        "peakLRmax": [
+         0,
+         0
+        ],
+        "rmsOverUnequal": [
+         0,
+         0
+        ],
+        "runCount": 0,
+        "firstRunsInclusive": [],
+        "expectedSHA256": "67b83a809e6acf03c15ee9beb032e70ec9891ad970abd5cf10518cdc8bf06295",
+        "actualSHA256": "67b83a809e6acf03c15ee9beb032e70ec9891ad970abd5cf10518cdc8bf06295",
+        "playerStartBehaviour": false,
+        "summary": "381824/381824 sample frames; 0 differing samples (output index range none); length delta +0"
+       },
+       "leadingExtraSamples": null,
+       "extraMarked": false,
+       "soundOk": true,
+       "subtitles": [
+        "KEPT TWO @9.960"
+       ],
+       "subtitleClears": [
+        10.96
+       ],
+       "subtitleTracks": [
+        {
+         "default": true,
+         "id": 1,
+         "selected": true,
+         "codec": "subrip",
+         "forced": false
+        }
+       ],
+       "audioTracks": [
+        1
+       ]
+      }
+     ],
+     "seek": {
+      "landings": [
+       {
+        "target": null,
+        "expected": 0,
+        "landed": 0,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 7.0,
+        "expected": 301,
+        "landed": 301,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.48,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 2.0,
+        "expected": 50,
+        "landed": 50,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.44,
+        "expected": 136,
+        "landed": 136,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       },
+       {
+        "target": 5.479,
+        "expected": 263,
+        "landed": 263,
+        "marked": false,
+        "subtitle": "",
+        "sid": 1
+       }
+      ],
+      "ok": true
+     },
+     "subtitleRoutes": {
+      "tracks": 1,
+      "ticketScoped": true,
+      "noStore": true,
+      "nativeSubtitleRefused": true
+     },
+     "subtitleTakes": [
+      {
+       "control": {
+        "subtitles": [
+         "KEPT ONE @1.000",
+         "SPANS CUT START @5.000",
+         "MARKED LINE @7.000",
+         "SPANS CUT END @10.000",
+         "KEPT TWO @15.000"
+        ],
+        "subtitleTracks": [
+         {
+          "codec": "mov_text",
+          "default": true,
+          "id": 1,
+          "forced": false,
+          "selected": true
+         }
+        ],
+        "subtitleClears": [
+         2.0,
+         6.0,
+         8.0,
+         11.0,
+         16.0
+        ]
+       },
+       "straight": {
+        "subtitles": [
+         "KEPT ONE @1.000",
+         "KEPT TWO @9.960"
+        ],
+        "subtitleTracks": [
+         {
+          "default": true,
+          "forced": false,
+          "codec": "subrip",
+          "selected": true,
+          "id": 1
+         }
+        ],
+        "subtitleClears": [
+         2.0,
+         10.96
+        ]
+       },
+       "starts": [
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "selected": true,
+           "default": true,
+           "forced": false,
+           "id": 1,
+           "codec": "subrip"
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        },
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "codec": "subrip",
+           "id": 1,
+           "default": true,
+           "selected": true,
+           "forced": false
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        },
+        {
+         "subtitles": [
+          "KEPT TWO @9.960"
+         ],
+         "subtitleTracks": [
+          {
+           "default": true,
+           "id": 1,
+           "selected": true,
+           "codec": "subrip",
+           "forced": false
+          }
+         ],
+         "subtitleClears": [
+          10.96
+         ]
+        }
+       ],
+       "subtitleSeek": {
+        "landings": [
+         {
+          "target": null,
+          "expected": 0,
+          "landed": 0,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 1.24,
+          "expected": 31,
+          "landed": 31,
+          "marked": false,
+          "subtitle": "KEPT ONE",
+          "sid": 1
+         },
+         {
+          "target": 2.24,
+          "expected": 56,
+          "landed": 56,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.44,
+          "expected": 136,
+          "landed": 136,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.48,
+          "expected": 263,
+          "landed": 263,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 5.68,
+          "expected": 268,
+          "landed": 268,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 10.12,
+          "expected": 379,
+          "landed": 379,
+          "marked": false,
+          "subtitle": "KEPT TWO",
+          "sid": 1
+         },
+         {
+          "target": 11.2,
+          "expected": 406,
+          "landed": 406,
+          "marked": false,
+          "subtitle": "",
+          "sid": 1
+         },
+         {
+          "target": 1.56,
+          "expected": 39,
+          "landed": 39,
+          "marked": false,
+          "subtitle": "KEPT ONE",
+          "sid": 1
+         }
+        ],
+        "ok": true
+       },
+       "jointVerdict": {
+        "markedPicture": true,
+        "markedSound": true,
+        "keptPicture": true,
+        "keptSound": true,
+        "starts": true,
+        "seeks": true,
+        "exact": true
+       },
+       "straightPicture": {
+        "frames": 374,
+        "unreadable": 0,
+        "markedCount": 0,
+        "missing": 0,
+        "duplicates": 0,
+        "monotonic": true,
+        "ok": true,
+        "firstFrame": 0,
+        "expectedFirstFrame": 0
+       },
+       "straightSound": {
+        "exact": true,
+        "unequalFrames": 0,
+        "firstUnequal": null,
+        "lastUnequal": null,
+        "pre": 0,
+        "post": 0,
+        "delta": 0,
+        "expectedFrames": 717824,
+        "actualFrames": 717824,
+        "peakLRmax": [
+         0,
+         0
+        ],
+        "rmsOverUnequal": [
+         0,
+         0
+        ],
+        "runCount": 0,
+        "firstRunsInclusive": [],
+        "expectedSHA256": "98846ece3091e30bd38e0ad97a42f132a7881d896bce21601e82fcfac3e9d39b",
+        "actualSHA256": "98846ece3091e30bd38e0ad97a42f132a7881d896bce21601e82fcfac3e9d39b",
+        "playerStartBehaviour": false,
+        "summary": "717824/717824 sample frames; 0 differing samples (output index range none); length delta +0"
+       }
+      }
+     ],
+     "subtitleChecks": [],
+     "sweep": [
+      {
+       "mark": "[5480, 10520) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[1000, 1960) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[6000, 12000) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[2000, 2040) ms",
+       "exact": true,
+       "deviations": [],
+       "takes": 5,
+       "seeks": 7
+      },
+      {
+       "mark": "[4000, 4001) ms",
+       "exact": false,
+       "deviations": [
+        "start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra)",
+        "start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra)"
+       ],
+       "takes": 5,
+       "seeks": 7
+      }
+     ],
+     "control": {
+      "frames": 500,
+      "unreadable": 0,
+      "samples": 959744,
+      "subtitles": [
+       "KEPT ONE @1.000",
+       "SPANS CUT START @5.000",
+       "MARKED LINE @7.000",
+       "SPANS CUT END @10.000",
+       "KEPT TWO @15.000"
+      ],
+      "subtitleClears": [
+       2.0,
+       6.0,
+       8.0,
+       11.0,
+       16.0
+      ],
+      "subtitleTracks": [
+       {
+        "codec": "mov_text",
+        "default": true,
+        "id": 1,
+        "forced": false,
+        "selected": true
+       }
+      ],
+      "audioTracks": [
+       1
+      ],
+      "lead": 0
+     }
+    },
+    "summary": {
+     "layout": "mp4-h264-eac351-mov_text",
+     "result": "inexact",
+     "verdict": {
+      "markedPicture": true,
+      "markedSound": true,
+      "keptPicture": true,
+      "keptSound": true,
+      "starts": true,
+      "seeks": true,
+      "exact": false,
+      "subtitles": true,
+      "sweep": false
+     },
+     "deviations": [
+      "cut [4000, 4001) ms: start 3.999 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra); start 4.000 s: 765825/765824 sample frames; 765824 differing samples (output index range 0..765823); length delta +1 (1 extra leading; preceding kept: True; original at that picture: 0 extra)",
+      "19 cut position(s) not measured"
+     ],
+     "positions": {
+      "passed": 4,
+      "measured": 5,
+      "total": 24
+     }
+    }
+   }
+  }
+ },
+ "mpv": {
+  "image": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+  "version": "0.40.0"
+ },
+ "pluginBuild": {
+  "12.4": "055276dd1802e645f9bb9702151f743328ad1a4c83eafe8ff2915b1b40364d84"
+ }
+}

@@ -44,8 +44,8 @@ internal static class PointerSubtitles
         var partitions = PointerEvidence.Partitions(binding.Evidence);
         FixtureGate.Require(program is { Length: > 0 } && Path.IsPathFullyQualified(program) &&
             Path.IsPathFullyQualified(binding.FilePath) &&
-            tracks.SequenceEqual(av.Concat(subtitles)) && tracks.Select((t, i) => t.Index == i).All(x => x) &&
-            partitions != MpvPartitions.SplitPictureAndSound, RefusalCode.UnsupportedSubtitle);
+            tracks.SequenceEqual(av.Concat(subtitles)) && tracks.Select((t, i) => t.Index == i).All(x => x),
+            RefusalCode.UnsupportedSubtitle);
         FixtureGate.Require(Extractors.Wait(0), RefusalCode.LimitExceeded);
         try
         {

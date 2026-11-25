@@ -27,8 +27,9 @@ public class EligibilityTests
         Assert.All(register.Rows.Skip(5), row =>
         {
             Assert.Equal(("mpv", "mpv"), (row.Tuple.AppId, row.Tuple.Backend));
-            Assert.Contains(row.Tuple.AdapterRevision, new[] { MpvEdlRenderer.AdapterRevision, MpvEdlRenderer.SubtitleAdapterRevision });
-            if (row.Tuple.AdapterRevision == MpvEdlRenderer.SubtitleAdapterRevision)
+            Assert.Contains(row.Tuple.AdapterRevision, new[] { MpvEdlRenderer.AdapterRevision, MpvEdlRenderer.SubtitleAdapterRevision,
+                MpvEdlRenderer.SplitAdapterRevision, MpvEdlRenderer.SplitSubtitleAdapterRevision });
+            if (MpvEdlRenderer.IsSubtitleRevision(row.Tuple.AdapterRevision))
                 Assert.Contains(" subtitle ", row.Tuple.Source.TrackLayout);
             Assert.StartsWith("Linux lab container, desktop mpv, decoded PCM", row.Tuple.DeviceMode);
             Assert.NotEqual(EvidenceStatus.Eligible, row.Status);

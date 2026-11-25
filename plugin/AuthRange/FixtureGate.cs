@@ -85,7 +85,7 @@ internal sealed class FixtureGate(ILibraryManager library, IDeviceManager device
     internal string Issue(Binding binding)
     {
         Require(!binding.Pointer.HasValue || binding.Evidence != null, RefusalCode.EvidenceIdentityUnavailable);
-        Require((binding.Evidence?.Tuple.AdapterRevision == MpvEdlRenderer.SubtitleAdapterRevision) == (binding.Subtitles != null),
+        Require(MpvEdlRenderer.IsSubtitleRevision(binding.Evidence?.Tuple.AdapterRevision) == (binding.Subtitles != null),
             RefusalCode.UnsupportedSubtitle);
         var origin = Origin(binding.Config);
         var reason = grants.Table.Issue(binding, binding.Expires, out var slot, out var list);
