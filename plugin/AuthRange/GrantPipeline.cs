@@ -37,7 +37,7 @@ internal sealed class GrantService : IDisposable
     public void Dispose() { _sessions.SessionEnded -= End; _users.OnUserUpdated -= UserChanged; Slots.Dispose(); }
 }
 
-internal sealed record Admission(Binding Binding, Leg Leg, byte[]? List);
+internal sealed record Admission(Binding Binding, Leg Leg, byte[]? Content, bool Ass = false);
 internal sealed class GrantPipeline : IStartupFilter
 {
     internal static readonly object Marker = new();
@@ -73,15 +73,21 @@ internal sealed class GrantPipeline : IStartupFilter
         try
         {
             var query = ctx.Request.QueryString.Value;
-            if (route.Length != 2 || route[1] is not ("list.edl" or "source") || query is not { Length: 35 } || !query.StartsWith("?t=", StringComparison.Ordinal))
+            if (route.Length != 2 || query is not { Length: 35 } || !query.StartsWith("?t=", StringComparison.Ordinal))
                 throw new Refused(RefusalCode.InvalidIdentifier);
-            var leg = route[1] == "source" ? Leg.Source : Leg.List;
+            var leg = route[1] switch
+            {
+                "source" => Leg.Source, "list.edl" => Leg.List,
+                var s when s.StartsWith("subtitle-", StringComparison.Ordinal) && s.Length <= 15 => Leg.Subtitle,
+                _ => throw new Refused(RefusalCode.InvalidIdentifier),
+            };
             if (GrantTable<Binding>.IsHandle(c.LabPointerKey))
             {
                 var trace = ctx.RequestServices.GetRequiredService<ILogger<GrantPipeline>>();
                 ctx.Response.OnCompleted(() => {
                     trace.LogInformation("Fixture {Method} {Route} {Status}", ctx.Request.Method,
-                        leg == Leg.List ? "/Cleanyfin/play/{S}/list.edl" : "/Cleanyfin/play/{S}/source -> /Videos/{original}/stream", ctx.Response.StatusCode);
+                        leg switch { Leg.List => "/Cleanyfin/play/{S}/list.edl", Leg.Subtitle => "/Cleanyfin/play/{S}/subtitle-{N}",
+                            _ => "/Cleanyfin/play/{S}/source -> /Videos/{original}/stream" }, ctx.Response.StatusCode);
                     return Task.CompletedTask;
                 });
             }
@@ -104,18 +110,31 @@ internal sealed class GrantPipeline : IStartupFilter
                 var a = await ctx.RequestServices.GetRequiredService<IAuthorizationContext>().GetAuthorizationInfo(ctx.Request);
                 FixtureGate.Require(h[credentialHeaders[0]].Count == 1 && a.IsAuthenticated && !a.IsApiKey && a.UserId == b.User && a.Token == token && a.DeviceId == b.Device, RefusalCode.AuthorityMismatch);
             }
-            byte[]? list = null;
+            byte[]? content = null;
+            var ass = false;
             if (leg == Leg.List)
             {
-                var d = MpvEdlRenderer.Render(plan, FixtureGate.Origin(c), new(UInt128.Parse(route[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture), svc.Table.SourceFor(ticket)), MpvClockMapping.VerifiedSourceIdentity, noChapters:b.Shelf!=null, partitions:PointerEvidence.Partitions(b.Evidence));
-                list = d.Value ?? throw new Refused(d.Reason!.Value);
+                var d = MpvEdlRenderer.Render(plan, FixtureGate.Origin(c), new(UInt128.Parse(route[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture), svc.Table.SourceFor(ticket)),
+                    MpvClockMapping.VerifiedSourceIdentity, noChapters:b.Shelf!=null, partitions:PointerEvidence.Partitions(b.Evidence),
+                    subtitles: b.Subtitles?.Layout(svc.Table.SubtitleFor(ticket)));
+                content = d.Value ?? throw new Refused(d.Reason!.Value);
                 var accept = ctx.Request.GetTypedHeaders().Accept;
                 if (accept is { Count: > 0 } && !accept.Any(m => (m.Quality ?? 1) > 0 && (m.MediaType.Value?.ToLowerInvariant() is "*/*" or "text/*" or "text/plain")))
                 { Private(ctx); ctx.Response.StatusCode = 406; return; }
             }
-            ctx.Items[Marker] = new Admission(b, leg, list);
-            ctx.Request.QueryString = leg == Leg.List ? QueryString.Empty : new($"?static=true&mediaSourceId={b.Source}");
-            ctx.Request.Path = prefix + (leg == Leg.List ? "/Cleanyfin/lab/descriptor" : $"/Videos/{b.Item}/stream");
+            if (leg == Leg.Subtitle)
+            {
+                var sub = b.Subtitles?.Safe.SingleOrDefault(s => route[1] == FormattableString.Invariant(
+                    $"subtitle-{s.Track.Index}.{(s.Track.Ass ? "ass" : "srt")}")) ?? throw new Refused(RefusalCode.InvalidIdentifier);
+                content = sub.Bytes;
+                ass = sub.Track.Ass;
+            }
+            ctx.Items[Marker] = new Admission(b, leg, content, ass);
+            ctx.Request.QueryString = leg != Leg.Source ? QueryString.Empty : new($"?static=true&mediaSourceId={b.Source}");
+            ctx.Request.Path = prefix + (leg switch
+            {
+                Leg.List => "/Cleanyfin/lab/descriptor", Leg.Subtitle => "/Cleanyfin/lab/subtitle", _ => $"/Videos/{b.Item}/stream"
+            });
             // The raw-target feature is independent of Path and QueryString. Do not leave
             // a second copy of the capability available to downstream native middleware.
             if (ctx.Features.Get<IHttpRequestFeature>() is {} feature)
@@ -152,9 +171,12 @@ internal sealed class GrantActionFilter : IAsyncActionFilter
         var ctx = action.HttpContext;
         if (ctx.Items[GrantPipeline.Marker] is not Admission a) { await next(); return; }
         var identity = await ctx.RequestServices.GetRequiredService<IAuthorizationContext>().GetAuthorizationInfo(ctx);
-        var isTarget = action.ActionDescriptor is ControllerActionDescriptor cad && (a.Leg == Leg.List
-            ? cad.ControllerTypeInfo.AsType() == typeof(AuthRangeController) && cad.ActionName == nameof(AuthRangeController.Descriptor)
-            : cad.ControllerTypeInfo.FullName == "Jellyfin.Api.Controllers.VideosController" && cad.MethodInfo.Name == "GetVideoStream");
+        var isTarget = action.ActionDescriptor is ControllerActionDescriptor cad && (a.Leg switch
+        {
+            Leg.List => cad.ControllerTypeInfo.AsType() == typeof(AuthRangeController) && cad.ActionName == nameof(AuthRangeController.Descriptor),
+            Leg.Subtitle => cad.ControllerTypeInfo.AsType() == typeof(AuthRangeController) && cad.ActionName == nameof(AuthRangeController.Subtitle),
+            _ => cad.ControllerTypeInfo.FullName == "Jellyfin.Api.Controllers.VideosController" && cad.MethodInfo.Name == "GetVideoStream",
+        });
         if (!isTarget || ctx.User.Identity?.IsAuthenticated != true || !identity.IsAuthenticated || identity.IsApiKey || identity.UserId != a.Binding.User || identity.DeviceId != a.Binding.Device || GrantTable<Binding>.Hash(identity.Token ?? "") != a.Binding.TokenHash)
         { GrantPipeline.Deny(ctx, RefusalCode.AuthorityMismatch); action.Result = new EmptyResult(); return; }
         var result = await next();

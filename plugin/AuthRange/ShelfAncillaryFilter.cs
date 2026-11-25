@@ -16,7 +16,8 @@ internal sealed class ShelfAncillaryFilter : IAsyncActionFilter
     {
         var route = action.ActionDescriptor.AttributeRouteInfo?.Template;
         if (route == null || !(route.EndsWith("/Download", StringComparison.OrdinalIgnoreCase) ||
-            route.Contains("/Images/", StringComparison.OrdinalIgnoreCase) || route.Contains("/Trickplay/", StringComparison.OrdinalIgnoreCase)) ||
+            route.Contains("/Images/", StringComparison.OrdinalIgnoreCase) || route.Contains("/Trickplay/", StringComparison.OrdinalIgnoreCase) ||
+            route.Contains("/Subtitles/", StringComparison.OrdinalIgnoreCase)) ||
             !(action.ActionArguments.TryGetValue("itemId", out var id) || action.ActionArguments.TryGetValue("id", out id)) || id is not Guid guid)
         { await next(); return; }
         var services = action.HttpContext.RequestServices;

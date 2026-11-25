@@ -25,17 +25,24 @@ public enum MpvPartitions
     JointBeforeInstant,
 }
 
+public sealed record MpvAvTrack(string Codec, bool IsVideo, bool IsDefault, string? Language = null, string? Title = null);
+public sealed record MpvSafeSubtitle(int Index, bool Ass, bool IsDefault, bool IsForced, string? Language, string? Title);
+public sealed record MpvSubtitleLayout(IReadOnlyList<MpvAvTrack> AudioVideo, IReadOnlyList<MpvSafeSubtitle> Subtitles, UInt128 SubtitleTicket);
+
 public static class MpvEdlRenderer
 {
     public const string AdapterId = "mpv-edl";
     // 2: times on the file's own clock (source ms + the file time of source zero) and the split-partition form.
     // For a source whose zero is file time 0 rendered Joint, the bytes equal revision 1 apart from six decimals.
     public const string AdapterRevision = "2";
+    // Separate evidence for delayed A/V and independently filtered subtitle partitions.
+    public const string SubtitleAdapterRevision = "3";
     // A quarter of a 48 kHz sample, rounded to whole microseconds (5.208 us); well under half a frame or sample.
     private const long SplitOffsetMicroseconds = 5;
 
     public static Decision<byte[]> Render(PlaybackPlan plan, Uri trustedBaseOrigin, MpvSourceIdentifiers ids,
-        MpvClockMapping mapping, bool noChapters = false, MpvPartitions partitions = MpvPartitions.Joint)
+        MpvClockMapping mapping, bool noChapters = false, MpvPartitions partitions = MpvPartitions.Joint,
+        MpvSubtitleLayout? subtitles = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
         if (plan.Requires.Any(feature => feature != PlanValidator.Cut))
@@ -48,7 +55,7 @@ public static class MpvEdlRenderer
             return Decision<byte[]>.Refuse(RefusalCode.NoCuts);
         if (ids.SessionId == 0 || ids.SourceTicket == 0)
             return Decision<byte[]>.Refuse(RefusalCode.InvalidIdentifier);
-        if (!TryBuildSourceUrl(trustedBaseOrigin, ids, out var source))
+        if (!TryBuildSlotUrl(trustedBaseOrigin, ids.SessionId, out var slotUrl))
             return Decision<byte[]>.Refuse(RefusalCode.InvalidOrigin);
 
         if (FileZeroMicroseconds(plan.Source) is not { } zero)
@@ -57,7 +64,31 @@ public static class MpvEdlRenderer
         var output = new StringBuilder("# mpv EDL v0\n");
         if (noChapters)
             output.Append("!no_chapters\n");
-        var quotedSource = FormattableString.Invariant($"%{Encoding.UTF8.GetByteCount(source)}%{source}");
+        var source = FormattableString.Invariant($"{slotUrl}/source?t={ids.SourceTicket:x32}");
+        var quotedSource = Quote(source);
+        if (subtitles is { } layout)
+        {
+            if (partitions == MpvPartitions.SplitPictureAndSound || layout.SubtitleTicket == 0 ||
+                layout.AudioVideo.Count is < 2 or > 16 || layout.AudioVideo.Count(t => t.IsVideo) != 1 ||
+                layout.AudioVideo.Any(t => t.Codec.Length is < 1 or > 32 ||
+                    t.Codec.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_')) ||
+                layout.Subtitles.Count > 16 || layout.Subtitles.Any(t => t.Index < 0) ||
+                layout.Subtitles.Select(t => t.Index).Distinct().Count() != layout.Subtitles.Count)
+                return Decision<byte[]>.Refuse(RefusalCode.UnsupportedSubtitle);
+            // Describe only A/V from the original. Keep them joint so audio gets video-keyframe preroll.
+            foreach (var track in layout.AudioVideo)
+                AppendTrack(track.IsVideo ? "video" : "audio", track.Codec, track.IsDefault, lang: track.Language, title: track.Title);
+            Segments(JointShift(partitions));
+            var duration = FileSegments(plan, zero, JointShift(partitions)).Sum(s => s.End - s.Start);
+            foreach (var track in layout.Subtitles)
+            {
+                output.Append("!new_stream\n");
+                AppendTrack("sub", track.Ass ? "ass" : "subrip", track.IsDefault, track.IsForced, track.Language, track.Title);
+                var url = FormattableString.Invariant($"{slotUrl}/subtitle-{track.Index}.{(track.Ass ? "ass" : "srt")}?t={layout.SubtitleTicket:x32}");
+                output.Append(Quote(url)).Append(",0,").Append(Seconds(duration)).Append('\n');
+            }
+            return Decision<byte[]>.Allow(Encoding.UTF8.GetBytes(output.ToString()));
+        }
         if (partitions == MpvPartitions.SplitPictureAndSound)
         {
             output.Append("!delay_open,media_type=video\n");
@@ -66,24 +97,49 @@ public static class MpvEdlRenderer
             Segments(SplitOffsetMicroseconds);
         }
         else
-            Segments(partitions == MpvPartitions.JointBeforeInstant ? -SplitOffsetMicroseconds : 0);
+            Segments(JointShift(partitions));
         return Decision<byte[]>.Allow(Encoding.UTF8.GetBytes(output.ToString()));
 
-        // mpv reads segment times as the file's own timestamps; the plan's source zero is the earliest audio/video
-        // first timestamp, which may be before (MKV encoder priming) or after file time zero. Interior boundaries move
-        // by `shift`; the source's own start and end do not.
         void Segments(long shift)
         {
-            foreach (var kept in plan.Timeline.KeptRanges)
-            {
-                var start = kept.SourceStartMs * 1000 + zero + (kept.SourceStartMs == 0 ? 0 : shift);
-                var end = kept.SourceEndMs * 1000 + zero + (kept.SourceEndMs == plan.Source.DurationMs ? 0 : shift);
-                start = Math.Max(start, 0); // nothing before file time 0 is presented
+            foreach (var (start, end) in FileSegments(plan, zero, shift))
                 output.Append(quotedSource).Append(',').Append(Seconds(start))
                     .Append(',').Append(Seconds(end - start)).Append('\n');
-            }
+        }
+
+        void AppendTrack(string type, string codec, bool isDefault, bool isForced = false, string? lang = null, string? title = null)
+        {
+            output.Append("!delay_open,media_type=").Append(type).Append(",codec=").Append(codec).Append('\n');
+            var flags = (isDefault, isForced) switch
+            {
+                (true, true) => "default+forced", (true, false) => "default", (false, true) => "forced", _ => null
+            };
+            lang = SafeMeta(lang);
+            title = SafeMeta(title);
+            if (flags is null && lang is null && title is null) return;
+            output.Append("!track_meta");
+            if (flags != null) output.Append(",flags=").Append(flags);
+            if (lang != null) output.Append(",lang=").Append(Quote(lang));
+            if (title != null) output.Append(",title=").Append(Quote(title));
+            output.Append('\n');
         }
     }
+
+    internal static long JointShift(MpvPartitions partitions) => partitions == MpvPartitions.JointBeforeInstant ? -SplitOffsetMicroseconds : 0;
+
+    // Share exact segment durations with the sidecars, including clipping a negative file start and the MKV tie nudge.
+    internal static IEnumerable<(long Start, long End)> FileSegments(PlaybackPlan plan, long zero, long shift)
+    {
+        foreach (var kept in plan.Timeline.KeptRanges)
+        {
+            var start = kept.SourceStartMs * 1000 + zero + (kept.SourceStartMs == 0 ? 0 : shift);
+            var end = kept.SourceEndMs * 1000 + zero + (kept.SourceEndMs == plan.Source.DurationMs ? 0 : shift);
+            yield return (Math.Max(start, 0), end);
+        }
+    }
+
+    private static string? SafeMeta(string? s) => s is { Length: > 0 and <= 128 } && !s.Any(char.IsControl) ? s : null;
+    private static string Quote(string s) => FormattableString.Invariant($"%{Encoding.UTF8.GetByteCount(s)}%{s}");
 
     /// <summary>
     /// The file time of source zero in whole microseconds, from the verified track clocks: every audio/video track's
@@ -113,7 +169,7 @@ public static class MpvEdlRenderer
 
     // trustedBaseOrigin is deployment configuration (not a request Host, plan field, or endpoint).
     // Preserve literal UTF-8 in vetted base-path segments for mpv's length-prefixed fields.
-    private static bool TryBuildSourceUrl(Uri origin, MpvSourceIdentifiers ids, out string result)
+    private static bool TryBuildSlotUrl(Uri origin, UInt128 sessionId, out string result)
     {
         result = string.Empty;
         if (!origin.IsAbsoluteUri || origin.Scheme is not ("http" or "https") ||
@@ -143,7 +199,7 @@ public static class MpvEdlRenderer
 
         var authority = origin.GetLeftPart(UriPartial.Authority);
         result = FormattableString.Invariant(
-            $"{authority}{path.TrimEnd('/')}/Cleanyfin/play/{ids.SessionId:x32}/source?t={ids.SourceTicket:x32}");
+            $"{authority}{path.TrimEnd('/')}/Cleanyfin/play/{sessionId:x32}");
         return Uri.TryCreate(result, UriKind.Absolute, out var generated) &&
             generated.Scheme == origin.Scheme && generated.IdnHost == origin.IdnHost &&
             generated.Port == origin.Port && generated.UserInfo.Length == 0 && generated.Fragment.Length == 0;

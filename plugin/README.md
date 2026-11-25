@@ -9,10 +9,10 @@ Builds for one Jellyfin line at a time, chosen by the `JellyfinTarget` property 
 
 | `-p:JellyfinTarget=` | Jellyfin.Controller | Framework | SDK image | Lab result |
 |---|---|---|---|---|
-| `10.11` (default) | 10.11.11 | `net9.0` | `mcr.microsoft.com/dotnet/sdk:9.0` | all five `check-plugin.py` cases pass on 10.11.11 |
-| `12.4` | 12.4.0 | `net10.0` | `mcr.microsoft.com/dotnet/sdk:10.0` | all five `check-plugin.py` cases pass on 12.4.0 (2026-11-24) |
+| `10.11` (default) | 10.11.11 | `net9.0` | `mcr.microsoft.com/dotnet/sdk:9.0` | all six `check-plugin.py` cases pass on 10.11.11 (2026-11-25) |
+| `12.4` | 12.4.0 | `net10.0` | `mcr.microsoft.com/dotnet/sdk:10.0` | all six `check-plugin.py` cases pass on 12.4.0 (2026-11-25) |
 
-A build for one line refuses the lab gate on any other server version. Neither line has measured player evidence beyond what `delivery/evidence/register-v1.json` lists (10.11.11 only). The release manifest (`build.yaml`, `manifest.json`) still declares only the 10.11 ABI.
+A build for one line refuses the lab gate on any other server version. Player evidence is limited to the exact tuples in `delivery/evidence/register-v1.json`; the desktop mpv rows do not qualify TV or Wholphin playback. The release manifest (`build.yaml`, `manifest.json`) still declares only the 10.11 ABI.
 
 ## Build
 
@@ -37,6 +37,7 @@ There is no settings UI or upstream fetch for shelves. In the lab, under Jellyfi
 | `profiles/<viewer-id>/policy.json` | Strict private policy v1 for this viewer; `profileRef` must equal the lowercase, 32-hex native viewer ID. A selected required mute or no applicable cuts means **no offer**. |
 | `profiles/<viewer-id>/device.txt` | Exact enrolled Jellyfin device ID, plain text. Not a login token. |
 | `profiles/<viewer-id>/evidence-device.txt` | Lab declaration: app build SHA-256 and exact output mode, one per line. See the [evidence gate](../delivery/README.md#evidence-register). |
+| `evidence-register-v1.json` | Reviewed register installed from `delivery/evidence/register-v1.json`, with rows for the exact deployed build and player tuple. Missing, invalid or out-of-build evidence means no filtered offer. |
 
 Schemas and examples are in `delivery/schema/` and `tests/Delivery.Contract.Tests/Fixtures/`. Write documents to a temporary sibling, then rename. Disable delivery while staging a change that must span multiple files atomically. Only the trusted operator and plugin should write this private tree. Set `LabOrigin` to the lab's loopback origin and base path, pin `LabSourceSha256` to the synthetic fixture, set `EnableAuthRangeLab=true`, and leave `EnableProductionEligibility=false` and `EnableLegacyRangeFixture=false`. The latter is a mutually exclusive, fixed-plan **diagnostic**, not another way to open a shelf. The lab allows up to eight profiles and eight snapshots. Do not enable this on a household server.
 

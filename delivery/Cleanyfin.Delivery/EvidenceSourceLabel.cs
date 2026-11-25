@@ -7,7 +7,7 @@ namespace Cleanyfin.Delivery;
 /// <summary>What the server's catalogue says about one embedded stream of the verified original.</summary>
 public sealed record SourceTrackFacts(int Index, string Kind, string Codec, string? Profile = null, int? Width = null,
     int? Height = null, double? FrameRate = null, int? BitDepth = null, string? Range = null, int? Channels = null,
-    int? SampleRate = null, bool IsDefault = false);
+    int? SampleRate = null, bool IsDefault = false, bool IsForced = false, string? Language = null);
 
 /// <summary>The measured stream layout a playback is offered for: the evidence tuple's source, plus the sound track it plays.</summary>
 public sealed record DescribedSource(EvidenceSource Source, int AudioIndex);
@@ -90,8 +90,17 @@ public static class EvidenceSourceLabel
                 if (ReferenceEquals(t, selected))
                     text.Append(" plays");
             }
-            else if (t.IsDefault)
-                text.Append(" default");
+            else
+            {
+                if (t.IsDefault) text.Append(" default");
+                if (t.IsForced)
+                {
+                    text.Append(" forced");
+                    if (t.Language is { Length: > 0 } lang && Token(lang) &&
+                        string.Equals(lang, selected.Language, StringComparison.OrdinalIgnoreCase))
+                        text.Append(" matches-audio");
+                }
+            }
         }
         // Every audio/video clock of the edition must be accounted for by the catalogue, and vice versa.
         if (clocks.Count(c => c.Kind is "video" or "audio") != video.Length + audio.Length)

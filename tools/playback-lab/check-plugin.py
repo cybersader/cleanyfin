@@ -353,13 +353,13 @@ class Lab:
                 if not p.is_file(): continue
                 raw=p.read_bytes(); blobs.append(raw)
                 mime = mimetypes.guess_type(p.name)[0] or ''
-                if (mime.startswith(('video/', 'audio/', 'image/')) or p.suffix.lower() in {'.ts','.m4s','.m3u8'}
+                if (mime.startswith(('video/', 'audio/', 'image/')) or p.suffix.lower() in {'.ts','.m4s','.m3u8','.srt','.ass','.ssa','.vtt','.sup','.sub','.idx'}
                         or raw[4:8] == b'ftyp' or raw.startswith((b'\x1aE\xdf\xa3', b'\xff\xd8\xff', b'\x89PNG', b'RIFF'))
                         or self.original in raw):
                     outputs.append(p)
         native_tokens = [u[1].encode() for u in (self.admin,self.one,self.two,self.other_device)]
         log_files = [p.read_bytes() for p in (self.work/'config/log').rglob('*') if p.is_file()]
-        check('server logs/config/cache: no grant values, copies or transcodes',not outputs and not any(re.search(rb'/Cleanyfin/play/[a-f0-9]{32}/(?:list\.edl|source)\?t=[a-f0-9]{32}',blob,re.I) for blob in blobs) and not any(s in blob for s in secrets_seen for blob in blobs) and not any(s in blob for s in native_tokens+[t.encode() for t in getattr(self,'extra_tokens',[])] for blob in [log,*log_files]))
+        check('server logs/config/cache: no grant values, copies or transcodes',not outputs and not any(re.search(rb'/Cleanyfin/play/[a-f0-9]{32}/(?:list\.edl|source|subtitle-\d+\.(?:srt|ass))\?t=[a-f0-9]{32}',blob,re.I) for blob in blobs) and not any(s in blob for s in secrets_seen for blob in blobs) and not any(s in blob for s in native_tokens+[t.encode() for t in getattr(self,'extra_tokens',[])] for blob in [log,*log_files]))
         print('Default HTTP logging, SessionManager=Warning: refusal-code lines',log.count(b'Auth-range lab refused:'),'ticket-route lines',log.lower().count(b'/cleanyfin/play/'),flush=True)
 
 
@@ -606,6 +606,8 @@ class EligibilityLab(PointerLab):
 
     def exercise(self):
         self.setup_pointer(stub_evidence=False)
+        check('missing reviewed register: no offer', self.refusal('EvidenceRegisterInvalid'))
+        self.put(self.register_path, REGISTER.read_bytes())
         check('historical plugin build differs: no offer', self.refusal('EvidenceTupleUnknown'))
         stub = self.stub_register()
         # The same synthetic row naming any other server version must not admit this server.

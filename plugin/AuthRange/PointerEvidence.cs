@@ -58,7 +58,11 @@ internal static class PointerEvidence
         // geometry, rate, channels, time base and clock anchor, and which sound track plays. Evidence for one layout
         // never covers another; anything the label cannot state is refused here.
         var described = Describe(source, plan);
-        var tuple = new EvidenceTuple(MpvEdlRenderer.AdapterId, MpvEdlRenderer.AdapterRevision, binding.Client, binding.Version,
+        var hasSubtitles = source.MediaStreams.Any(s => s.Type == MediaStreamType.Subtitle);
+        FixtureGate.Require(!hasSubtitles || source.MediaStreams.Where(s => s.Type == MediaStreamType.Subtitle)
+            .All(s => MpvSubtitleCues.ForEmbeddedTrack(described.Source.Container, s.Codec).HasValue), RefusalCode.UnsupportedSubtitle);
+        var revision = hasSubtitles ? MpvEdlRenderer.SubtitleAdapterRevision : MpvEdlRenderer.AdapterRevision;
+        var tuple = new EvidenceTuple(MpvEdlRenderer.AdapterId, revision, binding.Client, binding.Version,
             appBuild, backend, outputMode, serverVersion, PluginBuild.Value, described.Source);
         return Admit(ctx, binding.Config, tuple, plan, described.AudioIndex);
     }
@@ -82,7 +86,8 @@ internal static class PointerEvidence
         var facts = source.MediaStreams.Where(s => !s.IsExternal).OrderBy(s => s.Index).Select(s => new SourceTrackFacts(s.Index,
             s.Type switch { MediaStreamType.Video => "video", MediaStreamType.Audio => "audio", MediaStreamType.Subtitle => "subtitle", _ => "other" },
             s.Codec ?? "", s.Profile, s.Width, s.Height, s.RealFrameRate, s.BitDepth,
-            s.Type == MediaStreamType.Video ? s.VideoRangeType.ToString() : null, s.Channels, s.SampleRate, s.IsDefault)).ToArray();
+            s.Type == MediaStreamType.Video ? s.VideoRangeType.ToString() : null, s.Channels, s.SampleRate, s.IsDefault, s.IsForced,
+            s.Language)).ToArray();
         FixtureGate.Require(source.MediaStreams.All(s => !s.IsExternal) && source.MediaAttachments.Count == 0, RefusalCode.EvidenceTupleUnknown);
         var described = EvidenceSourceLabel.Describe(source.Container, facts, plan.Source.Tracks, plan.Source.DurationMs);
         return described.Value ?? throw new Refused(described.Reason!.Value);
@@ -138,7 +143,7 @@ internal static class PointerEvidence
         {
             var path = Path.Combine(Plugin.Instance!.ShelfRoot, RegisterName);
             ShelfStore.NoLinks(path);
-            using var stream = OpenRegister(path);
+            using var stream = File.OpenRead(path);
             var bytes = ReadBounded(stream, EvidenceRegister.MaxDocumentBytes);
             var result = EvidenceRegister.Parse(bytes);
             if (result.Value is { } register) return (register, Convert.ToHexStringLower(SHA256.HashData(bytes)));
@@ -148,16 +153,6 @@ internal static class PointerEvidence
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { cause = RefusalCode.EvidenceRegisterInvalid; }
         ctx.RequestServices.GetRequiredService<ILogger<PointerPlaybackFilter>>().LogWarning("Evidence register rejected: {Reason}", cause);
         throw new Refused(RefusalCode.EvidenceRegisterInvalid);
-    }
-
-    private static Stream OpenRegister(string path)
-    {
-        try { return File.OpenRead(path); }
-        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
-        {
-            return typeof(Plugin).Assembly.GetManifestResourceStream("Cleanyfin.Evidence.Register.v1") ??
-                throw new Refused(RefusalCode.EvidenceRegisterInvalid);
-        }
     }
 
     private static byte[] ReadBounded(Stream stream, int limit)

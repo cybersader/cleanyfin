@@ -92,16 +92,61 @@ def summarize(name, result):
             deviations.append(f"start {x['startSeconds']} s: " + (
                 f"{lead} extra sample(s) from before the start position ({'MARKED' if x['extraMarked'] else 'kept'} source samples)"
                 if lead else x['sound']['summary']))
-    # Subtitle text is marked content too: a line that starts inside the mark (e.g. a language mark) must not be shown.
-    marked_lines = [text for begin, _, text in ff.SUBTITLES if ff.START*fm.FRAME_MS <= begin < ff.END*fm.FRAME_MS]
-    shown = [t for t in marked_lines if any(seen.startswith(t + ' @') for seen in s.get('subtitles', []))]
-    if shown:
-        deviations.append(f"subtitle line(s) that start inside the mark shown after the join: {', '.join(shown)}")
+    if ff.LAYOUTS[name]['subtitles']:
+        proof = result.get('subtitleChecks')
+        if proof is None:  # --local still runs the raw embedded-subtitle negative control
+            banned = [t for a, b, t in ff.LAYOUTS[name]['subtitles'][0][2] if a <= ff.END*fm.FRAME_MS and b >= ff.START*fm.FRAME_MS]
+            leaks = [t for t in banned if any(t in seen for seen in s['subtitles'])]
+            proof = [f'unfiltered embedded subtitle(s) shown: {", ".join(leaks)}'] if leaks else ['no filtered sidecars measured']
+        deviations.extend(proof)
+        v = dict(v, subtitles=not proof, exact=v['exact'] and not proof)
     for l in result.get('seek', {}).get('landings', []):
         if l['landed'] != l['expected'] or l['marked']:
             deviations.append(f"seek {l['target']}: landed on frame {l['landed']}, expected {l['expected']}" + (' (MARKED)' if l['marked'] else ''))
-    v = dict(v, subtitles=not shown, exact=v['exact'] and not shown)
     return dict(layout=name, result='exact' if v['exact'] else 'inexact', verdict=v, deviations=deviations)
+
+
+def check_subtitles(spec, result):
+    """A leak OR missing/mistimed kept text OR an unaccounted selectable track fails the layout."""
+    problems = []
+    a, b = (result['cut'][k] + result['cut']['zeroMs'] for k in ('startMs', 'endMs'))
+    forbidden = [t for _, _, cues in spec['subtitles'] for start, end, t in cues if start <= b and end >= a]
+    expected_tracks = [(i, 'ass' if codec == 'ass' else 'subrip', flags == 'default', flags == 'forced')
+                       for i, (codec, flags, _) in enumerate(spec['subtitles'], 1)]
+    for sid, ((_, _, cues), take) in enumerate(zip(spec['subtitles'], result['subtitleTakes'], strict=True), 1):
+        control, straight = take['control'], take['straight']
+        if [s.rsplit(' @', 1)[0] for s in control['subtitles']] != [t for _, _, t in cues]:
+            problems.append(f'track {sid}: positive control did not display every authored cue')
+        actual_tracks = [(t['id'], t.get('codec'), bool(t.get('default')), bool(t.get('forced'))) for t in straight['subtitleTracks']]
+        if actual_tracks != expected_tracks or [t['id'] for t in straight['subtitleTracks'] if t.get('selected')] != [sid]:
+            problems.append(f'track {sid}: unexpected selectable track list or not selected ({actual_tracks})')
+        kept = [(start if end < a else start-(b-a), end if end < a else end-(b-a), t)
+                for start, end, t in cues if end < a or start > b]
+        actual = [(t, round(float(at)*1000)) for t, at in (s.rsplit(' @', 1) for s in straight['subtitles'])]
+        def matching_times(actual, expected):
+            # time-pos is evaluated on 25 fps frames; one frame is the observation resolution, not a cut tolerance.
+            return len(actual) == len(expected) and all(abs(x-y) <= fm.FRAME_MS for x, y in zip(actual, expected))
+        if ([t for t, _ in actual] != [t for _, _, t in kept] or
+                not matching_times([t for _, t in actual], [start for start, _, _ in kept]) or
+                not matching_times([round(t*1000) for t in straight['subtitleClears']], [end for _, end, _ in kept])):
+            problems.append(f'track {sid}: kept subtitle sequence/onset/clear not as expected')
+        traces = straight['subtitles'] + [text for start in take.get('starts', []) for text in start['subtitles']]
+        for l in take['subtitleSeek']['landings']:
+            if l['target'] is None:
+                continue
+            at = l['target'] * 1000
+            expected = next((text for begin, end, text in kept if begin <= at < end), '')
+            if l['sid'] != sid or (l['subtitle'] or '') != expected:
+                problems.append(f"track {sid}: wrong active subtitle at seek {l['target']} s")
+            traces.append(l['subtitle'] or '')
+        if not take['subtitleSeek']['ok']:
+            problems.append(f'track {sid}: wrong seek picture')
+        if 'jointVerdict' in take and not take['jointVerdict']['exact']:
+            problems.append(f'track {sid}: selected-track picture/sound was not exact')
+        leaks = [text for text in forbidden if any(text in line for line in traces)]
+        if leaks:
+            problems.append(f'track {sid}: forbidden subtitle text shown: {", ".join(leaks)}')
+    return problems
 
 
 def register_row(name, summary, result, tuple_, evidence_ref, today):
@@ -115,7 +160,7 @@ def register_row(name, summary, result, tuple_, evidence_ref, today):
     devs = '; '.join(summary.get('deviations', []))[:400] or 'none'
     results = dict(
         markedPicture=r(v.get('markedPicture') and v.get('seeks') and v.get('subtitles', True), 'Zero of 126 marked frames in the straight cut, the fresh starts and the seeks; every seek landed on the expected kept frame.',
-                        f"Marked picture shown: {devs}"),
+                        f"Picture, seek, or subtitle check failed: {devs}"),
         markedSound=r(v.get('markedSound'), 'Kept sound equals the uncut decode minus exactly the marked sample indices, so no marked sample; 0 ms of 880 Hz in 5 ms windows.',
                       f"Marked or misplaced sound: {devs}"),
         keptPictureAtJoin=r(v.get('keptPicture'), f"All {pic.get('frames')} kept frames once and in order, including both join neighbours.",
@@ -125,7 +170,9 @@ def register_row(name, summary, result, tuple_, evidence_ref, today):
     return dict(tuple=tuple_, actions=['cut'], controls=CONTROLS, results=results, evidenceRef=evidence_ref, date=today,
                 status='experimental' if summary['result'] == 'exact' else 'refused',
                 observation=(f"Desktop mpv in the plugin lab, {name}, synthetic hard-fixture copy; decoded PCM only. "
-                             'Not a TV app, HDMI output or audio passthrough; resume and restart not measured.'))
+                             'Not a TV app, HDMI output or audio passthrough; resume and restart not measured.' +
+                             (' R19: zero overlapping or touching text, kept cues at expected presentation times; '
+                              'all offered subtitle tracks tested.' if v.get('subtitles') else '')))
 
 
 class FormatLab(cp.PointerLab):
@@ -180,8 +227,8 @@ class FormatLab(cp.PointerLab):
         self.server_ref = api('/System/Info/Public')['Id']
         self.extra_tokens = []
 
-    def tuple_for(self, source):
-        return dict(adapterId='mpv-edl', adapterRevision='2', appId='mpv', appVersion=self.mpv_version, appBuild=self.mpv_image,
+    def tuple_for(self, source, subtitles):
+        return dict(adapterId='mpv-edl', adapterRevision='3' if subtitles else '2', appId='mpv', appVersion=self.mpv_version, appBuild=self.mpv_image,
                     backend='mpv', deviceMode=DEVICE_MODE, jellyfinVersion=self.server_version, pluginBuild=self.plugin_build,
                     source=source)
 
@@ -192,7 +239,7 @@ class FormatLab(cp.PointerLab):
                    'TranscodingProfiles': [{'Type': 'Video', 'Context': 'Streaming', 'Protocol': 'hls', 'Container': 'ts',
                                             'VideoCodec': 'h264', 'AudioCodec': 'aac'}],
                    # mpv renders embedded subtitles itself; without this Jellyfin plans a transcode for a default subtitle.
-                   'SubtitleProfiles': [{'Format': 'srt', 'Method': 'Embed'}, {'Format': 'subrip', 'Method': 'Embed'}]}
+                   'SubtitleProfiles': [{'Format': c, 'Method': 'Embed'} for c in ('srt', 'subrip', 'ass', 'mov_text')]}
         status, h, raw = self.request('/Items/'+self.pointer+'/PlaybackInfo', 'POST',
                                       {'DeviceProfile': profile, 'MediaSourceId': self.pointer, 'MaxStreamingBitrate': 100000000,
                                        'AutoOpenLiveStream': True}, user=self.one)
@@ -212,6 +259,31 @@ class FormatLab(cp.PointerLab):
         if st != 200:
             raise fm.Unmeasured(f'cut list status {st}')
         return url, s, edl.decode()
+
+    def subtitle_routes(self, edl, list_url, projected, spec):
+        # Inspect only our loopback descriptor URLs; never store credentials or route payloads in the receipt.
+        links = re.findall(r'%\d+%(http://[^,\n]+)', edl)
+        source = next(u for u in links if '/source?t=' in u)
+        subs = [u for u in links if '/subtitle-' in u]
+        self.tokens.update(u.split('t=')[1] for u in links)
+        tracks = [t for t in projected['MediaStreams'] if t['Type'] == 'Subtitle']
+        assert len(subs) == len(tracks) == len(spec['subtitles']), 'EDL and PlaybackInfo must expose only rewritten tracks'
+        for link, track, (codec, flags, _) in zip(subs, tracks, spec['subtitles']):
+            assert f"/subtitle-{track['Index']}.{'ass' if codec == 'ass' else 'srt'}?" in link
+            assert (track['Codec'] == ('ass' if codec == 'ass' else 'subrip') and
+                    track['IsDefault'] == (flags == 'default') and track['IsForced'] == (flags == 'forced') and
+                    not track.get('IsExternal') and not track.get('DeliveryUrl'))
+            st, headers, content = self.request(link)
+            hs, _, _ = self.request(link, method='HEAD')
+            assert st == hs == 200 and content and headers.get('cache-control') == 'private, no-store'
+            url_base = link.split('?')[0]
+            for wrong in (list_url, source):
+                assert self.request(url_base + '?' + wrong.split('?')[1])[0] == 404, 'wrong subtitle ticket accepted'
+            assert self.request(source.split('?')[0] + '?' + link.split('?')[1])[0] == 404, 'subtitle ticket authorized the original'
+            assert self.request(link, method='POST')[0] == 404, 'subtitle ticket authorized an unsupported method'
+        assert self.request('/Videos/'+self.pointer+'/'+self.pointer+'/Subtitles/'+str(tracks[0]['Index'])+'/Stream.srt',
+                            user=self.one)[0] >= 400, 'native subtitle route exposed a filtered pointer track'
+        return dict(tracks=len(tracks), ticketScoped=True, noStore=True, nativeSubtitleRefused=True)
 
     def measure(self, name):
         spec = ff.LAYOUTS[name]
@@ -246,7 +318,7 @@ class FormatLab(cp.PointerLab):
         self.item = item
         original = self.api('/Items/'+item+'/PlaybackInfo', user=self.admin)['MediaSources'][0]
         source, audio_index = describe_source(original['Container'], original['MediaStreams'], tracks, binding['durationMs'])
-        tuple_ = self.tuple_for(source)
+        tuple_ = self.tuple_for(source, spec['subtitles'])
         pending = dict(tuple=tuple_, actions=['cut'], controls=[], evidenceRef='tools/playback-lab/format-matrix.py',
                        date=now.strftime('%Y-%m-%d'), status='experimental',
                        observation='Measurement in progress: admits this layout so it can be measured; claims nothing.',
@@ -263,6 +335,7 @@ class FormatLab(cp.PointerLab):
         p.update(EnableAllFolders=False, EnabledFolders=[self.folders['Movies'], self.folders['Playback samples '+self.viewer]])
         self.api('/Users/'+self.viewer+'/Policy', 'POST', p, user=self.admin)
         url, projected, edl = self.offer(name, item)
+        subtitle_routes = self.subtitle_routes(edl, url, projected, spec) if spec['subtitles'] else None
         probe = probe_json(self.fixtures, f"{name}.{spec['container']}")
         result = dict(tuple=tuple_, audioIndex=audio_index, projectedAudioIndex=projected.get('DefaultAudioStreamIndex'),
                       edl=redact(edl))
@@ -274,9 +347,30 @@ class FormatLab(cp.PointerLab):
         try:
             # Each take re-asks PlaybackInfo, so a slow host cannot outlive a ticket.
             fresh = lambda: self.offer(name, item)[0]  # noqa: E731
-            measured = fm.measure(runner, source=fresh, control_source=f"/media/{name}.{spec['container']}", probe=probe,
-                                  channels=channels, plan_path=work/'plan.json', mpv_options=PLAYER_OPTIONS)
+            def joint(options):
+                return fm.measure(runner, source=fresh, control_source=f"/media/{name}.{spec['container']}", probe=probe,
+                                  channels=channels, plan_path=work/'plan.json', mpv_options=options)
+
+            measured = joint(PLAYER_OPTIONS)
             measured['seek'] = fm.seeks(runner, fresh(), PLAYER_OPTIONS)
+            if spec['subtitles']:
+                points = [(None, 0), (1.24, 31), (2.24, 56), (5.44, 136), (5.48, 263), (5.68, 268),
+                          (10.12, 379), (11.20, 406), (1.56, 39)]
+                keys = ('subtitles', 'subtitleTracks', 'subtitleClears')
+                only_subs = lambda x: {k: x[k] for k in keys}  # noqa: E731
+                measured['subtitleRoutes'] = subtitle_routes
+                # First track must play automatically; each alternate is captured by sid and switched to after load
+                # for the paused seeks. All are checked against an unedited positive control.
+                takes = []
+                for sid in range(1, len(spec['subtitles'])+1):
+                    run = measured if sid == 1 else joint([*PLAYER_OPTIONS, f'--sid={sid}'])
+                    seek = fm.seeks(runner, fresh(), PLAYER_OPTIONS, points, switch_sid=sid if sid > 1 else None)
+                    takes.append(dict(control=only_subs(run['control']), straight=only_subs(run['straight']),
+                                      starts=[only_subs(s) for s in run['starts']], subtitleSeek=seek,
+                                      jointVerdict=fm.verdict(run | {'seek': seek}),
+                                      straightPicture=run['straight']['picture'], straightSound=run['straight']['sound']))
+                measured['subtitleTakes'] = takes
+                measured['subtitleChecks'] = check_subtitles(spec, measured)
         except fm.Unmeasured as e:
             return result | dict(unmeasured=str(e))
         finally:
@@ -334,7 +428,7 @@ def main():
         facts[name] = ff.generate(fixtures, name)
         print(f"  {name}: {facts[name]['sha256'][:16]}... {facts[name]['size']} bytes", flush=True)
     receipt = dict(method=fm.__doc__.strip().splitlines()[0], playerOptions=PLAYER_OPTIONS, deviceMode=DEVICE_MODE,
-                   fixtures={n: {k: f[k] for k in ('sha256', 'size', 'video', 'audio')} for n, f in facts.items()}, runs={})
+                   fixtures={n: {k: f[k] for k in ('sha256', 'size', 'video', 'audio', 'subtitles')} for n, f in facts.items()}, runs={})
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     rows, ok = [], True
     try:

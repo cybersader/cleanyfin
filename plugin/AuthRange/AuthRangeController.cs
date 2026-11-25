@@ -33,9 +33,16 @@ public sealed class AuthRangeController : ControllerBase
     [HttpGet("descriptor"), HttpHead("descriptor")]
     public IActionResult Descriptor()
     {
-        if (HttpContext.Items[GrantPipeline.Marker] is not Admission { Leg: Leg.List, List: {} bytes }) return NotFound();
+        if (HttpContext.Items[GrantPipeline.Marker] is not Admission { Leg: Leg.List, Content: {} bytes }) return NotFound();
         Response.ContentType = "text/plain; charset=utf-8";
         Response.ContentLength = bytes.Length;
         return HttpMethods.IsHead(Request.Method) ? new EmptyResult() : File(bytes, Response.ContentType);
+    }
+
+    [HttpGet("subtitle"), HttpHead("subtitle")]
+    public IActionResult Subtitle()
+    {
+        if (HttpContext.Items[GrantPipeline.Marker] is not Admission { Leg: Leg.Subtitle, Content: {} bytes } sub) return NotFound();
+        return File(bytes, sub.Ass ? "text/x-ssa; charset=utf-8" : "application/x-subrip; charset=utf-8", enableRangeProcessing: true);
     }
 }
