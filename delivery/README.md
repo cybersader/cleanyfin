@@ -21,7 +21,10 @@ dotnet test tests/Delivery.Contract.Tests --filter Category=Plan
 dotnet test tests/Delivery.Contract.Tests --filter Category=Mpv
 dotnet test tests/Delivery.Contract.Tests --filter Category=Resolver
 dotnet test tests/Delivery.Contract.Tests --filter Category=Edition
+dotnet test tests/Delivery.Contract.Tests --filter Category=Formats
 ```
+
+**mpv renderer, adapter revision 2.** mpv reads cut-list times as the file's own timestamps, so `MpvEdlRenderer` adds the file time of the plan's source zero (exact, from the verified track clocks; a disagreement refuses with `UnverifiedPlayerClock`). It writes one of three measured forms: `Joint` (one partition, boundaries on the instant); `JointBeforeInstant` (interior boundaries 5 µs earlier; Matroska with AC-3/E-AC-3, whose frame times mpv reads a hair early); and `SplitPictureAndSound` (picture and sound partitions, a quarter sample before and after; sound without inter-frame overlap). For a source whose zero is file time 0 rendered `Joint`, the output equals revision 1 byte for byte. `EvidenceSourceLabel` names the exact stream layout an evidence row must match. See [common formats](../knowledge-base/01-working/common-formats-2026-11-24/01-common-formats.md).
 
 The golden pair uses the lab's timing with synthetic asset and authority identities; it is not proof of a live binding.
 

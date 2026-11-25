@@ -107,7 +107,24 @@ Screenshots of both pages (synthetic data, headless) are written to `knowledge-b
 
 ### Household file binding
 
-Run `python3 tools/playback-lab/check-plugin.py --case household-binding [--jellyfin 10.11|12.4]` (same prerequisites as `marking`). The movie is an ordinary file in a folder mount (`/media/movies/Lab Movie (2026)/…mp4`), not the individually pinned fixture inode, so it goes through the household verifier: the plugin hashes it in the background (paced to 100 kB/s here so progress is visible), the review page shows the check, a marker drafts, the administrator refines frame-exactly, accepts and publishes, and mpv plays the filtered item with the same sample-exact checks as above. Then the runner touches the file (offer refused at once, same edition after the re-hash, same filtered item plays again) and replaces it with a same-size, same-duration copy with the mtime preserved (offer refused at once, filtered item withdrawn, the mark flagged "file changed, review again", publish refused until it is withdrawn). The file's bytes are the hard fixture's because filtered playback is only offered for a measured stream layout. The screenshot `household-review-again.png` is written to the marking design folder.
+Run `python3 tools/playback-lab/check-plugin.py --case household-binding [--jellyfin 10.11|12.4]` (same prerequisites as `marking`). The movie is an ordinary file in a folder mount (`/media/movies/Lab Movie (2026)/…mp4`), not the individually pinned fixture inode, so it goes through the household verifier: the plugin hashes it in the background (paced to 100 kB/s here so progress is visible), the review page shows the check, a marker drafts, the administrator refines frame-exactly, accepts and publishes, and mpv plays the filtered item with the same sample-exact checks as above. Then the runner touches the file (offer refused at once, same edition after the re-hash, same filtered item plays again) and replaces it with a same-size, same-duration copy with the mtime preserved (offer refused at once, filtered item withdrawn, the mark flagged "file changed, review again", publish refused until it is withdrawn). The file's bytes are the hard fixture's because filtered playback is only offered for a measured stream layout; the other measured layouts are exercised by the [format matrix](#common-household-layouts-format-matrix). The screenshot `household-review-again.png` is written to the marking design folder.
+
+### Common household layouts (format matrix)
+
+Run `python3 tools/playback-lab/format-matrix.py` from the repository root (same prerequisites as `household-binding`, minus Node and Chromium). It generates synthetic copies of the hard fixture in common layouts (`format_fixtures.py`):
+
+- containers: MKV and MP4
+- video: H.264 8-bit, HEVC Main 10, one HDR10-tagged HEVC
+- sound: AAC-LC stereo, AC-3 5.1, E-AC-3 5.1, FLAC, Opus
+- one typical multi-track file: E-AC-3 5.1 default, AAC stereo second, a default SubRip track
+
+The generator refuses a layout unless the cut lies inside a GOP and inside an audio packet. For each Jellyfin line it starts one disposable loopback server and measures the layouts **one at a time**. Each measurement goes through the household verifier, a published mark, the plugin's real PlaybackInfo and the ticketed cut list, with mpv in the server's private namespace (`format_measure.py`).
+
+Every take captures picture and sound from the same playback. The exact verdict compares every channel of every sample with mpv's uncut decode of the same file, minus exactly the marked sample indices (`exact_audio.py`, now any channel count). This covers the straight cut, fresh starts before, at and after the join, and paused exact seeks across and onto it. A fresh start that emits extra samples from before the start position passes only if they are kept source samples and the unfiltered original does the same; any marked sample fails.
+
+A take that times out or fails is **unmeasured**, never a pass. `--case-timeout` sets the per-take limit. `--jellyfin 10.11|12.4|both`, repeated `--layout` and `--local` (plain files, no Jellyfin) narrow a run. `--receipt` writes the full JSON (capabilities redacted) and `--rows` writes candidate register rows. The reviewed register is never edited by the runner.
+
+Results, the three cut-list forms and the reasons for each refusal are in [common formats](../../knowledge-base/01-working/common-formats-2026-11-24/01-common-formats.md). Receipts: `prototypes/common-formats/`. Desktop mpv decoding to PCM only. It says nothing about a TV app, HDMI output or passthrough.
 
 ## Browser playback: original vs. filtered timeline
 

@@ -52,7 +52,7 @@ The household never gets an unfiltered fallback in place of a filtered title. An
 
 - **Proof against accidents and ordinary tools, not against the administrator.** Whoever controls the disk can change a file and restore its ctime (`debugfs`, a changed clock, a crafted filesystem). A network filesystem reports whatever the NAS says; a NAS that preserves ctime across a content change would defeat the cheap check. Same threat model as the audit log.
 - **Cost.** One full read of every marked title, once, plus a re-read after any signal change. See the ledger row for measured throughput.
-- **Playback is still offered only for a measured layout.** Binding works for any file with an exact clock; filtered playback additionally needs a measured evidence tuple (today: the hard fixture's 720p25 H.264/AAC layout). The household lab case therefore uses the fixture's bytes at an ordinary library path.
+- **Playback is still offered only for a measured layout.** Binding works for any file with an exact clock; filtered playback additionally needs a measured evidence tuple. The plugin now derives the tuple's layout from the verified file (container, every track's codec, depth, range, geometry, rate, channels, clock anchor and the track that plays), so the register decides; see [common formats](../common-formats-2026-11-24/01-common-formats.md) for which layouts measured exact. The household lab case uses the hard fixture's bytes at an ordinary library path.
 
 ## 6. Evidence
 
