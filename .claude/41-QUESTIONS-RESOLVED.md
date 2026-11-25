@@ -108,3 +108,18 @@ Locked 2026-11-25 (owner decision on the [boundary sweep](../knowledge-base/01-w
 
 **R21 — Admission standard: zero marked material is absolute; one extra kept sample at a fresh start is tolerated and disclosed.** A layout is admitted only if, at every position of the cut-position sweep on that server line: no marked picture and no marked sound sample is ever presented; straight cuts and seeks keep every kept frame and every kept sample exactly; and a fresh start or resume near a join deviates from the uncut original at most by one extra *kept* sample (21 µs at 48 kHz) presented before the start point. Any other kept-sound difference (altered, lost or shifted samples, including AAC noise substitution under R20) still refuses. Docs and evidence rows state the tolerance. MKV Dolby stays refused (decoder history at joins). The owner also chose to have the upstream mpv rounding fix reported, so the tolerance can be removed once mpv rounds to the nearest sample. *Source:* owner answer, recommended option, after a timeline diagram of the extra sample.
 
+---
+
+Locked 2026-11-25 (owner decision after watching worst-case lab clips; supersedes the kept-sound clauses of R20 and R21 for admission):
+
+**R22 — Admission is judged by what a viewer experiences.** Asked "Should the rule for 'good enough to offer filtered' be about what a viewer experiences? ... nothing marked ever gets through; no added silence, pop, freeze or missing picture; and lips back in sync within a split second", the owner chose "Yes; Dolby now, FLAC later (Recommended)". A layout is admitted on a server line only if, at every position of the cut-position sweep (straight cut, fresh starts, seek-and-resume):
+
+1. **Nothing marked, ever (absolute).** No marked frame and no marked sound is presented. This must be shown positively; a sample whose identity cannot be proven is not assumed to be kept.
+2. **No added silence:** no run of silence at a join longer than the ideal cut's.
+3. **No added pop:** the join is not audibly harsher than the ideal hard cut (measured high-frequency transient energy no higher than the ideal's, within measurement tolerance).
+4. **Picture intact:** no kept frame missing, repeated, or frozen beyond what the uncut original does.
+5. **Lips in sync:** sound and picture are back within ordinary playback jitter of each other within a split second (about 100 ms) of the join, and stay there.
+6. **Kept-sound loss is capped and disclosed:** at most about 40 ms of kept sound may be dropped at a join (measured worst case: a mark at the very start of a movie, Dolby).
+
+Admitted now: Dolby (AC-3/E-AC-3) layouts that meet all six on that line. FLAC stays refused until its worst case (up to 65 ms dropped mid-movie, which can clip a syllable onset) is fixed or the owner has watched the clips and accepted it. AAC stays refused (it can present marked sound or picture). Desktop-mpv lab evidence only; TV and HDMI still need their own measurement. Sample-exact kept sound remains the long-term goal (upstream mpv rounding fix), not the admission bar.
+
