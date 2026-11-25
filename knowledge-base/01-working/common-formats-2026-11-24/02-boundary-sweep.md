@@ -1,23 +1,21 @@
-# Exact at every cut position, or refused: the boundary sweep
+# Zero marked content at every cut position: the R21 boundary sweep
 
-**2026-11-25 · lab research, renderer change, desktop mpv only · branch `feat/boundary-sweep` (PR #20 + PR #21).** Follows the AAC finding that mpv truncates the sound boundary of a cut-list segment to a whole sample, and that MP4 E-AC-3, admitted "exact" from one cut position, was wrong at others.
+**2026-11-25 · desktop mpv lab only · `feat/r21-admission`.** Follows the renderer work in PR #22: mpv truncates sound boundaries to whole samples, and prior one-position MP4 E-AC-3 evidence did not hold at every position.
 
-## Answer
+## Admission standard
 
-**No layout is exact at every cut position on either server line, so every common-format and subtitle layout stays refused.** The joins themselves are now fixed for MP4 E-AC-3: with the new cut-list form, the straight cut and the paused seeks are exact at all 24 measured positions. What still fails is the fresh start. When playback starts near a join, mpv sometimes plays one extra sound sample from just before the start position. That sample is always a kept one, never a marked one. The unfiltered original, started at the same picture, plays none, so under the project's rule (R20: never admit an inexact layout) the layout stays refused. Matroska AC-3/E-AC-3 additionally fails at joins, for a reason no cut list can fix (below).
-
-Whether one extra *kept* sample at a fresh start counts as exact is an owner decision; see [the question](#owner-question).
-
-## The admission standard (what a row must now pass)
+[R21](../../../.claude/41-QUESTIONS-RESOLVED.md) requires **zero marked picture and zero marked sound**, with exact kept picture and sound at straight cuts and exact seek landings. Only a fresh start or resume near a join may play one extra **kept** sample before the start point (about 21 µs at 48 kHz), compared with the uncut original starting on the same picture. Missing, altered or shifted kept samples still refuse; R20's sample-for-sample check on AAC is unchanged. “Experimental” here only means a measured desktop-mpv lab offer; it is not household, TV or Wholphin support.
 
 `tools/playback-lab/format-matrix.py` measures each layout through the plugin's real PlaybackInfo, ticket and cut-list path, then republishes the reviewed mark at **24 cut positions** (`POSITIONS`): on and off frame instants and AC-3/E-AC-3 packet edges (MP4 every 32 ms; Matroska 32 ms minus the 5.333 ms priming), 1 ms before and after a frame instant, a one-frame mark, two 1 ms marks (one with no frame inside it, sound only), both edges on keyframes, marks from the very start and to the very end of the file. At each position it plays:
 
 - the straight cut: every kept frame once and in order, no marked frame, and every sample of every channel equal to mpv's uncut decode with exactly the marked samples removed;
 - fresh starts 200 ms and 1 ms before the join, on it, and 520 ms after it;
-- paused exact seeks onto the join, 1.3 ms and 41.3 ms before it, forward across it and back across it;
-- for subtitle layouts, the existing per-track checks at the fixture's own mark, plus at every position: no cue touching the mark is shown, every other cue is.
+- paused exact seeks onto the join, 1.3 ms and 41.3 ms before it, forward across it and back across it; one in-session resume after the final near-join seek with frame-complete picture and joint PCM to end of file;
+- for subtitle layouts, per-track controls at the fixture's own mark; at each position the default-selected track must hide any cue touching the mark and keep every untouched cue.
 
-A layout is admitted only if every position passes on that line. A partial sweep (`--positions N`) never admits.
+A layout is admitted only if every position passes on that line. The run continues after failures; a timeout is unmeasured, never a pass. A partial sweep (`--positions N` or `--stop-on-fail`) never admits. The extra-prefix test compares bit-exact interleaved PCM on the source clock; it checks the filtered stream's preceding kept indices against the marked-side seam candidates, and independently measures the uncut start. An original prefix sample inside the mark is not a kept sample. An unidentified or ambiguous sample always refuses.
+
+The old fixture shared periodic 440 Hz audio across channels and could alias the preceding kept and marked samples for a whole-period mark. The R21 fixture keeps the channel-zero tone as an independent clock check and adds a deterministic aperiodic pilot to the other channels. Its source fingerprints differ from the old run; the legacy hard-fixture AAC source is swept unchanged as a separate diagnostic. The oracle does not guess sample identity from the waveform's frequency or realign PCM to make a mismatch pass.
 
 **The oracle now uses the true source clock.** The old oracle assumed mpv's uncut decode starts at source sample 0. For Matroska AC-3/E-AC-3 it does not: mpv plays one priming sample first, because ffmpeg stores Matroska `CodecDelay` truncated to whole nanoseconds (256/48000 s becomes 5333333 ns), so mpv's start computation lands on 255.99998 samples and truncates to 255. Proof: mpv's uncut output sample *i* is bit-identical to ffmpeg's decode (with priming) sample *i* + 255, and the fixture tone's phase puts it exactly one sample early. Because the old oracle used mpv's own uncut decode as the truth, the "exact" Matroska rows from PR #19 hid one wrong sample per join: their boundaries 5 µs *before* the instant passed only against that one-sample-early reference, which on the true clock means the last kept sample before the join was dropped and the last marked sample played (the measured boundary windows: on the old reference −20…0 µs passed and +1…+15 µs failed; on the true clock it is the reverse). The new oracle locates the uncut decode's lead from the tone's phase (the tone is a function of the integer sample index) and places every mark on the true clock.
 
@@ -27,9 +25,39 @@ From mpv 0.40's source: a picture survives a segment iff its time is at or after
 
 The new **split** form, used for AC-3, E-AC-3 and FLAC sound: picture and sound in separate partitions of the same source; at every mark edge the picture boundary sits 2 µs before the frame instant and the sound boundary 10 µs (half a sample) after the sample instant. The presentation's own start and the end of the file stay where the original's are, so after every join sound and picture keep the original's relative position. The kept frames and samples are exactly those whose instants are outside the marks. The plugin passes the playing track's sample rate; the renderer refuses rates whose milliseconds are not samples (e.g. 44.1 kHz) and picture clocks with a tick inside the 2 µs lead. Subtitle partitions follow the picture clock. The adapter revision names the form (2/3 joint, 4/5 split), so old evidence can never admit the new form. AAC and Opus stay on the joint form: in a sound-only MP4 partition they lose their decoder history.
 
-## Measured results (both server lines through the plugin)
+<a id="per-layout"></a>
 
-<a id="per-layout"></a>The sweep stops a layout at its first failing position (one failure refuses it). Results were the same on Jellyfin 10.11.11 and 12.4.0 for every layout. "Positions exact" counts the positions in `POSITIONS` order before the first failure; 24 are needed.
+## R21 results
+
+**0 of 14 layouts admitted under R21 on both lines.** Jellyfin 10.11.11: 0/14. Jellyfin 12.4.0: 0/14. Any admitted row is `experimental` desktop mpv only and discloses the one-kept-sample limit. The original MP4 AAC fixture is a separate diagnostic, not a candidate row. Both historical rows (Wholphin revision 1 and `lab-hard-fixture-v0`) stay refused; the desktop sweep does not qualify Wholphin.
+
+Both MP4 E-AC-3 layouts passed 18/24 on each line. Kept samples were lost at several starts, and one head cut lost kept PCM even in straight playback. These are not the one extra kept sample R21 allows. The unchanged MP4 AAC hard fixture passed 8/24 on each line and presented a marked sample. Neither historical AAC row remains experimental.
+
+Counts are positions that passed out of the 24 planned. A layout continues past a failed position. Opus is an exception to position-level playback: the uncut control could not establish a whole-sample source clock, so all 24 positions per line are unmeasured. The two 10.11 head positions listed as unmeasured for some Matroska layouts were attempted but produced no usable paired capture. The receipts distinguish tolerated extra kept samples from rejected differences. A pass at every position is necessary; the separate original-mark controls and every fixture sharing the exact tuple must also pass.
+
+| Layout | 10.11 passed/24 | 12.4 passed/24 | Deviations (10.11; 12.4 if different) |
+|---|---:|---:|---|
+| `mp4-h264-aac` | 2/24 | 2/24 | audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented |
+| `mkv-h264-aac` | 0/24 | 0/24 | audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented |
+| `mkv-h264-ac351` | 18/24 (2 unmeasured) | 18/24 | 10.11: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured; 12.4: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost |
+| `mkv-h264-eac351` | 18/24 (2 unmeasured) | 18/24 | 10.11: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured; 12.4: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost |
+| `mkv-hevc10-aac` | 0/24 | 0/24 | audio-identity-unproven, kept-picture-missing-altered-or-shifted, kept-sample-altered, kept-sample-lost, marked-frame-presented |
+| `mkv-hevc10-eac351` | 18/24 (2 unmeasured) | 18/24 | 10.11: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured; 12.4: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost |
+| `mkv-hevc10-hdr10-eac351` | 18/24 (2 unmeasured) | 18/24 | 10.11: audio-identity-unproven, extra-kept-sample, kept-sample-altered, unmeasured; 12.4: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost |
+| `mp4-hevc10-aac` | 2/24 | 2/24 | audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented |
+| `mp4-h264-eac351` | 18/24 | 18/24 | audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost |
+| `mkv-h264-flac` | 10/24 | 10/24 | extra-kept-sample, kept-sample-altered, kept-sample-lost |
+| `mkv-h264-opus` | 0/24 (24 unmeasured) | 0/24 (24 unmeasured) | unmeasured |
+| `mkv-h264-eac351+aac-srt` | 17/24 (2 unmeasured) | 17/24 | 10.11: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, unmeasured; 12.4: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost |
+| `mkv-h264-eac351-ass+srt` | 16/24 (2 unmeasured) | 16/24 | 10.11: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation, unmeasured; 12.4: audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, subtitle-deviation |
+| `mp4-h264-eac351-mov_text` | 18/24 | 18/24 | audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost |
+| `mp4-h264-aac-hard-original` | 8/24 | 8/24 | audio-identity-ambiguous, audio-identity-unproven, extra-kept-sample, kept-sample-altered, kept-sample-lost, kept-sample-shifted, marked-sample-presented |
+
+Receipts: [10.11.11](../../../tools/playback-lab/prototypes/common-formats/receipt-r21-10.11-2026-11-25.json), [12.4.0](../../../tools/playback-lab/prototypes/common-formats/receipt-r21-12.4-2026-11-25.json). The 12.4 receipt combines completed layouts from three isolated lab runs after two watchdog stops. The merge checked the exact plugin and player builds and settings, and kept the input fingerprint of the run that actually measured each layout.
+
+## Historical strict sweep (PR #22, before R21)
+
+The original strict sweep stopped a layout at its first failing position (one failure refused it). Results were the same on Jellyfin 10.11.11 and 12.4.0 for every layout. "Positions exact" counts the positions in `POSITIONS` order before the first failure; 24 are needed.
 
 | Layout | Positions exact (each line) | First failure | Why |
 |---|---|---|---|
@@ -47,7 +75,7 @@ The new **split** form, used for AC-3, E-AC-3 and FLAC sound: picture and sound 
 
 A diagnostic run of MP4 E-AC-3 on plain files (`--local --keep-going`, the same cut-list form) measured all 24 positions: the straight cut was exact at 23 and every seek at all 24, so 14 positions passed outright. Nine failed only because fresh starts near the join played one (once two) extra **kept** samples where the original plays fewer, and the tenth (the cut from the very start to 1 ms after a frame) played one extra kept sample before its first picture. No marked sample played anywhere by mechanism (the split form removes marked sound before mpv's start clipping). One take could not be told apart by sample identity, because that mark is a whole number of 440 Hz periods long; it counts as marked.
 
-Receipts: [`receipt-sweep-10.11-2026-11-25.json`](../../../tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json), [`receipt-sweep-12.4-2026-11-25.json`](../../../tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json). Register: 25 new `refused` rows (adapter revisions 2, 4 and 5; on 12.4 the HEVC E-AC-3 file with HDR10 mastering metadata gets the same label as the one without, so they share a row); no `experimental` common-format row remains. The two hard-fixture rows (MP4 AAC, Wholphin revision 1 and lab revision `lab-hard-fixture-v0`) were not part of this sweep and are unchanged; they too rest on one cut position.
+Receipts: [`receipt-sweep-10.11-2026-11-25.json`](../../../tools/playback-lab/prototypes/common-formats/receipt-sweep-10.11-2026-11-25.json), [`receipt-sweep-12.4-2026-11-25.json`](../../../tools/playback-lab/prototypes/common-formats/receipt-sweep-12.4-2026-11-25.json). Register: 25 new `refused` rows (adapter revisions 2, 4 and 5; on 12.4 the HEVC E-AC-3 file with HDR10 mastering metadata gets the same label as the one without, so they share a row); no `experimental` common-format row remains. The two hard-fixture rows (MP4 AAC, Wholphin revision 1 and `lab-hard-fixture-v0`) were not part of that historical run.
 
 ## What still blocks, and why a cut list cannot fix it
 
@@ -61,11 +89,7 @@ Receipts: [`receipt-sweep-10.11-2026-11-25.json`](../../../tools/playback-lab/pr
 
 With rounding to nearest, a cut list could put sound boundaries exactly on the instant again; the split partitions and their offsets would be unnecessary, and MP4 AAC could keep the joint partition's pre-roll.
 
-## Owner question
-
-*"With the new cut list, MP4 E-AC-3 cuts and seeks are exact at all 24 tested positions. Starting playback near a cut sometimes plays one extra kept sound sample (21 µs) from just before the start point; never marked sound. The unfiltered movie, started at the same picture, plays none. Should that count as exact?"* Until answered, it does not, and every layout stays refused.
-
 ## What this proves and what it does not
 
-- **Proves:** desktop mpv 0.40 in the lab container, decoded PCM, through the plugin on Jellyfin 10.11.11 and 12.4.0: which positions of the sweep are exact per layout (receipts below).
-- **Does not prove:** any TV app, HDMI output, passthrough, real encoder settings, other frame rates or sample rates. No TV or Wholphin tuple is promoted.
+- **Scope:** desktop mpv 0.40 in the lab container, decoded PCM, through the plugin on pinned Jellyfin 10.11.11 and 12.4.0. Evidence belongs to the exact layout and server/plugin/player tuple, not the codec family.
+- **Does not prove:** any TV app, Wholphin audio, HDMI output, passthrough, persisted resume/restart, real encoder settings, other frame rates or sample rates. Paused seeks present no audio; the resumed take separately measures PCM from the final near-join landing onward.

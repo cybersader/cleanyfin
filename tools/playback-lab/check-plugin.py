@@ -91,7 +91,7 @@ class Lab:
             shutil.rmtree(w/folder)
         self.plugin_build = sha((install/'Jellyfin.Plugin.Cleanyfin.dll').read_bytes())
         print('Plugin SHA-256', self.plugin_build, flush=True)
-        subprocess.run([sys.executable, LAB/'hard-fixture.py', w/'fixture'], check=True, stdout=subprocess.DEVNULL)
+        subprocess.run([sys.executable, LAB/'hard-fixture.py', w/'fixture', '--source-only'], check=True, stdout=subprocess.DEVNULL)
         (w/'config/config/network.xml').write_text(f'''<NetworkConfiguration><BaseUrl>{BASE}</BaseUrl>
 <InternalHttpPort>{self.port}</InternalHttpPort><PublicHttpPort>{self.port}</PublicHttpPort>
 <LocalNetworkAddresses><string>127.0.0.1</string></LocalNetworkAddresses><EnableUPnP>false</EnableUPnP><EnableIPv6>false</EnableIPv6></NetworkConfiguration>''')
@@ -411,6 +411,7 @@ class PointerLab(Lab):
         row['tuple']['pluginBuild'] = self.plugin_build
         # Exercise the gate on the server under test; the historical row names 10.11.11 only.
         row['tuple']['jellyfinVersion'] = self.server_version
+        row['status'] = 'experimental'
         row['observation'] = 'Synthetic integration-test setup only; no claims about playback fidelity on this build.'
         row['evidenceRef'] = 'tools/playback-lab/check-plugin.py'
         row['controls'] = []

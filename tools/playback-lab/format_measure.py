@@ -3,7 +3,7 @@
 One playback per take, with picture and sound selected together as a viewer would play it: numbered images and
 48 kHz signed 16-bit PCM in the layout's own channel count. The exact verdict compares every channel of every sample
 with the same mpv's uninterrupted decode of the same file, re-indexed to the true source clock, minus exactly the
-marked samples; no resampling or tolerance. Pictures are read from the barcode, so every kept frame must appear once
+marked samples; no resampling or sample-value tolerance. R21 permits only a proven leading kept sample at a fresh start. Pictures are read from the barcode, so every kept frame must appear once
 and in order and no marked frame may appear at all.
 
 Clock: a plan's source time zero is the earliest audio/video first timestamp (the edition rule). Sample n of the
@@ -26,9 +26,16 @@ import subprocess
 import sys
 import time
 from fractions import Fraction
+from functools import cache
 from pathlib import Path
 
-from exact_audio import RATE, compare, compare_ranges, kept_pcm, read_pcm, summary
+from exact_audio import RATE, compare, kept_pcm, read_pcm, summary
+from r21_oracle import classify_pcm, deviation
+
+try:
+    from PIL import Image  # Optional fast path for the lab's already-scaled PNGs.
+except ImportError:
+    Image = None
 from format_fixtures import END, FPS, FRAMES, START, TONE_HZ, TONE_LEVEL
 
 LAB = Path(__file__).resolve().parent
@@ -193,6 +200,7 @@ class Runner:
         return read_sequence(directory)
 
 
+@cache
 def _analyzer():
     import importlib.util
     spec = importlib.util.spec_from_file_location('analyze_capture', LAB/'analyze-capture.py')
@@ -203,6 +211,8 @@ def _analyzer():
 
 def read_sequence(directory):
     a = _analyzer()
+    if Image is not None:
+        return [read_one(path) for path in sorted(directory.glob('*.png'))]
     from hard_fixture_lab import SCAN_HEIGHT, SCAN_WIDTH, media
     raw = media(directory, 'ffmpeg', '-protocol_whitelist', 'file,pipe', '-f', 'concat', '-safe', '0', '-i', 'pipe:0',
                 '-map', '0:v:0', '-vf', f'scale={SCAN_WIDTH}:{SCAN_HEIGHT}:flags=area,format=gray,settb=1/{FPS},setpts=N',
@@ -214,6 +224,10 @@ def read_sequence(directory):
 
 def read_one(image):
     from hard_fixture_lab import SCAN_HEIGHT, SCAN_WIDTH, media
+    if Image is not None:
+        with Image.open(image) as decoded:
+            if decoded.size == (SCAN_WIDTH, SCAN_HEIGHT):
+                return _analyzer().read_barcode(memoryview(decoded.convert('L').tobytes()), FRAMES)
     raw = media(image.parent, 'ffmpeg', '-i', f'/lab/{image.name}', '-vf',
                 f'scale={SCAN_WIDTH}:{SCAN_HEIGHT}:flags=area,format=gray', '-frames:v', '1', '-f', 'rawvideo', 'pipe:1',
                 readonly=True)
@@ -277,7 +291,7 @@ class Mark:
         size = 2*ref['channels']
         lead, pcm = ref['lead'], ref['pcm']
         total = min(len(pcm)//size - lead, (self.duration_ms - self.av)*SAMPLES_PER_FRAME//FRAME_MS)
-        ranges = [(0, lead + self.a)] + ([(lead + self.b, lead + total)] if self.b < total else [])
+        ranges = ([(0, lead + self.a)] if self.a else []) + ([(lead + self.b, lead + total)] if self.b < total else [])
         return kept_pcm(pcm, [r for r in ranges if r[1] > r[0]], ref['channels'])
 
     def landing(self, target):
@@ -310,16 +324,20 @@ def reference(runner, *, control_source, probe, channels, mpv_options=()):
     if seq != list(range(FRAMES)):
         raise Unmeasured('uncut control did not show all 500 pictures once and in order')
     lead = reference_lead(pcm, channels)
-    return dict(cut=cut, channels=channels, pcm=pcm, lead=lead, source=control_source, control=control | dict(lead=lead))
+    return dict(cut=cut, channels=channels, pcm=pcm, lead=lead, source=control_source, startLeads={}, control=control | dict(lead=lead))
 
 
 def take(runner, source, ref, mark, label, *extra_args, start=None, mpv_options=()):
     """One playback from START (filtered seconds) or the beginning: picture and sound against the mark."""
-    size = 2*ref['channels']
     args = ([f'--start={float(start):.6f}'] if start is not None else []) + list(extra_args) + list(mpv_options)
     frames, wav, extra = runner.capture(label, source, ref['channels'], *args)
     seq = runner.sequence(frames)
     got = read_pcm(wav, ref['channels'])
+    return score_take(runner, ref, mark, label, seq, got, start, mpv_options) | extra
+
+
+def score_take(runner, ref, mark, label, seq, got, start, mpv_options):
+    size = 2*ref['channels']
     expected = mark.expected(ref)
     first = next((f for f in seq if f is not None), None)
     if start is None:
@@ -336,49 +354,61 @@ def take(runner, source, ref, mark, label, *extra_args, start=None, mpv_options=
     p['ok'] = (first == want_first and kept_from is not None and [f for f in seq if f is not None] == kept_from
                and not p['unreadable'] and not p['markedCount'])
     p['firstFrame'], p['expectedFirstFrame'] = first, want_first
+    issues = []
+    if p['markedCount']:
+        issues.append(deviation('marked-frame-presented', p['markedCount']))
+    if not p['ok'] and (not p['markedCount'] or p['missing'] or p['unreadable'] or p['duplicates']):
+        issues.append(deviation('kept-picture-missing-altered-or-shifted'))
     tail, at = expected, 0
-    if first is not None and first in mark.kept_frames and (start is not None or mark.a == 0):
-        # Sound starts at the first shown picture's instant. Only a presentation that starts at the file's own start
-        # (the straight play of a mark that does not begin at 0) has the uncut decode's lead-in before it.
+    fresh = start is not None and first in mark.kept_frames
+    n, lead, pcm = 0, ref['lead'], ref['pcm']
+    if fresh:
+        # First shown picture is the start reference. Straight play preserves the whole kept sample sequence,
+        # including at the head of a cut; it does not get the fresh-start exception.
         n = first*SAMPLES_PER_FRAME
-        at = ref['lead'] + mark.kept_index(n)
+        at = (lead if mark.a else 0) + mark.kept_index(n)
         tail = expected[at*size:]
-    sound = compare(tail, got, mark.a if start is None else 0, ref['channels'])
-    sound['playerStartBehaviour'] = False
-    if not sound['exact'] and first in mark.kept_frames:
-        # Diagnose a near miss by sample identity: extra or missing leading samples, and what the extra ones are.
-        k = next((k for k in range(1, 9) if got[k*size:] == tail), None)
-        sound['leadingExtraSamples'] = k
-        sound['leadingMissingSamples'] = next((k for k in range(1, 9) if got == tail[k*size:]), None)
-        if k:
-            n = first*SAMPLES_PER_FRAME
-            pcm, lead = ref['pcm'], ref['lead']
-            # Marked samples are absent from `expected`; check the extra ones against the marked source directly.
-            marked = pcm[(lead + mark.a)*size:(lead + mark.b)*size]
-            sound['extraMarked'] = any(got[i*size:(i+1)*size] == marked[j*size:(j+1)*size]
-                                       for i in range(k) for j in (range(max(0, mark.b - mark.a - k), mark.b - mark.a)
-                                                                   if first >= mark.end_frame else ()))
-            sound['extraArePreceding'] = at >= k and got[:k*size] == expected[(at - k)*size:at*size]
-            # The fixture's tone can make a marked sample equal a kept one (e.g. marks a whole number of 440 Hz
-            # periods long); identity then cannot tell them apart, and the take counts as marked.
-            sound['extraAmbiguous'] = sound['extraArePreceding'] and sound['extraMarked']
-            if start is not None and sound['extraArePreceding'] and not sound['extraMarked']:
-                # Is it the player's start behaviour? Start the unfiltered original at the same picture.
-                ofr, owav, _ = runner.capture('original-start', ref['source'], ref['channels'],
-                                              f'--start={first*FRAME_MS/1000:.6f}', *mpv_options)
-                oseq = runner.sequence(ofr)
-                original = read_pcm(owav, ref['channels'])
-                want = ref['pcm'][(lead + n)*size:(lead + n + SAMPLES_PER_FRAME)*size]
-                olead = next((j for j in range(0, 9) if original[j*size:j*size + len(want)] == want), None)
-                sound['originalStartLead'] = olead
-                sound['originalFirstFrame'] = next((f for f in oseq if f is not None), None)
-                sound['playerStartBehaviour'] = olead == k and sound['originalFirstFrame'] == first
-    sound['summary'] = summary(sound, 'sample frames')
-    # Exact: every kept sample from the first picture on, none missing, none marked. A fresh start that also plays the
-    # filtered stream's own preceding kept samples passes only where the unfiltered original started at the same
-    # picture plays the same number of preceding samples (mpv's start behaviour, not filtering; never a marked one).
-    sound_ok = sound['exact'] or sound['playerStartBehaviour']
-    return dict(picture=p, sound=sound, soundOk=sound_ok, exact=p['ok'] and sound_ok, **extra)
+    before = pcm[(lead + max(mark.a, mark.b - 8))*size:(lead + mark.b)*size]
+    after = pcm[(lead + mark.a)*size:(lead + min(mark.a + 8, mark.b))*size]
+    original_lead = None
+    if fresh:
+        leads = ref['startLeads']
+        if first not in leads:
+            ofr, owav, _ = runner.capture('original-start', ref['source'], ref['channels'],
+                                           f'--start={first*FRAME_MS/1000:.6f}', *mpv_options)
+            oseq = runner.sequence(ofr)
+            original = read_pcm(owav, ref['channels'])
+            # Prove the prefix on the uncut source clock, not just the length of any matching audio run.
+            at_original = (lead + n)*size
+            matches = [j for j in range(9) if at_original >= j*size and oseq[0] == first and
+                       original[:(j + SAMPLES_PER_FRAME)*size] ==
+                       pcm[at_original - j*size:at_original + SAMPLES_PER_FRAME*size]]
+            leads[first] = matches[0] if len(matches) == 1 else None
+            shutil.rmtree(ofr)
+            owav.unlink()
+        if leads[first] is not None:
+            # The uncut start can itself precede the picture by a marked sample. Only its kept prefix can
+            # enter the comparison: the original's marked samples are required omissions, not kept loss.
+            original_lead = sum(not mark.a <= i < mark.b for i in range(n - leads[first], n))
+    near_join = fresh and -Fraction(1, 5) <= start - mark.join_seconds <= Fraction(13, 25)
+    join = (lead if mark.a else 0) + mark.a - at
+    pcm_issues, sound_ok = classify_pcm(tail, got, size=size, preceding=expected[max(0, at - 8)*size:at*size],
+                                        marked_before=before if join >= 0 else b'',
+                                        marked_after=after if join >= 0 else b'', join=join,
+                                        original_lead=original_lead, fresh=near_join)
+    if fresh and original_lead is None and sound_ok:
+        pcm_issues.append(deviation('original-start-unproven'))
+        sound_ok = False
+    # Full bit comparison is useful for the fixture's original mark; the sweep uses the faster R21 classifier.
+    sound = (compare(tail, got, max(0, join), ref['channels']) if label == 'cut' and
+             mark.start_frame == START and mark.end_frame == END else
+             dict(exact=tail == got, expectedFrames=len(tail)//size, actualFrames=len(got)//size,
+                  delta=(len(got)-len(tail))//size))
+    sound['summary'] = summary(sound, 'sample frames') if 'firstUnequal' in sound else (
+        f"{sound['actualFrames']}/{sound['expectedFrames']} sample frames; length delta {sound['delta']:+d}")
+    sound['originalStartLead'] = original_lead
+    return dict(picture=p, sound=sound, soundOk=sound_ok, exact=p['ok'] and sound_ok,
+                deviations=issues + pcm_issues)
 
 
 def sweep_position(runner, source, ref, mark, *, mpv_options=(), seek=None):
@@ -395,30 +425,35 @@ def sweep_position(runner, source, ref, mark, *, mpv_options=(), seek=None):
     result['starts'] = starts
     if seek is not None:
         targets = [(None, mark.kept_frames[0])]
-        for t in (j, j - Fraction(13, 10000), j - Fraction(413, 10000), j + Fraction(10007, 10000), Fraction(1, 2), j):
+        before_join = j - Fraction(413, 10000)
+        resume_at = j if mark.landing(j) is not None else before_join
+        for t in (j, j - Fraction(13, 10000), before_join, j + Fraction(10007, 10000), Fraction(1, 2), resume_at):
             if t >= 0 and mark.landing(t) is not None:
                 targets.append((float(t), mark.landing(t)))
         result['seek'] = seek(targets)
-    deviations = []
+        resume = result['seek'].pop('resume', None)
+        if resume is not None:
+            rseq, rpcm = resume
+            result['resume'] = score_take(runner, ref, mark, 'resume', rseq, rpcm, resume_at, mpv_options)
+    issues = []
     for label, t in [('straight cut', straight)] + [(f"start {s['startSeconds']:.3f} s", s) for s in starts]:
-        if not t['picture']['ok']:
-            deviations.append(f"{label}: picture first {t['picture']['firstFrame']} (want {t['picture']['expectedFirstFrame']}), "
-                              f"{t['picture']['markedCount']} marked, {t['picture']['missing']} missing")
-        if not t['soundOk']:
-            deviations.append(f"{label}: {t['sound']['summary']}" + (' (a MARKED sample plays)' if t['sound'].get('extraMarked') else '')
-                              + (f" ({t['sound']['leadingExtraSamples']} extra leading; preceding kept: "
-                                 f"{t['sound'].get('extraArePreceding')}; original at that picture: "
-                                 f"{t['sound'].get('originalStartLead')} extra)" if t['sound'].get('leadingExtraSamples') else '')
-                              + (f" ({t['sound']['leadingMissingSamples']} missing leading)" if t['sound'].get('leadingMissingSamples') else ''))
+        issues.extend(dict(d, take=label, tolerated=t['exact']) for d in t['deviations'])
+    if 'resume' in result:
+        issues.extend(dict(d, take='resume after seek', tolerated=result['resume']['exact'])
+                      for d in result['resume']['deviations'])
     for l in result.get('seek', {}).get('landings', []):
-        if l['landed'] != l['expected'] or l['marked']:
-            deviations.append(f"seek {l['target']}: landed on frame {l['landed']}, expected {l['expected']}" + (' (MARKED)' if l['marked'] else ''))
-    result['deviations'] = deviations
-    result['exact'] = not deviations
+        if l['marked']:
+            issues.append(deviation('marked-frame-presented', l['markedCount'], take=f"seek {l['target']}"))
+        if l['landed'] != l['expected'] or l['unreadable']:
+            issues.append(deviation('kept-picture-missing-altered-or-shifted', take=f"seek {l['target']}",
+                                    expected=l['expected'], landed=l['landed']))
+    result['deviations'] = issues
+    result['passed'] = (seek is not None and straight['exact'] and all(s['exact'] for s in starts)
+                        and result['seek']['ok'] and result.get('resume', {}).get('exact', False))
     return result
 
 
-def measure(runner, *, source, control_source, probe, channels, plan_path, mpv_options=(), starts=(5.28, 5.48, 7.0), ref=None):
+def measure(runner, *, source, control_source, probe, channels, plan_path, mpv_options=(), starts=(5.28, 5.48, 6.0), ref=None):
     """Control, straight cut and fresh starts at the hard fixture's own mark (source frames [137, 263)), on the true
     source clock. Returns a result dict; raises Unmeasured if a take did not finish."""
     ref = ref or reference(runner, control_source=control_source, probe=probe, channels=channels, mpv_options=mpv_options)
@@ -447,7 +482,7 @@ def measure(runner, *, source, control_source, probe, channels, plan_path, mpv_o
     return result
 
 
-def seeks(runner, source, mpv_options=(), targets=None, switch_sid=None, marked_frames=None):
+def seeks(runner, source, mpv_options=(), targets=None, switch_sid=None, marked_frames=None, resume_channels=None):
     """Paused desktop mpv with exact landing pictures and active text, optionally after an in-player track switch.
     MARKED_FRAMES: the frames the current mark removes (default: the fixture's own [137, 263))."""
     marked_set = set(range(START, END)) if marked_frames is None else set(marked_frames)
@@ -462,13 +497,19 @@ def seeks(runner, source, mpv_options=(), targets=None, switch_sid=None, marked_
     images.mkdir()
     sock = w/'seek.sock'
     sock.unlink(missing_ok=True)
+    resume_wav = w/'seek-resume.wav'
+    resume_wav.unlink(missing_ok=True)
+    ao = ['--ao=null'] if resume_channels is None else [
+        '--untimed=yes', '--ao=pcm', '--ao-pcm-waveheader=yes', f'--ao-pcm-file={resume_wav.name}',
+        f'--audio-samplerate={RATE}', f'--audio-channels={CHANNEL_LAYOUT[resume_channels]}', '--audio-format=s16']
     cid = subprocess.check_output(['docker', 'run', '-d', '--rm', '--pull=never', '--network', runner.network,
         '--user', f'{os.getuid()}:{os.getgid()}', '-e', 'HOME=/tmp', '-v', f'{w}:/lab:z', *runner.mounts, '-w', '/lab', '--entrypoint=mpv',
         MPV, '--no-config', '--load-scripts=no', '--sub-auto=no', '--audio-file-auto=no', '--pause', '--idle', '--keep-open',
         '--hwdec=no', '--framedrop=no', '--hr-seek=yes', '--no-input-terminal', '--really-quiet', '--vo=image',
-        '--vo-image-format=png', '--vf=scale=160:90', '--vo-image-outdir=seek-images', '--ao=null',
+        '--vo-image-format=png', '--vo-image-png-compression=1', '--vf=scale=160:90', '--vo-image-outdir=seek-images', *ao,
         '--input-ipc-server=/lab/seek.sock', *mpv_options], text=True, timeout=60).strip()
     landings = []
+    resumed = {}
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
             fd = os.open(w, os.O_RDONLY | os.O_DIRECTORY)
@@ -519,19 +560,35 @@ def seeks(runner, source, mpv_options=(), targets=None, switch_sid=None, marked_
                     raise Unmeasured('mpv ended before a seek landing')
                 time.sleep(.3)
                 fresh = sorted(set(images.glob('*.png')) - before)
-                got = read_one(fresh[-1]) if fresh else None
-                landings.append(dict(target=target, expected=expected, landed=got,
-                                     marked=bool(fresh) and any((read_one(f) or -1) in marked_set for f in fresh),
-                                     subtitle=get('sub-text'), sid=get('sid')))
+                presented = [read_one(f) for f in fresh]
+                marked_count = sum(f in marked_set for f in presented)
+                landings.append(dict(target=target, expected=expected, landed=presented[-1] if presented else None,
+                                     marked=bool(marked_count), markedCount=marked_count,
+                                     unreadable=any(f is None for f in presented), subtitle=get('sub-text'), sid=get('sid')))
                 if target is None and switch_sid is not None:
                     request = send(['set_property', 'sid', switch_sid])
                     if wait_for(lambda val: val.get('request_id') == request).get('error') != 'success' or get('sid') != switch_sid:
                         raise Unmeasured('mpv refused the requested in-player subtitle switch')
+            if resume_channels is not None:
+                if not fresh or target is None:
+                    raise Unmeasured('no exact seek landing to resume')
+                for old in images.glob('*.png'):
+                    if old != fresh[-1]:
+                        old.unlink()
+                for key, value in [('keep-open', 'no'), ('pause', False)]:
+                    request = send(['set_property', key, value])
+                    if wait_for(lambda val: val.get('request_id') == request).get('error') != 'success':
+                        raise Unmeasured(f'mpv refused seek resume ({key})')
+                end = wait_for(lambda val: val.get('event') == 'end-file')
+                if end.get('reason') != 'eof' or not resume_wav.exists():
+                    raise Unmeasured('resume did not capture through end of file')
+                resumed['resume'] = (runner.sequence(images), read_pcm(resume_wav, resume_channels))
     finally:
         subprocess.run(['docker', 'rm', '-f', cid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
         sock.unlink(missing_ok=True)
+        resume_wav.unlink(missing_ok=True)
         shutil.rmtree(images, ignore_errors=True)
-    return dict(landings=landings, ok=all(l['landed'] == l['expected'] and not l['marked'] for l in landings))
+    return dict(landings=landings, ok=all(l['landed'] == l['expected'] and not l['marked'] and not l['unreadable'] for l in landings), **resumed)
 
 
 def verdict(result):

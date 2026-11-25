@@ -95,10 +95,17 @@ LAYOUTS = dict([
 ])
 
 
-def tone(level):
+HARD_AAC = 'mp4-h264-aac-hard-original'
+LAYOUTS[HARD_AAC] = LAYOUTS['mp4-h264-aac']
+
+
+def tone(level, channel=0):
     # n is the integer sample index, so neither transition depends on a float timestamp.
+    # Keep channel zero as the independent clock and tone control. Other channels use an aperiodic pilot
+    # to distinguish seam candidates even when the mark is an exact multiple of the main tone's period.
+    pilot = '' if channel == 0 else f'+{0.02 + channel*0.002}*sin(2*PI*({173+channel*19}*n/{HZ}+{channel+1}*n*n/1e10))'
     return (f"{level}*sin(2*PI*if(lt(n,{START_SAMPLE}),440*n,"
-            f"if(lt(n,{END_SAMPLE}),880*(n-{START_SAMPLE}),660*(n-{END_SAMPLE})))/{HZ})")
+            f"if(lt(n,{END_SAMPLE}),880*(n-{START_SAMPLE}),660*(n-{END_SAMPLE})))/{HZ})" + pilot)
 
 
 def srt(cues):
@@ -115,12 +122,24 @@ def generate(out, name):
     """Write NAME.mkv or NAME.mp4 into the existing directory OUT and return its facts (incl. SHA-256)."""
     spec = LAYOUTS[name]
     file = f"{name}.{spec['container']}"
+    if name == HARD_AAC:
+        # Re-test the original periodic stereo AAC source behind the legacy eligibility rows, not its pilot copy.
+        legacy = out/'hard-aac-source'
+        legacy.mkdir()
+        try:
+            _hard.generate(legacy, source_only=True)
+            (legacy/'source.mp4').rename(out/file)
+        finally:
+            (legacy/'plan.json').unlink(missing_ok=True)
+            (legacy/'source.mp4').unlink(missing_ok=True)
+            legacy.rmdir()
+        return check(out, file, spec)
     inputs = ['-f', 'lavfi', '-i', _hard.barcode_filter()]
     maps = ['-map', '0:v:0']
     codecs = list(VIDEO[spec['video']])
     for i, (codec, channels) in enumerate(spec['audio']):
         layout_name, levels = CHANNELS[channels]
-        exprs = '|'.join(tone(level) for level in levels)
+        exprs = '|'.join(tone(level, c) for c, level in enumerate(levels))
         inputs += ['-f', 'lavfi', '-i', f"aevalsrc='{exprs}':s={HZ}:c={layout_name}:d={FRAMES//FPS}"]
         maps += ['-map', f'{i+1}:a:0']
         encoder, options = AUDIO[codec]
