@@ -93,6 +93,18 @@ class FamilyUI:
             s.key('BACK');s.wait_label('Select Server');s.key('DPAD_RIGHT')
         raise ValueError('server list cannot be completely enumerated')
 
+    def select_known_profile(self,server,user):
+        # Opening Switch servers deliberately leaves the signed-in Home. Relaunching
+        # from this picker stays on Select Server. Re-enter only the independently
+        # identified original server and already-signed-in user; never authenticate.
+        self.ui.wait_label('Select Server')
+        for _ in range(12):self.ui.key('DPAD_LEFT')
+        self.server_entries(server);self.ui.wait_label('Select User')
+        page=labels(self.ui.tree());i=page.index('Select User')
+        if i+1>=len(page) or page[i+1]!=server or page[i+2:].count(user)!=1:raise ValueError('ambiguous signed-in profile')
+        self.ui.activate(user)
+        if not self.ui.home_drawer():raise ValueError('authenticated Home not verified')
+
     def read_settings(self):
         self.restart();s=self.ui;s.enter_advanced();backend=s.focus_backend()
         s.dpad('Edit mpv.conf');s.wait_label('Save');edits=[n for n in s.tree() if n.get('package')==APP and n.get('class')=='android.widget.EditText']
@@ -104,6 +116,7 @@ class FamilyUI:
             phase='active profile';active,user=self.focus_profile()
             phase='server selection';self.servers_page()
             phase='server inventory';servers=self.server_entries()
+            phase='return from server inventory';self.select_known_profile(active,user)
             phase='player settings';backend,options=self.read_settings()
             phase='signed-in Home';self.restart()
             phase='visible state'
@@ -132,8 +145,8 @@ class FamilyUI:
                 self.restart();self.ui.enter_advanced();self.ui.dpad(backend);self.ui.dpad(original.backend,cap=5)
             self.focus_profile();self.servers_page();servers=self.server_entries()
             if set(servers)==set(original.servers)|{self.lab_name}:
-                self.focus_profile();self.servers_page();self.server_entries(self.lab_name,delete=True);self.ui.wait_label('Select Server')
+                for _ in range(12):self.ui.key('DPAD_LEFT')
+                self.server_entries(self.lab_name,delete=True);self.ui.wait_label('Select Server')
             elif set(servers)!=set(original.servers):raise ValueError('unexpected family server list change')
-            for _ in range(12):self.ui.key('DPAD_LEFT')
-            self.server_entries(original.active);self.ui.wait_label('Select User');self.ui.activate(original.user);self.ui.wait_label('Home')
+            self.select_known_profile(original.active,original.user)
         except Exception:raise ValueError('could not restore and verify family UI; no clear or uninstall attempted') from None

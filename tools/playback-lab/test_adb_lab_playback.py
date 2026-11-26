@@ -114,3 +114,13 @@ class PlaybackScope(TestCase):
                     self.assertFalse(dst.exists())
         for path in ('/data/user/0/'+APP+'/settings','/data/app/else/base.apk'):
             with self.assertRaises(LabError):self.p.run('pull',path,dst)
+
+    def test_seed_old_version_uses_guest_inventory_but_cannot_become_reinstall(self):
+        from hashlib import sha256
+        old=self.work/'v1.0.9'/'Wholphin-x86_64.apk';old.parent.mkdir();old.write_bytes(b'old')
+        p=Playback(self.lab,self.work,guest=True,family=True);p.qualify('x86_64');p._call=Mock(side_effect=[b'package:android',b'Success'])
+        with patch('adb_lab_playback.OLD_SHA',sha256(b'old').hexdigest()):
+            p._install(('install','--no-streaming',str(old)),30)
+            self.assertEqual(p._call.call_args_list[0].args[0],('shell','pm','list','packages'))
+            with self.assertRaises(LabError):p._install(('install','-r','--no-streaming',str(old)),30)
+            self.assertFalse(p.owned_install)

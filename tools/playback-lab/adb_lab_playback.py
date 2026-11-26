@@ -174,7 +174,8 @@ class Playback:
             with dest.open('xb') as f,src.open('rb') as inp:shutil.copyfileobj(inp,f)
             if not helper and hashlib.sha256(dest.read_bytes()).hexdigest()!=expected:refused()
             if not updating:
-                if self.guest and not self.family:
+                if self.guest:
+                    # Includes the disposable old-version seed, never a family reinstall.
                     # A filtered pm list can exit nonzero with no matches. Require a
                     # successful, recognizable stock inventory and the exact app absent.
                     rows=self._call(('shell','pm','list','packages')).splitlines()

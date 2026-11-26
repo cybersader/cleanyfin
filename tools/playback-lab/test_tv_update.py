@@ -68,3 +68,15 @@ class FamilyProtection(unittest.TestCase):
         for header,page in ((['one','House','unrelated'],['Select User','House','one']),(['O','House','one'],['Select User','Else','one']),
                             (['one','House'],['Select User','House','two'])):
             with self.assertRaises(ValueError):identify_profile(header,page)
+
+    def test_original_profile_reentry_refuses_wrong_server_or_user(self):
+        from tv_family_ui import FamilyUI
+        for words,okay in ((['Select User','A','person'],True),(['Select User','B','person'],False),
+                            (['Select User','A','person','person'],False),(['Select User','A','Add User'],False)):
+            ui=Mock();ui.tree.return_value=[{'package':APP,'text':w} for w in words];ui.home_drawer.return_value=True
+            family=FamilyUI(ui);family.server_entries=Mock()
+            if okay:family.select_known_profile('A','person');ui.activate.assert_called_once_with('person')
+            else:
+                with self.assertRaises(ValueError):family.select_known_profile('A','person')
+                ui.activate.assert_not_called()
+            family.server_entries.assert_called_once_with('A')
