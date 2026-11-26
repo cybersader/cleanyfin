@@ -98,3 +98,19 @@ class PlaybackScope(TestCase):
                 else:
                     with self.assertRaises(LabError):p._install(('install','--no-streaming',str(app)),30)
             self.assertEqual(p.owned_install,valid);self.assertEqual(p._call.call_count,2 if valid else 1)
+
+    def test_public_apk_sync_never_exposes_private_data_or_accepts_partial_files(self):
+        src='/data/app/~~ab==/'+APP+'-ab==/base.apk';dst=self.work/'public.apk'
+        self.lab.server.poll.return_value=None;self.lab.bin=['bwrap','--','/adb'];self.lab.target=['-s','synthetic']
+        self.p.public={src};self.p._call=Mock(return_value=b'4')
+        for payload in (b'12',b'1234'):
+            def sync(cmd,**kw):
+                self.assertEqual(cmd[-3:],['pull',src,'/transfer/base.apk']);temp=Path(cmd[cmd.index('--bind')+1]);self.assertEqual(list(temp.iterdir()),[])
+                (temp/'base.apk').write_bytes(payload)
+            with patch('adb_lab_playback.sp.run',side_effect=sync):
+                if len(payload)==4:self.p.run('pull',src,dst);self.assertEqual(dst.read_bytes(),payload);dst.unlink()
+                else:
+                    with self.assertRaises(LabError):self.p.run('pull',src,dst)
+                    self.assertFalse(dst.exists())
+        for path in ('/data/user/0/'+APP+'/settings','/data/app/else/base.apk'):
+            with self.assertRaises(LabError):self.p.run('pull',path,dst)

@@ -14,6 +14,7 @@ import shlex
 import shutil
 import subprocess as sp
 import time
+import tempfile
 
 from adb_lab import AdbLab, LabError, PRIVATE_PORT
 from tv_device import APP, ASSETS, TOUCHED, CONTEXT
@@ -145,6 +146,21 @@ class Playback:
             if tuple(args) in READS:exc.playback_read=' '.join(args)
             raise
 
+    def _receive_base_apk(self,src,dst,size,timeout):
+        # ADB sync transfers the exact package-manager-proven public executable, not
+        # shell text. Only a new empty output directory is writable for this transfer.
+        if not (self.active and self.lab.connected and self.lab.server.poll() is None
+                and src in self.public and PUBLIC.fullmatch(src) and 0<size<=80_000_000):refused()
+        with tempfile.TemporaryDirectory(dir=self.work) as temp:
+            cmd=self.lab.bin[:-2]+['--bind',temp,'/transfer','--','/adb','-H','127.0.0.1','-P',str(PRIVATE_PORT)]
+            sp.run(cmd+self.lab.target+['pull',src,'/transfer/base.apk'],env={'PATH':'/usr/bin:/bin'},stdin=sp.DEVNULL,
+                   stdout=sp.DEVNULL,stderr=sp.DEVNULL,timeout=min(240,timeout),check=True)
+            output=Path(temp)/'base.apk'
+            if (output.is_symlink() or not output.is_file() or output.stat().st_size!=size):raise LabError('Incomplete public APK transfer.')
+            # Publish without overwriting an existing destination. Build.inspect verifies
+            # the APK signature before there can be an install -r.
+            os.link(output,dst)
+
     def _install(self,args,timeout):
         src=Path(args[-1]);old=self.guest and self.family and src.name=='Wholphin-x86_64.apk' and src.parent.name=='v1.0.9'
         helper=self.guest and src==self.work/'input/input.apk' and src in self.local_inputs
@@ -186,6 +202,8 @@ class Playback:
             if not permitted or dst.parent!=self.work or dst.is_symlink() or dst.exists():refused()
             size=int(self._call(('shell','stat','-c','%s',src)))
             if not 0<size<=80_000_000:refused()
+            if src in self.public:
+                self._receive_base_apk(src,dst,size,timeout);return b''
             data=self._call(('exec-out','cat',shlex.quote(src)),timeout=timeout)
             if len(data)!=size:raise LabError('Incomplete owned file transfer.')
             with dst.open('xb') as f:f.write(data)

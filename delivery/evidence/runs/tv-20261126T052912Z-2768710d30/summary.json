@@ -1,0 +1,442 @@
+{
+  "startedUtc": "20261126T052912Z",
+  "recording": "AudioPlaybackCapture; uncut Wholphin UID/USAGE_MEDIA only; no picture, microphone or HDMI",
+  "mode": "projection-control",
+  "interpretation": {
+    "soundIdentity": "Not measurable through this Android playback-capture route: six source lanes became stereo; sampled float values fall on the signed-16 grid; the entire empirical prediction is absent, and alignment is ambiguous. Bit-exact sound remains a desktop-mpv measurement.",
+    "clockLimit": "The tail favors a different offset from the start and middle. Competing peaks preclude a unique drift rate, a shared A/V clock or attribution to Wholphin.",
+    "tvR24Use": "Plan: use the separate marked-signature detector, gap-bounded screenrecord picture coverage and independently calibrated seam reporting. None of these was measured in this uncut audio-only control."
+  },
+  "observations": {
+    "milestone": "AudioPlaybackCapture uncut control",
+    "verifiedSettings": {
+      "backend": "MPV",
+      "mpvOptions": [
+        "hwdec=no",
+        "vo=gpu",
+        "gpu-context=android",
+        "opengl-es=yes",
+        "msg-level=all=v",
+        "ad-lavc-o=cons_noisegen=1"
+      ],
+      "verification": "MPV-only preferences visible and saved mpv.conf reopened"
+    },
+    "sessionIdentity": {
+      "client": "Wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "deviceIdSha256": "268199cab88749d02b21da1740770ee684e3b70dbf9228d2390a3eab5af60002",
+      "exactDeviceEnrollment": true,
+      "labTuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "Wholphin",
+        "appVersion": "1.1.2-0-gc530f5c5",
+        "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+        "backend": "mpv",
+        "deviceMode": "Dolby cons_noisegen 1, Google TV API 36 x86_64 emulator 1280x720, 1536 MiB, llvmpipe with 2 requested llvmpipe workers, software video vo-gpu Android GLES, stereo PCM",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "ac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio ac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      }
+    },
+    "projection": {
+      "consent": "run-scoped emulator PROJECT_MEDIA app-op; ordinary MediaProjection API",
+      "scope": "Wholphin UID AND USAGE_MEDIA; no microphone or virtual display",
+      "referenceFrames": 959760,
+      "expectedReferenceFrames": 959760,
+      "pictureClockFrames": 960000,
+      "firstDecodedSample": -240,
+      "referenceOrigin": 0,
+      "decodedFrames": 960000,
+      "discardedBeforeOrigin": 240,
+      "prefixAndReferenceVerified": true,
+      "prefixSha256": "0008b40ab69bea37ac1a8aa1c7863a595b07df0ddc739de0d6219b7cbe5f3127",
+      "referenceSha256": "399597f3c4a64c41a70f01fa5a92696978db506fc597860a17535bf175975d10",
+      "sourceManifest": {
+        "targetSdk": 37,
+        "explicitCapturePolicy": false
+      },
+      "helperApkSha256": "9b86c7d299d7730733cb37da1d85b9cdaa30a1fbc84e7395894cb571c67f0172",
+      "audioLevels": {
+        "androidMusicVolumeBefore": 3,
+        "androidMusicVolumeAfter": 3,
+        "androidMusicVolumeMax": 15,
+        "androidMusicVolumeAfterKeys": 15,
+        "privateQemuStreamVolume": {
+          "front-left": "100%",
+          "front-right": "100%"
+        }
+      },
+      "appOpAllowed": true,
+      "runtime": {
+        "captureUid": 10090,
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "fixture duration plus startup margin (no end signal)",
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "activeTrack": {
+          "type": "AudioTrack",
+          "uidPidMatched": true,
+          "state": "started",
+          "usage": "USAGE_MEDIA",
+          "contentType": "CONTENT_TYPE_UNKNOWN",
+          "flags": "0x800",
+          "sampleRate": "48000",
+          "channelMask": "0x3f"
+        },
+        "observedAudioDriver": "audiotrack",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "ac3"
+        ],
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "captureDeadline": "timed out at projection-uncut playback limit (1m load 2.62/24 CPUs, 11.52 GiB available, I/O full PSI 0.1%, run scope memory/I/O PSI 0.0%/0.0%)",
+        "watchedS": 34.0,
+        "audioRouteVerified": false,
+        "runtimeVerified": false,
+        "mpvAudioTrackFormat": "48000Hz 5.1 6ch float"
+      },
+      "AudioRecord": {
+        "sampleRate": 48000,
+        "channels": 2,
+        "encoding": 4,
+        "attempts": [
+          "6x4-IllegalArgumentException",
+          "5x4-IllegalArgumentException",
+          "4x4-IllegalArgumentException",
+          "3x4-IllegalArgumentException",
+          "2x4-started"
+        ],
+        "channelIndexMask": 0,
+        "channelPositionMask": 12
+      },
+      "helperDeclaredBytes": 13549568,
+      "transferredBytes": 13549568,
+      "nonzeroFrames": 959488,
+      "floatPrecisionProbe": {
+        "strideFrames": 13,
+        "activeChannelValues": 147611,
+        "onS16Grid": 147611
+      },
+      "perChannelIdentityCertified": false,
+      "comparison": {
+        "referenceFrames": 959760,
+        "captureFrames": 1693696,
+        "nonSilentFrames": 959488,
+        "referenceSha256": "f7265e0d3d1210c5601391fd3983fcf0307d1b93abaddd766ac3515c9648bd2d",
+        "captureSha256": "581896759dadcd23bd0b53982eecdc37603585aad081274055fff2d31a305c2f",
+        "fullReferencePresent": false,
+        "outcome": "unmeasured",
+        "differenceUnits": "normalized float",
+        "globalAlignment": {
+          "offsetFrames": 67569,
+          "correlation": 0.9998705816178738,
+          "competingPeak": 0.9971307490148446
+        },
+        "landmarks": [
+          {
+            "sourceFrame": 0,
+            "captureOffsetFrames": 67569,
+            "correlation": 0.9999997908299277,
+            "competingPeak": 0.9995372907917958
+          },
+          {
+            "sourceFrame": 479880,
+            "captureOffsetFrames": 67569,
+            "correlation": 0.9999999999683004,
+            "competingPeak": 0.999000259172595
+          },
+          {
+            "sourceFrame": 935760,
+            "captureOffsetFrames": 60878,
+            "correlation": 0.9978992939697227,
+            "competingPeak": 0.9976240261817702
+          }
+        ],
+        "scope": "empirical reduced-channel mix only; never source per-channel identity"
+      },
+      "channelIdentification": {
+        "runtime": {
+          "captureUid": 10090,
+          "speed": 1,
+          "fixtureDurationS": 20,
+          "wallCeilingS": 34.0,
+          "endSignal": "fixture duration plus startup margin (no end signal)",
+          "audioUnderruns": 1,
+          "libmpvEof": false,
+          "activeTrack": {
+            "type": "AudioTrack",
+            "uidPidMatched": true,
+            "state": "started",
+            "usage": "USAGE_MEDIA",
+            "contentType": "CONTENT_TYPE_UNKNOWN",
+            "flags": "0x800",
+            "sampleRate": "48000",
+            "channelMask": "0x3f"
+          },
+          "observedAudioDriver": "audiotrack",
+          "libmpvVO": "gpu 320x180 yuv420p",
+          "libmpvAudioCodecs": [
+            "ac3"
+          ],
+          "playMethod": "DirectPlay",
+          "activeQemuAudioRoute": [
+            {
+              "sink": "fixture",
+              "mute": false,
+              "corked": false
+            }
+          ],
+          "captureDeadline": "timed out at projection-channel-id playback limit (1m load 3.31/24 CPUs, 11.51 GiB available, I/O full PSI 0.0%, run scope memory/I/O PSI 0.0%/0.0%)",
+          "watchedS": 34.0,
+          "audioRouteVerified": false,
+          "runtimeVerified": false,
+          "mpvAudioTrackFormat": "48000Hz 5.1 6ch float"
+        },
+        "AudioRecord": {
+          "sampleRate": 48000,
+          "channels": 2,
+          "encoding": 4,
+          "attempts": [
+            "6x4-IllegalArgumentException",
+            "5x4-IllegalArgumentException",
+            "4x4-IllegalArgumentException",
+            "3x4-IllegalArgumentException",
+            "2x4-started"
+          ],
+          "channelIndexMask": 0,
+          "channelPositionMask": 12
+        },
+        "helperDeclaredBytes": 13443072,
+        "transferredBytes": 13443072,
+        "nonzeroFrames": 464177,
+        "floatPrecisionProbe": {
+          "strideFrames": 13,
+          "activeChannelValues": 47641,
+          "onS16Grid": 47641
+        },
+        "trainingCoefficients": [
+          [
+            1.00000068,
+            0.0
+          ],
+          [
+            0.0,
+            1.00000097
+          ],
+          [
+            0.70710684,
+            0.70710645
+          ],
+          [
+            0.49999896,
+            0.49999999
+          ],
+          [
+            0.70710803,
+            -0.0
+          ],
+          [
+            0.0,
+            0.70710554
+          ]
+        ],
+        "heldOutCoefficients": [
+          [
+            0.9999993,
+            -0.0
+          ],
+          [
+            -0.0,
+            0.99999954
+          ],
+          [
+            0.70710724,
+            0.70710738
+          ],
+          [
+            0.50000013,
+            0.50000025
+          ],
+          [
+            0.7071057,
+            -0.0
+          ],
+          [
+            0.0,
+            0.70710798
+          ]
+        ],
+        "trainingResidualRms": [
+          6.246822449657636e-06,
+          6.2810072671472955e-06,
+          8.860833067944052e-06,
+          9.060712505254313e-06,
+          6.237254257678608e-06,
+          6.2489410486072915e-06
+        ],
+        "heldOutResidualRms": [
+          6.272504200697208e-06,
+          6.210189519962274e-06,
+          8.865666928039496e-06,
+          9.145585947375223e-06,
+          6.296776580911435e-06,
+          6.292340766547788e-06
+        ],
+        "heldOutCoefficientMaxDelta": 2.4438181873698284e-06,
+        "trainingOffsetsFrames": [
+          44801,
+          44801,
+          44801,
+          44801,
+          44801,
+          44801
+        ],
+        "heldOutOffsetsFrames": [
+          44801,
+          44801,
+          44801,
+          44801,
+          44801,
+          44801
+        ],
+        "validated": true,
+        "independentHeldOutPass": true,
+        "observedS16Grid": true,
+        "quantization": "nearest-even",
+        "quantizerExactFractions": [
+          {
+            "nearest-even": 0.9986135507174615,
+            "toward-zero": 0.49946574792684134,
+            "floor": 0.5003935222587657
+          },
+          {
+            "nearest-even": 0.9977124693866917,
+            "toward-zero": 0.4997081965504664,
+            "floor": 0.49936428534208743
+          }
+        ],
+        "quantizerVerified": true,
+        "predictionEncoding": "nearest-even signed16, saturated in float32"
+      },
+      "empiricalMixComparison": {
+        "referenceFrames": 959760,
+        "captureFrames": 1693696,
+        "nonSilentFrames": 959488,
+        "referenceSha256": "f7265e0d3d1210c5601391fd3983fcf0307d1b93abaddd766ac3515c9648bd2d",
+        "captureSha256": "581896759dadcd23bd0b53982eecdc37603585aad081274055fff2d31a305c2f",
+        "fullReferencePresent": false,
+        "outcome": "unmeasured",
+        "differenceUnits": "normalized float",
+        "globalAlignment": {
+          "offsetFrames": 67569,
+          "correlation": 0.9998705816178738,
+          "competingPeak": 0.9971307490148446
+        },
+        "landmarks": [
+          {
+            "sourceFrame": 0,
+            "captureOffsetFrames": 67569,
+            "correlation": 0.9999997908299277,
+            "competingPeak": 0.9995372907917958
+          },
+          {
+            "sourceFrame": 479880,
+            "captureOffsetFrames": 67569,
+            "correlation": 0.9999999999683004,
+            "competingPeak": 0.999000259172595
+          },
+          {
+            "sourceFrame": 935760,
+            "captureOffsetFrames": 60878,
+            "correlation": 0.9978992939697227,
+            "competingPeak": 0.9976240261817702
+          }
+        ]
+      },
+      "cleanup": {
+        "stop": true,
+        "default": true,
+        "allowCleared": true,
+        "revoke-audio": true,
+        "remove": true,
+        "helperAbsent": true
+      }
+    }
+  },
+  "hostBeforeRun": {
+    "load1": 1.81,
+    "cpus": 24,
+    "availableGiB": 17.04,
+    "ioFull10sPct": 0.37,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "declaredGpu": "host",
+  "llvmpipeThreadsRequested": 2,
+  "guestRamMiB": 1536,
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "audioInputFormat": "s16le 2ch 48000Hz",
+  "guestKernelMemTotalKiB": 1502724,
+  "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+  "fixtureSha256": "34fae95642e4d09143692a407dde481ccce7fd02a771b5bb05d3e6d73e1eb785",
+  "splitCapture": false,
+  "privateAdbExited": true,
+  "scratchPeakBytesObserved": 1331757056,
+  "hostWorstObservedIo": {
+    "load1": 5.2,
+    "cpus": 24,
+    "availableGiB": 14.24,
+    "ioFull10sPct": 2.37,
+    "scopeMemoryFull10sPct": 0.01,
+    "scopeIOFull10sPct": 0.05,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 1.11,
+    "scopeIOFull10sPct": 0.51
+  },
+  "hostAfterRun": {
+    "load1": 4.6,
+    "cpus": 24,
+    "availableGiB": 13.85,
+    "ioFull10sPct": 0.26,
+    "scopeMemoryFull10sPct": 0.14,
+    "scopeIOFull10sPct": 0.18,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 384.0,
+  "blocker": null,
+  "claims": [
+    "not-measured projection uncut control \u2014 unmeasured"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T052912Z-2768710d30",
+  "candidateWritten": false
+}
