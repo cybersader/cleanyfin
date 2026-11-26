@@ -11,10 +11,15 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import time
 import zlib
 from typing import Protocol
+
+if __name__ == '__main__':
+    sys.path.insert(0, str(Path(__file__).resolve().parent))  # Also under python -I.
+from gimbalatch_backend import GimbalatchBackend, GimbalatchError
 
 SIZE = (1920, 1080)
 KEYS = {'HOME', 'BACK', 'DPAD_UP', 'DPAD_DOWN', 'DPAD_LEFT', 'DPAD_RIGHT', 'DPAD_CENTER'}
@@ -42,8 +47,8 @@ def crop(text):
     return x, y, w, h
 
 
-def capture(command):
-    return subprocess.run(command, check=True, capture_output=True, timeout=10).stdout
+def capture(command, *, input=None):
+    return subprocess.run(command, input=input, check=True, capture_output=True, timeout=10).stdout
 
 
 class Camera(Protocol):
@@ -63,6 +68,26 @@ class Link2:
                         '-analyzeduration', '0', '-i', self.node, '-an', '-frames:v', '1',
                         '-vf', f'crop={w}:{h}:{x}:{y}:exact=1', '-c:v', 'png',
                         '-f', 'image2pipe', 'pipe:1'])
+
+
+class GimbalatchCamera:
+    """Adapt a bound JPEG session to the one-shot TV-only PNG seam."""
+
+    def __init__(self, backend, roi):
+        self.backend, self.roi = backend, roi
+
+    def grab(self):
+        frame = self.backend.frame()
+        self.backend.release()
+        x, y, w, h = self.roi
+        try:
+            return capture(['ffmpeg', '-nostdin', '-v', 'error', '-f', 'mjpeg',
+                            '-protocol_whitelist', 'pipe', '-i', 'pipe:0', '-an', '-frames:v', '1',
+                            '-vf', f'crop={w}:{h}:{x}:{y}:exact=1', '-c:v', 'png',
+                            '-f', 'image2pipe', 'pipe:1'], input=frame)
+        except (OSError, subprocess.SubprocessError):
+            pass
+        raise GimbalatchError('Gimbalatch frame could not be decoded and cropped')
 
 
 class WirelessTV:
@@ -95,11 +120,13 @@ class DryRun:
     screen = grab
 
 
-def step(action, tv, camera: Camera, out, settle, *, clock=time.monotonic, wait=time.sleep):
+def step(action, tv, camera: Camera, out, settle, *, retain=True, clock=time.monotonic, wait=time.sleep):
     if action not in KEYS | {'SETTINGS'} or not math.isfinite(settle) or not 0 <= settle <= 10:
         raise ValueError('invalid navigation step or settle time')
-    out.mkdir(mode=0o700, parents=True, exist_ok=True)
-    directory = Path(tempfile.mkdtemp(prefix='look-', dir=out))
+    directory = None
+    if retain:
+        out.mkdir(mode=0o700, parents=True, exist_ok=True)
+        directory = Path(tempfile.mkdtemp(prefix='look-', dir=out))
     try:
         start = clock()
         tv.send(action)
@@ -114,37 +141,69 @@ def step(action, tv, camera: Camera, out, settle, *, clock=time.monotonic, wait=
         for name, data in [('webcam', cam), ('screencap', screen)]:
             if not data.startswith(b'\x89PNG\r\n\x1a\n'):
                 raise ValueError(f'{name}: expected PNG')
-            path = directory / (name + '.png')
-            path.write_bytes(data)
-            paths[name] = str(path)
-        return {**paths, 'timing_ms': {k: round(v*1000, 1) for k, v in {
+            if directory is not None:
+                path = directory / (name + '.png')
+                path.write_bytes(data)
+                paths[name] = str(path)
+        return {**(paths if retain else {'images_retained': False}), 'timing_ms': {k: round(v*1000, 1) for k, v in {
             'action_round_trip': sent-start, 'camera_call': seen-opened,
             'action_to_webcam_return': seen-start, 'action_to_pair_return': done-start,
         }.items()}}
     except BaseException:
-        shutil.rmtree(directory)
+        if directory is not None:
+            shutil.rmtree(directory)
         raise
 
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=sorted(KEYS | {'SETTINGS'}))
+    p.add_argument('action', nargs='?', choices=sorted(KEYS | {'SETTINGS'}))
     p.add_argument('--target', type=endpoint, help='already connected paired IPv4:TLS-port')
-    p.add_argument('--camera', default='/dev/video3')
-    p.add_argument('--crop', type=crop, help='required live: TV-only X,Y,W,H, checked by operator')
-    p.add_argument('--out', type=Path, default=DEFAULT_DIR)
+    p.add_argument('--camera', default='/dev/video3', help='V4L2 node or gimbalatch')
+    p.add_argument('--crop', type=crop, help='required for live navigation: verified TV-only X,Y,W,H')
+    p.add_argument('--out', type=Path, default=DEFAULT_DIR, help='output root for direct camera and dry run only')
     p.add_argument('--settle', type=float, default=0.45, help='seconds after action returns')
-    p.add_argument('--dry-run', action='store_true', help='only synthetic pixels and timing')
+    modes = p.add_mutually_exclusive_group()
+    modes.add_argument('--dry-run', action='store_true', help='only synthetic pixels and timing')
+    modes.add_argument('--probe', action='store_true', help='query Gimbalatch controls once, without a TV key')
+    modes.add_argument('--capture', action='store_true', help='request one Gimbalatch JPEG without saving or printing it')
     args = p.parse_args(argv)
-    if args.dry_run:
-        tv = camera = DryRun()
+    if args.probe or args.capture:
+        if args.camera != 'gimbalatch' or args.action or args.target or args.crop:
+            p.error('--probe/--capture require --camera gimbalatch and no navigation arguments')
     else:
-        if not args.target or not args.crop:
-            p.error('live mode needs --target and a verified TV-only --crop')
-        tv, camera = WirelessTV(args.target), Link2(args.camera, args.crop)
-    print(json.dumps({'action': args.action, 'dry_run': args.dry_run,
-                      **step(args.action, tv, camera, args.out, args.settle)}))
+        if not args.action:
+            p.error('a navigation action, --probe or --capture is required')
+        if not 0 <= args.settle <= 10:
+            p.error('--settle must be between 0 and 10 seconds')
+        if not args.dry_run and (not args.target or not args.crop):
+            p.error('live navigation needs --target and a verified TV-only --crop')
+
+    try:
+        if args.probe or args.capture:
+            with GimbalatchBackend() as backend:
+                if args.probe:
+                    result = {'camera': 'gimbalatch', 'controls': backend.probe()}
+                else:
+                    result = {'camera': 'gimbalatch', 'frame_bytes': len(backend.frame()), 'images_retained': False}
+        else:
+            if args.dry_run:
+                tv = camera = DryRun()
+                result = step(args.action, tv, camera, args.out, args.settle)
+            elif args.camera == 'gimbalatch':
+                # Bind before any TV action, so a refused bind can't send a key.
+                with GimbalatchBackend() as backend:
+                    result = step(args.action, WirelessTV(args.target), GimbalatchCamera(backend, args.crop),
+                                  args.out, args.settle, retain=False)
+            else:
+                result = step(args.action, WirelessTV(args.target), Link2(args.camera, args.crop), args.out, args.settle)
+            result = {'action': args.action, 'dry_run': args.dry_run, **result}
+    except GimbalatchError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    print(json.dumps(result))
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
