@@ -9,7 +9,7 @@ import numpy as np
 
 from r22_oracle import (FINGERPRINT_ENERGY_LIMIT, RATE, SourceFingerprint, classify,
                         compare_transient, control_clock, observe, read_clocks, repeat_noise, silence,
-                        transient_channels)
+                        transient_channels, transient_onset_channels)
 
 
 def good():
@@ -47,6 +47,14 @@ class ViewerRuleTests(unittest.TestCase):
         self.assertFalse(classify(good() | dict(transientMarginRms=-.00001))['added-pop'])
         self.assertFalse(classify(good() | dict(transientMarginRms=float('nan')))['added-pop'])
 
+    def test_r23_does_not_exempt_an_unknown_or_marked_sample_or_two_extra_samples(self):
+        m = good() | dict(onsetOmittedSamples=1, onsetExtraKeptSamples=1)
+        self.assertTrue(all(classify(m).values()))
+        self.assertFalse(classify(m | dict(markedSamples=1))['marked-material'])
+        self.assertFalse(classify(m | dict(audioIdentity='unproven'))['marked-material'])
+        self.assertFalse(classify(m | dict(onsetExtraKeptSamples=2))['added-pop'])
+        self.assertFalse(classify(m | dict(onsetExtraKeptSamples=None))['added-pop'])
+
     def test_missing_repeated_or_frozen_picture_fails(self):
         for value in (False, None):
             self.assertFalse(classify(good() | dict(pictureIntact=value))['kept-picture'])
@@ -79,6 +87,23 @@ class SignalTests(unittest.TestCase):
         after = transient_channels(altered, 1000)
         self.assertEqual(before.max(), after.max())  # The louder channel must not hide a pop.
         self.assertGreater((after-before).max(), .001)
+
+    def test_r23_exempts_only_sample_zero_from_the_onset_filter(self):
+        reference = np.zeros((500, 2), dtype='<i2')
+        first = reference.copy()
+        first[0, 1] = 20000
+        second = reference.copy()
+        second[1, 1] = 20000
+        zero = transient_onset_channels(reference, omit_first=True)
+        noise = [0., 0.]
+        same_uncut = (zero.tolist(), zero.tolist())
+        self.assertLess(compare_transient(transient_onset_channels(first), zero, noise)['marginRms'], 0)
+        self.assertEqual(0, compare_transient(transient_onset_channels(first, omit_first=True),
+                                              zero, noise, same_uncut)['marginRms'])
+        self.assertLess(compare_transient(transient_onset_channels(second, omit_first=True),
+                                          zero, noise, same_uncut)['marginRms'], 0)
+        self.assertLess(compare_transient(transient_channels(first, 0), transient_channels(reference, 0),
+                                          noise)['marginRms'], 0)  # Splice path is unchanged.
 
     def test_steady_repeat_noise_and_same_picture_onset_are_distinct(self):
         source = np.arange(300, dtype='<i2')[:, None]
@@ -120,6 +145,29 @@ class SignalTests(unittest.TestCase):
         self.assertAlmostEqual(1+1/48, control_clock(packets, [0,40], 2, 0)['jitterMs'])
         self.assertIsNone(control_clock(packets, [0,90], 2, 0))
 
+    def test_r23_keeps_the_omitted_sample_in_source_identity(self):
+        x = np.random.default_rng(23).integers(-30000, 30000, (RATE, 2), dtype='<i2')
+        a, b, one = 9600, 15360, 1920
+        mark = SimpleNamespace(a=a, b=b, marked_frames={5, 6, 7}, join_seconds=Fraction(a, RATE),
+                               frame_time=lambda f: Fraction(f, 25) - Fraction(b-a, RATE))
+        seq = list(range(8, 25))
+        video = [float(mark.frame_time(f))*1000 for f in seq]
+        ideal = x[b:]
+        expected_onset = transient_onset_channels(ideal, omit_first=True).tolist()
+        kw = dict(source=SourceFingerprint(x.tobytes(), 2, 0, a, b), mark=mark, ideal=ideal.tobytes(),
+                  control=dict(videoJitterMs=0, audioBiasMs=0, jitterMs=1, transientNoiseRms=[0., 0.]),
+                  ideal_at=a, join=0, picture_ok=True, exact_issues=[], fresh=True, onset_omit_first=True,
+                  onset_control=(expected_onset, expected_onset), original_lead=0)
+        for first, expected_marked in ((a-1, 0), (b-1, 1)):
+            pcm = np.vstack((x[first:first+1], ideal)).tobytes()
+            packets = [(a-1, 0, 1)] + [(a+i, 1+i, 1+i+one) for i in range(0, len(ideal), one)]
+            observed = observe(pcm, packets, video, seq, **kw)
+            self.assertEqual(1, observed['onsetOmittedSamples'])
+            self.assertEqual(expected_marked, observed['markedSamples'])
+            self.assertEqual(not expected_marked, classify(observed)['marked-material'])
+            if not expected_marked:
+                self.assertEqual(1, observed['onsetExtraKeptSamples'])
+
     def test_playback_clocks_are_not_wav_indices_and_a_late_drift_fails(self):
         # One dropped kept packet at the join, but the subsequent audio PTS still goes with the picture.
         rng = np.random.default_rng(11)
@@ -159,7 +207,7 @@ class CandidateRowsTests(unittest.TestCase):
         spec.loader.exec_module(cls.matrix)
 
     def run_entries(self):
-        return {name: dict(summary=dict(result='r22-pass', deviationTypes=[], positions=dict(passed=24,total=24)),
+        return {name: dict(summary=dict(result='r23-pass', deviationTypes=[], positions=dict(passed=24,total=24)),
                            result=dict(tuple=dict(source=name)))
                 for name, spec in self.matrix.ff.LAYOUTS.items() if spec['audio'][0][0] in ('ac3','eac3')}
 

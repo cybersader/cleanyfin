@@ -1,4 +1,4 @@
-"""R22 viewer-rule measurements for the synthetic, untimed desktop-mpv output.
+"""R22 viewer-rule measurements with the R23 onset amendment for the synthetic, untimed desktop-mpv output.
 
 Quantities are measured from the joined output and the same layout's uncut decode. Audio block PTSs are
 independent of the position in the WAV; dropped sound must not be counted as a permanent clock shift.
@@ -14,10 +14,13 @@ from scipy.spatial import cKDTree
 
 from exact_audio import RATE
 
-R22 = 'R22: zero marked material; no silence or pop beyond the ideal; intact picture; A/V recovers in 100 ms; at most 40 ms kept-sound loss.'
+R23 = ('R23: R22 viewer rule, except the first presented sample at a fresh start or resume on a skip '
+       'is excluded from onset transient measurement only; it must still be proven kept.')
 SILENCE_DBFS = -60
 POP_HP_HZ = 2000
 POP_WINDOW_MS = 5
+R23_ONSET_OMISSION = 1  # one 48 kHz sample frame across all channels
+MAX_EXTRA_KEPT_PREFIX = 1
 RECOVERY_MS = 100
 LOSS_MS = 40
 CLOCK_RESOLUTION_MS = 1  # Whole-ms layouts; audio PTS rounded to the nearest sample.
@@ -28,6 +31,7 @@ FINGERPRINT_ENERGY_LIMIT = FINGERPRINT_FRACTION ** 2
 CRITERIA = ('marked-material', 'added-silence', 'added-pop', 'kept-picture', 'av-sync', 'kept-sound-loss')
 THRESHOLDS = dict(silenceDbfs=SILENCE_DBFS, extraSilenceSamples=0, transientHighPassHz=POP_HP_HZ,
                   transientWindowMs=POP_WINDOW_MS,
+                  omitFirstOnsetSamplesAtJoin=R23_ONSET_OMISSION, maxExtraKeptPrefixSamples=MAX_EXTRA_KEPT_PREFIX,
                   transientAllowance='Per-channel repeat-control noise; startup also compares the same uncut landing and playback mode.',
                   recoveryMs=RECOVERY_MS, clockResolutionMs=CLOCK_RESOLUTION_MS,
                   maxControlJitterMs=MAX_CONTROL_JITTER_MS, keptSoundLossMs=LOSS_MS,
@@ -45,6 +49,10 @@ def classify(m):
         return v is not None and v <= limit
 
     margin = measured('transientMarginRms')
+    omitted = m.get('onsetOmittedSamples', 0)
+    prefix = m.get('onsetExtraKeptSamples')
+    prefix_ok = (omitted == 0 or (omitted == R23_ONSET_OMISSION and type(prefix) is int
+                                  and 0 <= prefix <= MAX_EXTRA_KEPT_PREFIX))
     zero = m.get('markedFrames') == 0 and (m.get('markedSamples') == 0 and
             (m.get('audioIdentity') == 'exact' or (m.get('audioIdentity') == 'fingerprint' and
              measured('markedFingerprintEnergy') is not None and
@@ -52,7 +60,7 @@ def classify(m):
              m.get('fingerprintPositiveControls') is True)))
     # Evaluate silence both literally and at the study's digital floor. Compare excess, not absolute silence.
     return dict(zip(CRITERIA, (zero, maximum('extraZeroSamples', 0) and maximum('extraQuietSamples', 0),
-                               margin is not None and margin >= 0, m.get('pictureIntact') is True,
+                               margin is not None and margin >= 0 and prefix_ok, m.get('pictureIntact') is True,
                                maximum('recoveryMs', RECOVERY_MS) and m.get('staysInSync') is True,
                                maximum('lostSamples', LOSS_MS*RATE//1000))))
 
@@ -117,6 +125,14 @@ def transient_channels(x, at):
     begin = max(0, lo - RATE//100)
     filt = signal.sosfilt(_HP, x[begin:hi] / 32768, axis=0)[lo-begin:]
     return np.sqrt(np.mean(filt*filt, axis=0))
+
+
+def transient_onset_channels(x, omit_first=False):
+    """Measure the same onset window, omitting sample zero before filtering only under R23."""
+    if not omit_first:
+        return transient_channels(x, 0)
+    remainder = x[R23_ONSET_OMISSION:POP_WINDOW_MS*RATE//1000]
+    return transient_channels(remainder, 0)
 
 
 def pcm_array(pcm, channels):
@@ -261,7 +277,7 @@ def _coverage(ranges, allowed):
 
 
 def observe(pcm, packets, video, seq, *, source, mark, control, ideal, ideal_at, join, picture_ok, exact_issues,
-            fresh=False, onset_control=None):
+            fresh=False, onset_control=None, onset_omit_first=False, original_lead=None):
     """Score one complete joint take; a timestamp without PCM identity is not used as mark proof."""
     channels = source.width//2
     actual = pcm_array(pcm, channels)
@@ -289,6 +305,7 @@ def observe(pcm, packets, video, seq, *, source, mark, control, ideal, ideal_at,
     exact = True
     proofs = True
     first_after = None
+    first_source = None
     join_pts = float(mark.join_seconds)*1000 + video_rebase
     audio_bias = control['audioBiasMs']
     raw = memoryview(pcm)
@@ -307,6 +324,8 @@ def observe(pcm, packets, video, seq, *, source, mark, control, ideal, ideal_at,
             proofs = False
             continue
         n = stop-begin
+        if begin == 0:
+            first_source = at
         marked_count, energy, calibrated = source.measure(actual[begin:stop], at)
         if marked_count is None:
             proofs = False
@@ -357,16 +376,31 @@ def observe(pcm, packets, video, seq, *, source, mark, control, ideal, ideal_at,
         transients['splice'] = (compare_transient(transient_channels(actual, actual_join),
                                                   transient_channels(reference, ideal_join), noise)
                                 if actual_join is not None else None)
+    split = source.a - (source.lead if not mark.a else 0)
     if fresh:
-        transients['onset'] = (compare_transient(transient_channels(actual, 0), transient_channels(reference, 0),
+        transients['onset'] = (compare_transient(transient_onset_channels(actual, onset_omit_first),
+                                                 transient_onset_channels(reference, onset_omit_first),
                                                  noise, onset_control) if onset_control is not None else None)
+        m['onsetOmittedSamples'] = R23_ONSET_OMISSION if onset_omit_first else 0
+        if onset_omit_first and first_source is not None and original_lead is not None:
+            # Translate the source anchor to the full cut stream before counting a leading kept
+            # sample. A jump across the removed interval does not count the mark as a prefix.
+            if not mark.a and first_source < source.b:
+                first_index = None
+            elif first_source < source.a:
+                first_index = first_source
+            elif first_source >= source.b:
+                first_index = first_source - source.b + split
+            else:
+                first_index = None
+            if first_index is not None:
+                m['onsetExtraKeptSamples'] = max(0, ideal_at - first_index - original_lead)
     m['transientComparisons'] = transients
     if transients and all(t is not None for t in transients.values()):
         m['transientExcessRms'] = max(t['worstExcessRms'] for t in transients.values())
         m['transientMarginRms'] = min(t['marginRms'] for t in transients.values())
     # ideal_at is in the marked-out full PCM. Derive the exact source intervals without counting
     # any incidental sample before a fresh start as owed, or any marked sample toward coverage.
-    split = source.a - (source.lead if not mark.a else 0)
     if ideal_at < split:
         allowed = [(ideal_at, split), (source.b, source.b+len(reference)-(split-ideal_at))]
     else:

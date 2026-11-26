@@ -1,8 +1,54 @@
-# Zero marked content at every cut position: the R21 boundary sweep
+# Cut-position admission for desktop mpv
 
-**2026-11-25 · desktop mpv lab only · `feat/r21-admission`.** Follows the renderer work in PR #22: mpv truncates sound boundaries to whole samples, and prior one-position MP4 E-AC-3 evidence did not hold at every position.
+**2026-11-25 · desktop mpv lab only.** The split cut-list renderer is unchanged. R22 replaces sample-exact kept sound as the admission bar; zero marked material is still absolute. No experiment on this page qualifies a TV, Wholphin, HDMI or passthrough path.
 
-## Admission standard
+## R22 viewer rule, amended by R23
+
+[R22](../../../.claude/41-QUESTIONS-RESOLVED.md) requires every straight cut, fresh start and seek-and-resume at the 24 positions to satisfy six checks. Only Dolby can be admitted, and only as `experimental` for the exact tested desktop-mpv tuple. FLAC and AAC measurements are diagnostic only; both remain refused. Every fixture sharing a tuple must pass before that tuple can be admitted.
+
+| Check | Lab measurement and limit |
+|---|---|
+| Nothing marked | Zero marked barcodes, including paused landings; zero marked samples. PCM must have positive all-channel source identity on the uncut source clock. An ambiguous or unidentified sample refuses. The nearest-mark waveform residual is diagnostic only: synthetic substitution does not calibrate alternate codec histories. |
+| No added silence | Compare longest all-channel runs at digital zero and below −60 dBFS against the ideal hard cut, within ±100 ms of the splice. No extra sample at either floor. |
+| No added pop | Second-order 2 kHz high-pass; 5 ms RMS channel by channel, centred on a splice or one-sided at an onset/endpoint. A splice cannot exceed the ideal hard cut plus the largest same-channel 5 ms delta measured between two same-clock uncut captures. Fresh starts and seek-resumes also compare the onset to an uncut start or seek-resume at the same source picture: allowed excess is the uncut onset's excess over its ideal plus that measured repeat noise. A take that plays through a splice must pass both comparisons. The receipt includes the actual, ideal, uncut comparator, noise and margin for each applicable comparison. |
+| Picture intact | Every kept barcode once, in order from the expected landing; timing can differ by at most 1 ms beyond the layout's uncut picture jitter. |
+| A/V in sync | Compare content-anchored audio packet PTS with the video timeline and uncut offset. Ordinary jitter is the measured uncut envelope plus 1 ms timestamp resolution; a control wider than 20 ms is unmeasured. Playback must have an observed in-jitter suffix within 100 ms and stay there. |
+| Kept sound loss | At most 1,920 kept sample frames (40 ms at 48 kHz) absent from the requested playback. Count unique source coverage; extra samples cannot offset a drop. |
+
+The test taps audio/video media timestamps in the same desktop-mpv take as the PCM and picture capture. Complete audio packets are matched to capture bytes by checksum, not by assuming that the WAV's concatenated sample index is a clock. The ideal cut is the same uncut decode with the marked indices removed. This measures media-output timing, not latency to speakers or a display. Missing traces, timeouts and partial sweeps never qualify a layout.
+
+[R23](../../../.claude/41-QUESTIONS-RESOLVED.md) amends the onset comparison only when the fresh-start or in-session resume target is the join. Drop the first sample frame (all channels, about 21 µs) from the original 5 ms window **before** applying the high-pass filter. Apply the same omission to the ideal and the matched uncut onset controls; keep the repeat-noise threshold unchanged. Keep that first sample in the marked-material proof, silence, splice, kept-sound and clock checks. At most one extra kept sample can precede the landing relative to the uncut control. Offset starts (including 200 ms or 1 ms before and 520 ms after) and straight playback do not get the exception.
+
+## R22/R23 results
+
+**Dolby admission: 0 of 8 layouts on Jellyfin 10.11.11; 0 of 8 on 12.4.0.** The reviewed register is unchanged. On 10.11.11 all 336 positions were attempted under R22. The two-hour outer job limit stopped the first 12.4.0 run after the first two layouts; the interrupted HEVC Main 10 attempt is unmeasured. Both completed layouts had independent measured failures on criteria R23 did not change. The recovery remeasured the six missing Dolby layouts under frozen R23, completing the 192 Dolby positions on 12.4.0. The two captures on 12.4.0 used identical plugin and player builds. HEVC Main 10 and its HDR10 fixture shared one tuple, and both failed.
+
+R22 receipts store RMS and calibration values, not raw PCM windows. The first-sample-excluded RMS cannot be reconstructed from them. No completed R22 Dolby layout needed replay for an admission decision: each already had an unchanged measured failure. The table reports actual R22/R23 scores, not synthetic reclassifications. **P/F/U** is positions passed / measured failure / unmeasured. For Dolby, loss and A/V are worst observed milliseconds; margin is the worst measured transient margin in thousandths of full-scale RMS (negative fails). These extrema describe measured takes only, not an all-take bound; the receipts include coverage per metric.
+
+| Layout | 10.11.11 R22 P/F/U | Loss / A/V / margin | 12.4.0 rule and P/F/U | Loss / A/V / margin |
+|---|---:|---:|---:|---:|
+| `mkv-h264-ac351` | 8/14/2 | 0.000 / 0.000 / −4.456 | R22 8/16/0 | 39.000 / 0.002 / −4.568 |
+| `mkv-h264-eac351` | 5/17/2 | 0.021 / 0.021 / −4.475 | R22 5/19/0 | 39.000 / 0.023 / −4.475 |
+| `mkv-hevc10-eac351` | 5/17/2 | 0.021 / 0.021 / −4.475 | R23 5/19/0 | 39.000 / 0.023 / −4.475 |
+| `mkv-hevc10-hdr10-eac351` | 5/17/2 | 0.021 / 0.021 / −4.475 | R23 5/19/0 | 39.000 / 0.023 / −4.475 |
+| `mp4-h264-eac351` | 9/15/0 | 38.979 / 0.031 / −4.568 | R23 9/15/0 | 38.979 / 0.031 / −4.475 |
+| `mkv-h264-eac351+aac-srt` | 6/16/2 | 0.021 / 0.021 / −4.475 | R23 6/18/0 | 39.000 / 0.023 / −4.475 |
+| `mkv-h264-eac351-ass+srt` | 6/16/2 | 0.021 / 0.021 / −2.986 | R23 6/18/0 | 39.000 / 0.023 / −4.005 |
+| `mp4-h264-eac351-mov_text` | 9/15/0 | 38.979 / 0.031 / −4.568 | R23 9/15/0 | 38.979 / 0.031 / −4.475 |
+| `mkv-h264-flac` | 15/8/1 | — | Not run; refused on other grounds | — |
+| `mp4-h264-aac` | 2/22/0 | — | Not run; refused on other grounds | — |
+| `mkv-h264-aac` | 0/22/2 | — | Not run; refused on other grounds | — |
+| `mkv-hevc10-aac` | 0/22/2 | — | Not run; refused on other grounds | — |
+| `mp4-hevc10-aac` | 2/22/0 | — | Not run; refused on other grounds | — |
+| `mp4-h264-aac-hard-original` | 7/17/0 | — | Not run; refused on other grounds | — |
+
+- **Why Dolby stays off:** the six R23 layouts still had onset-only failures at −1 ms (47 takes; worst margin −0.004475 full-scale RMS) and +520 ms (54 takes; worst −0.000724); no onset-only failure occurred at −200 ms. These targets are outside the exception. The receipts also contain failures on unchanged checks, including unproven sound identity and splice excess. A negative margin is a measurement failure, not a finding that a person heard a pop.
+- **FLAC and AAC:** FLAC lost 65 ms of known kept sound at `[3039, 7999) ms` in straight playback and still awaits a fix or owner acceptance. All five AAC layouts presented marked sound on 10.11.11; the two Matroska layouts also presented marked pictures. FLAC and AAC were deliberately not run on 12.4.0 after the timeout, because neither is eligible for admission. There is no measured 12.4.0 result for them.
+- **Supporting checks:** plugin 6/6 on each pinned server (one 10.11 shelf-isolation retry), Delivery 202/202 and Marking 43/43 on each SDK, PWA 9/9, and Python oracle 31/31. No renderer or register change.
+
+Full per-take JSON receipts (gzip): [10.11.11 R22](../../../tools/playback-lab/prototypes/common-formats/receipt-r22-10.11-2026-11-25.json.gz), [12.4.0 partial R22](../../../tools/playback-lab/prototypes/common-formats/receipt-r22-12.4-partial-2026-11-25.json.gz), [12.4.0 R23 Dolby recovery](../../../tools/playback-lab/prototypes/common-formats/receipt-r23-12.4-dolby-2026-11-25.json.gz). R21 results below are historical, not R22 or R23 evidence.
+
+## Historical R21 admission standard
 
 [R21](../../../.claude/41-QUESTIONS-RESOLVED.md) requires **zero marked picture and zero marked sound**, with exact kept picture and sound at straight cuts and exact seek landings. Only a fresh start or resume near a join may play one extra **kept** sample before the start point (about 21 µs at 48 kHz), compared with the uncut original starting on the same picture. Missing, altered or shifted kept samples still refuse; R20's sample-for-sample check on AAC is unchanged. “Experimental” here only means a measured desktop-mpv lab offer; it is not household, TV or Wholphin support.
 

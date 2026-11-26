@@ -8,7 +8,7 @@ plugin's real PlaybackInfo answers a desktop-mpv profile with a ticketed cut lis
 loopback namespace plays it. Picture and sound are captured from the same playback on straight cuts, fresh starts,
 and paused seeks; subtitle layouts also exercise every offered track. The mark is then republished at each sweep
 position (on and off frame and packet edges, one-frame and one-millisecond marks, and marks at either endpoint).
-R22 judges every straight, fresh-start and seek-and-resume take against the same-layout uncut control and the ideal
+R22, amended by R23, judges every straight, fresh-start and seek-and-resume take against the same-layout uncut control and the ideal
 hard cut. Timeouts and incomplete captures are unmeasured, never passes. The host oracle needs NumPy and SciPy.
 
     python3 tools/playback-lab/format-matrix.py                    # both lines, 14 named R22 fixtures
@@ -41,7 +41,7 @@ import format_fixtures as ff  # noqa: E402
 import format_measure as fm  # noqa: E402
 import aac_noise  # noqa: E402
 from r21_oracle import deviation  # noqa: E402
-from r22_oracle import R22, THRESHOLDS  # noqa: E402
+from r22_oracle import R23, THRESHOLDS  # noqa: E402
 from evidence_label import describe as describe_source  # noqa: E402
 from hard_fixture_lab import DEFAULT_JELLYFIN, JELLYFIN, media  # noqa: E402
 
@@ -63,7 +63,7 @@ AAC_PROFILES = ['mp4-h264-aacnopns', 'mp4-h264-aac51', 'mp4-h264-fdkaac', 'mp4-h
 CONTROLS = ['straight-play', 'seek-forward', 'seek-back']
 # The admission sweep: marks [start, end) in ms after the first picture (frames every 40 ms; AC-3/E-AC-3 packets every
 # 32 ms, at 32k ms in MP4 and 32k - 5.333 ms in Matroska, where the encoder priming is stored). A layout is admitted only
-# if every one passes R22 on that server line: straight cut, fresh starts, and paused exact seeks with resume.
+# if every one passes R23 on that server line: straight cut, fresh starts, and paused exact seeks with resume.
 POSITIONS = [
     (5480, 10520),   # the hard fixture's own mark: on frames, inside a GOP and an audio packet
     (1000, 1960),    # on frames, short
@@ -138,7 +138,7 @@ def summarize(name, result):
     worst = {k: max((m[k] for m in metrics if k in m), default=None) for k in keys}
     worst['transientMarginRms'] = min((m['transientMarginRms'] for m in metrics if 'transientMarginRms' in m),
                                       default=None)
-    return dict(layout=name, result='r22-pass' if all(v.values()) else 'unmeasured' if 'unmeasured' in kinds else 'r22-fail',
+    return dict(layout=name, result='r23-pass' if all(v.values()) else 'unmeasured' if 'unmeasured' in kinds else 'r23-fail',
                 verdict=v, deviationTypes=sorted(kinds), positions=counts, worst=worst,
                 worstMeasuredTakes={k: sum(k in m for m in metrics) for k in keys},
                 originalUnmeasured=result.get('originalUnmeasured'))
@@ -190,23 +190,23 @@ def check_subtitles(spec, result):
 def register_row(name, summary, tuple_, evidence_ref, today, complete_line):
     """Only Dolby tuples passing all six criteria may become an experimental candidate."""
     dolby = name in DOLBY_LAYOUTS
-    admitted = complete_line and dolby and summary['result'] == 'r22-pass'
+    admitted = complete_line and dolby and summary['result'] == 'r23-pass'
     n = summary['positions']
     swept = f"{n['passed']}/{n['total']} positions passed"
     kinds = ', '.join(summary['deviationTypes']) or 'none'
-    failure = f'R22: {swept}; deviations: {kinds}.'
+    failure = f'R23: {swept}; deviations: {kinds}.'
     if not dolby:
         failure += ' Not authorized for admission (FLAC waits for owner; AAC stays off).'
     outcome = 'pass' if admitted else ('not-measured' if summary['result'] == 'unmeasured' else 'fail')
     limits = dict(markedPicture='Zero marked frames, including paused seek landings.',
                   markedSound='Zero marked samples proven by an exact all-channel source match; unresolved residuals never pass.',
                   keptPictureAtJoin='Zero extra missing, repeated or frozen kept frames; <=1 ms timestamp resolution beyond uncut control.',
-                  keptSoundAtJoin='No longer zero or -60 dBFS silence; 2 kHz/5 ms RMS no higher than ideal splice or same-picture uncut onset, within repeat-control noise; A/V within calibrated jitter in 100 ms and stays; <=40 ms kept loss.')
-    results = {key: dict(outcome=outcome, limit=(f'R22: {swept}. {text}' if admitted else failure))
+                  keptSoundAtJoin='No longer zero or -60 dBFS silence; 2 kHz/5 ms RMS no higher than ideal splice or same-picture uncut onset, within repeat-control noise; exempt only the first onset sample at the join and only with a proven kept prefix of at most one extra sample; A/V within calibrated jitter in 100 ms and stays; <=40 ms kept loss.')
+    results = {key: dict(outcome=outcome, limit=(f'R23: {swept}. {text}' if admitted else failure))
                for key, text in limits.items()}
     return dict(tuple=tuple_, actions=['cut'], controls=CONTROLS, results=results, evidenceRef=evidence_ref, date=today,
                 status='experimental' if admitted else 'refused',
-                observation=f'Desktop mpv lab decoded PCM only, {name}: {swept}. {R22} '
+                observation=f'Desktop mpv lab decoded PCM only, {name}: {swept}. {R23} '
                             'No TV, HDMI, passthrough or persisted-resume claim.' +
                             (' R19: offered subtitle tracks tested.' if ff.LAYOUTS[name]['subtitles'] else ''))
 
@@ -580,7 +580,7 @@ def main():
         print(f"  {name}: {facts[name]['sha256'][:16]}... {facts[name]['size']} bytes", flush=True)
     measurement_source = ('format-matrix.py', 'format_measure.py', 'format_fixtures.py',
                           'r22_oracle.py', 'r21_oracle.py', 'exact_audio.py')
-    receipt = dict(admissionStandard=R22, thresholds=THRESHOLDS, method=fm.__doc__.strip().splitlines()[0],
+    receipt = dict(admissionStandard=R23, thresholds=THRESHOLDS, method=fm.__doc__.strip().splitlines()[0],
                    harnessSha256={f: hashlib.sha256((LAB/f).read_bytes()).hexdigest() for f in measurement_source},
                    playerOptions=PLAYER_OPTIONS, deviceMode=DEVICE_MODE, plannedLayouts=layouts,
                    plannedPositions=POSITIONS, requestedPositionCount=min(args.positions, len(POSITIONS)),

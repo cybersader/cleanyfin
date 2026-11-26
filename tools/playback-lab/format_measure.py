@@ -352,7 +352,7 @@ def start_control(runner, ref, first, mpv_options, resume):
     controls = ref['startControls']
     key = (resume, first)
     if key not in controls:
-        controls[key] = (None, None)
+        controls[key] = (None, {})
         size, channels = 2*ref['channels'], ref['channels']
         at = (ref['lead'] + first*SAMPLES_PER_FRAME)*size
         original_ideal = ref['pcm'][at:]
@@ -383,10 +383,14 @@ def start_control(runner, ref, first, mpv_options, resume):
             return controls[key]
         matches = [j for j in range(9) if at >= j*size and original[:(j + SAMPLES_PER_FRAME)*size] ==
                    ref['pcm'][at - j*size:at + SAMPLES_PER_FRAME*size]]
-        observed = viewer.transient_channels(viewer.pcm_array(original, channels), 0)
-        ideal = viewer.transient_channels(viewer.pcm_array(original_ideal, channels), 0)
-        if observed is not None and ideal is not None:
-            controls[key] = (matches[0] if len(matches) == 1 else None, (observed.tolist(), ideal.tolist()))
+        actual_pcm, ideal_pcm = viewer.pcm_array(original, channels), viewer.pcm_array(original_ideal, channels)
+        comparators = {}
+        for omit_first in (False, True):
+            observed = viewer.transient_onset_channels(actual_pcm, omit_first)
+            ideal = viewer.transient_onset_channels(ideal_pcm, omit_first)
+            if observed is not None and ideal is not None:
+                comparators[omit_first] = observed.tolist(), ideal.tolist()
+        controls[key] = matches[0] if len(matches) == 1 else None, comparators
     return controls[key]
 
 
@@ -435,8 +439,11 @@ def score_take(runner, ref, mark, label, seq, got, start, mpv_options, clocks):
     before = pcm[(lead + max(mark.a, mark.b - 8))*size:(lead + mark.b)*size]
     after = pcm[(lead + mark.a)*size:(lead + min(mark.a + 8, mark.b))*size]
     original_lead, onset_control = None, None
+    # Only the actual join target earns R23, not a nearby start or a straight cut playing through it.
+    onset_omit_first = fresh and start == mark.join_seconds
     if fresh:
-        control_lead, onset_control = start_control(runner, ref, first, mpv_options, resume=label == 'resume')
+        control_lead, controls = start_control(runner, ref, first, mpv_options, resume=label == 'resume')
+        onset_control = controls.get(onset_omit_first)
         if control_lead is not None:
             # For the R21 diagnostic, exclude original prefix samples inside the mark.
             original_lead = sum(not mark.a <= i < mark.b for i in range(n - control_lead, n))
@@ -465,7 +472,8 @@ def score_take(runner, ref, mark, label, seq, got, start, mpv_options, clocks):
     observed = viewer.observe(got, *clocks, seq, source=fingerprints[mark_id], mark=mark,
                               control=ref['r22Clock'], ideal=tail, ideal_at=at, join=join,
                               picture_ok=p['ok'], exact_issues=pcm_issues, fresh=start is not None,
-                              onset_control=onset_control)
+                              onset_control=onset_control, onset_omit_first=onset_omit_first,
+                              original_lead=original_lead)
     criteria = viewer.classify(observed)
     missing = ['unmeasured-clock'] if not clocks[0] or ref['r22Clock'] is None or 'extraVideoTimingMs' not in observed else []
     if ref['r22Clock'] is not None and ref['r22Clock'].get('transientNoiseRms') is None:

@@ -20,7 +20,7 @@ public class EligibilityTests
         Assert.True(SchemaAccepts(Seed));
         var register = Read(Seed);
         Assert.All(register.Rows.Take(5), row => Assert.Equal(EvidenceStatus.Refused, row.Status));
-        // Common-format rows: only R22-passing Dolby layouts may be experimental, in desktop lab mpv only.
+        // Common-format rows: only R23-passing Dolby layouts may be experimental, in desktop lab mpv only.
         Assert.All(register.Rows.Skip(5), row =>
         {
             Assert.Equal(("mpv", "mpv"), (row.Tuple.AppId, row.Tuple.Backend));
@@ -39,8 +39,8 @@ public class EligibilityTests
             {
                 Assert.Contains(row.Tuple.Source.AudioCodec, new[] { "ac3", "eac3" });
                 Assert.Contains("24/24 positions passed", row.Observation);
-                Assert.Contains("R22:", row.Observation);
-                Assert.StartsWith("R22:", JsonNode.Parse(File.ReadAllBytes(evidence))!["admissionStandard"]!.GetValue<string>());
+                Assert.Contains("R23:", row.Observation);
+                Assert.StartsWith("R23:", JsonNode.Parse(File.ReadAllBytes(evidence))!["admissionStandard"]!.GetValue<string>());
                 Assert.Equal(EvidenceStatus.Experimental, register.Admit(row.Tuple, ["cut"], allowExperimental: true).Value!.Status);
             }
         });
