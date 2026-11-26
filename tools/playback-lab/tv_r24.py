@@ -36,6 +36,9 @@ def make_lab(matrix, directory, line, layout, tv, origin):
 
     fixtures=directory/'movies'; fixtures.mkdir()
     facts=ff.generate(fixtures, layout)
+    if getattr(tv,'projection_control',False):
+        from tv_channel_control import generate
+        generate(fixtures,ff.LAYOUTS[layout]['audio'][0][0])
     lab=WholphinLab(directory/'server', line, fixtures, [layout], (tv.app_digest, '1.1.2'))
     lab.client='Wholphin'; lab.version=lab.wholphin['tuple']['appVersion']; lab.work.mkdir(); lab.public_origin=origin
     lab.r24_layout=layout; lab.r24_fixture=facts; lab.r24_mode=mode
@@ -154,14 +157,9 @@ def verdict(observations, blocker):
 
 
 def measure(h,tv,lab,ui,out,matrix):
-    from hard_fixture_lab import media
+    from tv_dolby_control import read
     layout=lab.r24_layout; spec=ff.LAYOUTS[layout]; binding=lab.r24_binding; av=lab.r24_anchor
-    src=lab.fixtures/(layout+'.'+spec['container']);probe=matrix.probe_json(lab.fixtures,src.name)
-    cut=fm.plan_for(probe); origin=round((cut['videoAnchorMs']+cut['zeroMs'])*48)
-    source=media(lab.fixtures,'ffmpeg','-copyts','-cons_noisegen','1','-i','/lab/'+src.name,'-map','0:a:0','-af',
-                 f'aresample=48000:first_pts={origin},atrim=end_sample={fm.FRAMES*fm.SAMPLES_PER_FRAME}',
-                 '-ac','2','-ar','48000','-f','s16le','pipe:1',readonly=True)
-    if len(source)!=fm.FRAMES*fm.SAMPLES_PER_FRAME*4:raise ValueError('missing complete source-clock control')
+    source,_,out['controlClock']=read(lab,matrix)
     scorer=h.module('analyze-capture');out['audioLevels']=tv.configure_audio();out['layout']=layout
     out['plannedPositions']=matrix.POSITIONS;out['tuple']=lab.stub_register()['rows'][0]['tuple'];out['positions']=[]
     out['admitted']=False

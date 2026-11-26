@@ -34,18 +34,36 @@ public final class ProjectionRecorder extends Service {
             int uid=getPackageManager().getApplicationInfo("com.github.damontecres.wholphin",0).uid;
             AudioPlaybackCaptureConfiguration config=new AudioPlaybackCaptureConfiguration.Builder(projection)
                 .addMatchingUid(uid).addMatchingUsage(AudioAttributes.USAGE_MEDIA).build();
-            int mask=AudioFormat.CHANNEL_IN_STEREO, enc=AudioFormat.ENCODING_PCM_16BIT;
-            record=new AudioRecord.Builder().setAudioPlaybackCaptureConfig(config).setAudioFormat(new AudioFormat.Builder()
-                .setSampleRate(48000).setChannelMask(mask).setEncoding(enc).build())
-                .setBufferSizeInBytes(Math.max(32768,4*AudioRecord.getMinBufferSize(48000,mask,enc))).build();
-            String format=uid+" "+record.getSampleRate()+" "+record.getChannelCount()+" "+record.getAudioFormat();
-            int total=0; byte[] data=new byte[8192]; long end=SystemClock.elapsedRealtime()+90000;
+            // The public SDK has no positional CHANNEL_IN_5POINT1. Ask for the six
+            // source lanes by index, then try stereo float and finally stereo s16.
+            // A successful builder is not enough: start and read actual frames.
+            StringBuilder attempts=new StringBuilder(); int channels=0,encoding=0;
+            for(int[] mode:new int[][]{{6,4},{2,4},{2,2}}) {
+                try {
+                    AudioFormat.Builder f=new AudioFormat.Builder().setSampleRate(48000).setEncoding(mode[1]);
+                    if(mode[0]==6) f.setChannelIndexMask(0x3f); else f.setChannelMask(AudioFormat.CHANNEL_IN_STEREO);
+                    record=new AudioRecord.Builder().setAudioPlaybackCaptureConfig(config).setAudioFormat(f.build())
+                        .setBufferSizeInBytes(98304).build();
+                    record.startRecording();
+                    if(record.getRecordingState()!=AudioRecord.RECORDSTATE_RECORDING || record.getSampleRate()!=48000 ||
+                       record.getChannelCount()!=mode[0] || record.getAudioFormat()!=mode[1]) throw new IllegalStateException();
+                    channels=mode[0];encoding=mode[1];attempts.append(channels+"x"+encoding+"-started");break;
+                } catch(IllegalArgumentException|IllegalStateException|UnsupportedOperationException e) {
+                    attempts.append(mode[0]+"x"+mode[1]+"-"+e.getClass().getSimpleName()+",");
+                    if(record!=null){record.release();record=null;}
+                }
+            }
+            if(channels==0)throw new IllegalStateException();
+            String format=uid+" "+record.getSampleRate()+" "+channels+" "+encoding+" "+attempts+" "+record.getFormat().getChannelIndexMask()+" "+record.getFormat().getChannelMask();
+            int total=0,limit=48000*channels*(encoding==4?4:2)*90;
+            java.nio.ByteBuffer direct=java.nio.ByteBuffer.allocateDirect(24576);byte[] data=new byte[direct.capacity()];
+            long end=SystemClock.elapsedRealtime()+90000;
             try (FileOutputStream f=openFileOutput("control.pcm",MODE_PRIVATE)) {
-                record.startRecording(); if(record.getRecordingState()!=AudioRecord.RECORDSTATE_RECORDING) throw new IOException();
                 status("ready "+format);
-                while(!done && SystemClock.elapsedRealtime()<end && total<192000*92) {
-                    int n=record.read(data,0,data.length,AudioRecord.READ_NON_BLOCKING);
-                    if(n<0) throw new IOException(); if(n==0){SystemClock.sleep(5);continue;} f.write(data,0,n);total+=n;
+                while(!done && SystemClock.elapsedRealtime()<end && total<limit) {
+                    direct.clear();int n=record.read(direct,direct.capacity(),AudioRecord.READ_NON_BLOCKING);
+                    if(n<0)throw new IOException();if(n==0){SystemClock.sleep(5);continue;}
+                    direct.position(0);direct.get(data,0,n);f.write(data,0,n);total+=n;
                 }
             }
             result=(done?"closed ":"expired ")+format+" "+total;

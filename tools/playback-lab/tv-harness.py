@@ -826,11 +826,11 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
                             if method:info['playMethod']=method
                             if not info.get('activeQemuAudioRoute'):
                                 info['activeQemuAudioRoute']=tv.audio_route()
-                        elif saw_session:
+                        elif saw_session and not getattr(tv,'projection_control',False):
                             info['endSignal']='Jellyfin session no longer reports the item';break
                         if info.get('libmpvVO'):
                             active=player_surface(tv)
-                            if saw_surface and not active:
+                            if saw_surface and not active and not getattr(tv,'projection_control',False):
                                 info['endSignal']='Wholphin video surface left foreground';break
                             saw_surface|=active
                     except (sp.CalledProcessError,sp.TimeoutExpired):
@@ -2035,6 +2035,7 @@ def main():
                 tv.projection_control=opts.projection_control
                 tv.boot();summary['graphicsAdapter']=tv.graphicsAdapter
                 print('Emulator graphics:',tv.graphicsAdapter or opts.gpu+' requested; renderer not reported',file=sys.stderr,flush=True)
+                eventually(lambda:tv.adb('shell','cmd','user','is-user-unlocked','0').strip()==b'true',45,'Disposable Android user not unlocked for package installation')
                 tv.adb('install','--no-streaming',apk,timeout=75)
                 summary['androidFingerprint']=tv.adb('shell','getprop','ro.build.fingerprint').decode().strip();summary['audioInputFormat']=tv.call('pactl','list','short','sink-inputs').decode().strip().split('\t')[-1]
                 mem=re.search(rb'^MemTotal:\s+(\d+) kB',tv.adb('shell','cat','/proc/meminfo'),re.M)

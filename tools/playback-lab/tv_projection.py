@@ -1,13 +1,9 @@
 """One uncut audio control; never an eligibility scorer."""
-from fractions import Fraction
-import hashlib
 import re
 import subprocess
 import numpy as np
 import format_fixtures as ff
-import format_measure as fm
-from hard_fixture_lab import media
-from tv_r24 import aligned_control
+from tv_dolby_control import read
 
 
 def active_track(tv,uid,pid):
@@ -26,89 +22,64 @@ def active_track(tv,uid,pid):
     return None
 
 
-def compare(ref,raw,frames):
-    out={'referenceFrames':len(ref)//4,'capturedFrames':len(raw)//4,'expectedFrames':frames,
-         'referenceSha256':hashlib.sha256(ref).hexdigest(),'captureSha256':hashlib.sha256(raw).hexdigest(),'outcome':'unmeasured'}
-    if not raw or len(raw)%4 or len(ref)!=frames*4:
-        out['reason']='missing complete stereo reference or capture';return out
-    y=np.frombuffer(raw,dtype='<i2').reshape(-1,2);nz=np.flatnonzero(y.any(axis=1));out['nonSilentFrames']=len(nz)
-    if not len(nz):out['reason']='silent capture';return out
-    out['containsFullReferenceBytes']=raw.find(ref)>=0
-    try:aligned_control(ref,raw)
-    except ValueError:pass
-    else:out.update(outcome='bit-exact',equalStereoFrames=frames);return out
-    # Approximate alignment cannot certify identity. Require distinct beginning/middle/end
-    # matches on one clock and complete coverage before reporting a numerical deviation.
-    from scipy.signal import correlate
-    x=np.frombuffer(ref,dtype='<i2').reshape(-1,2);matches=[]
-    for at in (0,frames//2,frames-24000):
-        window=x[at:at+24000,0].astype(float); signal=y[:,0].astype(float); n=len(window)
-        if len(signal)<n or not window.any():break
-        powers=np.r_[0.,np.cumsum(signal**2)];scores=correlate(signal,window,mode='valid',method='fft')/np.sqrt(np.maximum(1.,(powers[n:]-powers[:-n])*np.dot(window,window)))
-        best=int(np.argmax(scores)); peak=float(scores[best]);other=scores.copy();other[max(0,best-95):best+96]=0
-        match=dict(at=at,offset=best-at,score=round(peak,5),other=round(float(other.max()),5))
-        if peak>=.90 and peak-other.max()>=.005:
-            delta=y[best:best+n].astype('int32')-x[at:at+n]
-            match.update(windowFrames=n,unequalChannelSamples=int(np.count_nonzero(delta)),maxAbsDifference=int(abs(delta).max()))
-        matches.append(match)
-    out['alignmentWindows']=matches
-    if len(matches)!=3 or any(m['score']<.90 or m['score']-m['other']<.005 for m in matches) or len({m['offset'] for m in matches})!=1:
-        out['reason']='no unique complete common source clock';return out
-    start=matches[0]['offset'];end=start+frames
-    if start<0 or end>len(y):out['reason']='incomplete aligned take';return out
-    d=y[start:end].astype('int32')-x;out.update(outcome='deviation',unequalChannelSamples=int(np.count_nonzero(d)),maxAbsDifference=int(abs(d).max()),outsideNonzeroFrames=int(np.count_nonzero((nz<start)|(nz>=end))))
-    return out
-
-
 def measure(h,tv,lab,out,matrix):
     probe=out['projection']={'consent':'run-scoped emulator PROJECT_MEDIA app-op; ordinary MediaProjection API','scope':'Wholphin UID AND USAGE_MEDIA; no microphone or virtual display'}
-    spec=ff.LAYOUTS[lab.r24_layout];src=lab.r24_layout+'.'+spec['container']; plan=fm.plan_for(matrix.probe_json(lab.fixtures,src));origin=round((plan['videoAnchorMs']+plan['zeroMs'])*48)
-    frames=fm.FRAMES*fm.SAMPLES_PER_FRAME
-    ref=media(lab.fixtures,'ffmpeg','-copyts','-cons_noisegen','1','-i','/lab/'+src,'-map','0:a:0','-af',f'aresample=48000:first_pts={origin},atrim=end_sample={frames}','-ac','2','-ar','48000','-f','s16le','pipe:1',readonly=True)
-    # Decoder priming can place real samples before video time zero. Do not pad the tail
-    # to the picture duration. Independently count decoded audio frames and verify that
-    # the existing R24 reference equals the precise slice of the untrimmed decode.
-    decoded=ff.probe(lab.fixtures,src,'-select_streams','a:0','-show_entries','frame=nb_samples,pts_time')['frames']
-    begin=Fraction(decoded[0]['pts_time'])*48000; clock=begin
-    for frame in decoded:
-        if Fraction(frame['pts_time'])*48000!=clock:raise ValueError('Noncontiguous decoder frame timestamps')
-        clock+=int(frame['nb_samples'])
-    if begin.denominator!=1 or begin>origin:raise ValueError('No verified reference origin')
-    whole=media(lab.fixtures,'ffmpeg','-copyts','-cons_noisegen','1','-i','/lab/'+src,'-map','0:a:0',
-                '-ac','2','-ar','48000','-f','s16le','pipe:1',readonly=True)
-    skip=origin-int(begin); expected=min(frames,int(clock)-origin)
-    if len(whole)!=4*int(clock-begin) or ref!=whole[4*skip:4*(skip+expected)]:raise ValueError('Independent uncut decoder vector disagrees')
+    spec=ff.LAYOUTS[lab.r24_layout];_,_,facts=read(lab,matrix);probe.update(facts)
     manifest=h.run(tv.sdk/'build-tools/36.0.0/aapt2','dump','xmltree',tv.work/'release-x86_64'/h.APK,'--file','AndroidManifest.xml').decode()
     target=re.search(r'targetSdkVersion\([^)]*\)=(\d+)',manifest)
     probe['sourceManifest']={'targetSdk':int(target[1]) if target else None,'explicitCapturePolicy':'allowAudioPlaybackCapture' in manifest}
-    probe.update(referenceFrames=len(ref)//4,expectedReferenceFrames=expected,pictureClockFrames=frames,
-                 firstDecodedSample=int(begin),decodedFrames=int(clock-begin),discardedBeforeOrigin=skip,
-                 referenceOrigin=origin,audioLevels=tv.configure_audio())
-    tv.transport.projection_helper=True; call=tv.transport.projection;rt=probe['runtime']={}
+    probe['audioLevels']=tv.configure_audio()
+    tv.transport.projection_helper=True; call=tv.transport.projection
     def stage(expected):
         raw=call('status').decode(errors='replace').strip();tokens=raw.split()
         if tokens[:1] in (['failed'],['expired']):raise RuntimeError('Helper '+(raw if re.fullmatch('[A-Za-z0-9 ]{1,80}',raw) else 'failed'))
         return tokens if tokens[:1]==[expected] else None
+    from tv_channel_control import NAME,calibration,decode,observation,predict,samples
+    def take(label,item,report):
+        call('start');ready=h.eventually(lambda:stage('ready'),20,'No initialized playback AudioRecord after projection grant')
+        uid,rate,ch,enc=map(int,ready[1:5]);info=report.setdefault('runtime',{});info['captureUid']=uid
+        report['AudioRecord']={'sampleRate':rate,'channels':ch,'encoding':enc,'attempts':ready[5].split(','),
+                               'channelIndexMask':int(ready[6]),'channelPositionMask':int(ready[7])}
+        if rate!=48000 or (ch,enc) not in ((6,4),(2,4),(2,2)):raise RuntimeError('Unexpected negotiated AudioRecord format')
+        h.record(tv,lab,item,label,1,info,display=False,sound=False)
+        logs=tv.work/(label+'-logcat.log')
+        if logs.is_file():
+            ao=re.findall(r'\bcplayer,\s+AO: \[audiotrack\] (\d+Hz [A-Za-z0-9.()_-]+ \d+ch [A-Za-z0-9_-]+)',logs.read_text(errors='replace'))
+            if ao:info['mpvAudioTrackFormat']=ao[-1]
+        call('finish');end=h.eventually(lambda:stage('closed'),12,'Helper did not finalize its PCM')
+        pcm=call('pcm');report['helperDeclaredBytes']=int(end[-1]);report['transferredBytes']=len(pcm)
+        if ready[1:]!=end[1:-1] or len(pcm)!=int(end[-1]):raise ValueError('Incomplete playback-capture transfer')
+        report['nonzeroFrames']=int(np.count_nonzero(np.any(samples(pcm,ch,enc)!=0,axis=1)))
+        if not (info.get('mpvAudioTrackFormat')=='48000Hz 5.1 6ch float' and info.get('playMethod')=='DirectPlay'
+                  and spec['audio'][0][0] in info.get('libmpvAudioCodecs',[])
+                  and (info.get('activeTrack') or {}).get('usage')=='USAGE_MEDIA'):
+            raise ValueError('Missing matching ordinary 5.1 float AudioTrack, DirectPlay, or decoded Dolby track')
+        tv.adb('shell','am','force-stop',h.APP);call('stop');return pcm,ch,enc
     try:
         call('grant-audio');call('allow');probe['appOpAllowed']=b'allow' in call('policy')
         if not probe['appOpAllowed']:raise RuntimeError('Run-scoped projection grant not observed')
-        call('start');ready=h.eventually(lambda:stage('ready'),18,'No initialized playback AudioRecord after projection grant')
-        uid,rate,ch,enc=map(int,ready[1:]);rt['captureUid']=uid
-        probe['AudioRecord']={'sampleRate':rate,'channels':ch,'encoding':enc}
-        if (rate,ch,enc)!=(48000,2,2):raise RuntimeError('Unexpected negotiated AudioRecord format')
-        h.record(tv,lab,lab.item,'projection-uncut',1,rt,display=False,sound=False)
-        logs=tv.work/'projection-uncut-logcat.log'
-        if logs.is_file():
-            ao=re.findall(r'\bcplayer,\s+AO: \[audiotrack\] (\d+Hz [A-Za-z0-9.()_-]+ \d+ch [A-Za-z0-9_-]+)',logs.read_text(errors='replace'))
-            if ao:rt['mpvAudioTrackFormat']=ao[-1]
-        call('finish');end=h.eventually(lambda:stage('closed'),10,'Helper did not finalize its PCM')
-        pcm=call('pcm');probe['helperDeclaredBytes']=int(end[-1]);probe['transferredBytes']=len(pcm)
-        if ready[1:]!=end[1:-1] or len(pcm)!=int(end[-1]):raise ValueError('Incomplete playback-capture transfer')
-        if not (rt.get('mpvAudioTrackFormat') and rt.get('playMethod')=='DirectPlay' and rt.get('libmpvEof') and spec['audio'][0][0] in rt.get('libmpvAudioCodecs',[]) and (rt.get('activeTrack') or {}).get('usage')=='USAGE_MEDIA'):
-            probe['comparison']={'outcome':'unmeasured','reason':'missing direct uncut playback, EOF, decoder or active UID/media AudioTrack evidence','nonzeroBytes':sum(bool(v) for v in pcm)}
-        else:
-            probe['comparison']=compare(ref,pcm,expected)
-            probe['wholeDecoderComparison']=compare(whole,pcm,int(clock-begin))
+        pcm,ch,enc=take('projection-uncut',lab.item,probe)
+        whole_native=decode(lab.fixtures,lab.r24_layout+'.'+spec['container'])
+        if len(whole_native)!=facts['decodedFrames']*24:raise ValueError('Incomplete native float decoder reference')
+        native=whole_native[facts['discardedBeforeOrigin']*24:];probe['perChannelIdentityCertified']=False
+        if (ch,enc)==(6,4):
+            probe['nativeFloatComparison']=observation(native,pcm,ch,enc)
+            probe['wholeNativeFloatComparison']=observation(whole_native,pcm,ch,enc)
+            probe['comparison']=probe['nativeFloatComparison'];probe['perChannelIdentityCertified']=probe['comparison']['outcome']=='bit-exact'
+        else:probe['comparison']={'outcome':'unmeasured','reason':'native channels not preserved; await calibrated mix'}
+        rows=lab.api('/Items?Recursive=true&IncludeItemTypes=Movie,Video&Fields=Path',user=lab.admin)['Items']
+        items=[i['Id'].replace('-','') for i in rows if i.get('Path')=='/media/movies/'+NAME]
+        if len(items)!=1:raise ValueError('Independent channel-ID source not uniquely indexed')
+        cr=probe['channelIdentification']={};cpcm,cch,cenc=take('projection-channel-id',items[0],cr)
+        if (cch,cenc)!=(ch,enc):raise ValueError('Calibration route changed capture format')
+        for key in ('flags','sampleRate','channelMask','usage','contentType'):
+            if cr['runtime']['activeTrack'].get(key)!=probe['runtime']['activeTrack'].get(key):raise ValueError('Calibration playback attributes changed')
+        matrix,cal=calibration(decode(lab.fixtures,NAME),cpcm,ch,enc);cr.update(cal)
+        if ch==2:
+            cr['predictionEncoding']='float32' if enc==4 else 'nearest-even signed16, saturated'
+            pred=predict(native,matrix,enc);probe['empiricalMixComparison']=observation(pred,pcm,ch,enc)
+            if cr['validated']:probe['comparison']=dict(probe['empiricalMixComparison'],scope='empirical stereo mix only; never per-channel identity')
+            else:probe['comparison']['reason']='held-out channel-ID signal did not validate a stable downmix'
     finally:
         cleanup=probe['cleanup']={}
         for key in ('stop','default','revoke-audio','remove'):

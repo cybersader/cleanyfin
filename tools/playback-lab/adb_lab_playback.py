@@ -205,7 +205,7 @@ class Playback:
         if len(s)==4 and s[:3]==('dumpsys','SurfaceFlinger','--latency'):safe=s[3] in self.timing_layers
         if len(s)==4 and s[:3]==('cmd','media_session','dispatch'):safe=s[3] in ('pause','play')
         if self.guest:
-            if s==('cat','/proc/meminfo'):safe=True
+            if s in (('cat','/proc/meminfo'),('cmd','user','is-user-unlocked','0')):safe=True
             if s[:5]==('cmd','media_session','volume','--stream','3') and len(s)==7:safe=(s[5]=='--set' and s[6].isdecimal() and int(s[6])<=100)
             if s[:2]==('input','keyevent') and s[2:] and len(s)<=102 and set(s[2:])=={'KEYCODE_VOLUME_UP'}:safe=True
             if len(s)==10 and s[:5]==('am','instrument','-w','-e','op') and s[5] in ('pause','play','state','save','click') and s[6:8]==('-e','value') and re.fullmatch('[A-Za-z0-9+/=]{1,4096}',s[8]) and s[9]=='org.cleanyfin.fixture/.TvInput':safe=True

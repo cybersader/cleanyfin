@@ -4,7 +4,12 @@ from unittest.mock import Mock
 import numpy as np
 from adb_lab import LabError
 from adb_lab_playback import Playback
-from tv_projection import active_track,compare
+from tv_projection import active_track
+from tv_channel_control import observation,calibration,predict
+
+def compare(ref,raw,frames):
+    try:return observation(ref,raw,2,2)
+    except ValueError:return {'outcome':'unmeasured'}
 
 
 class CaptureControl(TestCase):
@@ -19,7 +24,7 @@ class CaptureControl(TestCase):
 
     def test_gain_change_not_equal_and_truncation_not_deviation(self):
         raw=(self.x*2).astype('<i2').tobytes();out=compare(self.ref,raw,len(self.x))
-        self.assertEqual(out['outcome'],'deviation');self.assertGreater(out['unequalChannelSamples'],100000)
+        self.assertEqual(out['outcome'],'deviation');self.assertGreater(out['mismatchedValues'],100000)
         for raw in (b'',b'\0'*len(self.ref),raw[4000:],self.ref[:12000],self.ref+b'\0'):
             self.assertEqual(compare(self.ref,raw,len(self.x))['outcome'],'unmeasured')
 
