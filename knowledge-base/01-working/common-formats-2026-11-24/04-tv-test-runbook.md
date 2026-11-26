@@ -18,6 +18,12 @@ The [corrected drawer-focus rehearsal](../../../delivery/evidence/runs/tv-202611
 
 **Consent belongs to the person holding the remote.** The [isolated stock prompt](../../../delivery/evidence/runs/tv-consent-20261126T140441Z-2ebf36ebe7/stock-prompt.png) showed why the first check stopped: Android displayed the long test-helper name with an ellipsis. Nothing was clicked. The capture-only build now uses a short, unique `CF Lab` name and verifies that name in the compiled APK. For a released owner run, show the synthetic reference picture first; when Android prompts on the actual TV, compare the complete name with the one printed by the harness. Use the remote to approve only an expected match, otherwise cancel. The physical route sends no key and waits for the helper to confirm **this specific request** produced a projection and initialized stereo playback capture. Seeing or dismissing a dialog is not proof of capture. No household screenshot is saved or uploaded for this check.
 
+The [private consent-only callback test](../../../delivery/evidence/runs/tv-consent-20261126T141033Z-b213cff173/summary.json) passed. Both the stock title and warning displayed the unique helper name in full. Only on that verified private guest did the harness focus and press **Share screen**. The current request then returned a usable projection, started a 48 kHz stereo AudioRecord, and closed it. The permission was revoked and helper removed. No media played: this proves consent and recorder initialization, not simultaneous Wholphin picture and sound.
+
+**Example for the owner, not a request to approve now.** The name changes each run; use the complete name printed at the time.
+
+![Private Google TV example: compare the full helper name before choosing Share screen](../../../delivery/evidence/runs/tv-consent-20261126T141033Z-b213cff173/stock-prompt.png)
+
 The owner’s read-only probe identified `jarvis2`, Android 14 / SDK 34 (2026-06-01 patch), Amlogic S905X5M but **32-bit userspace**. Its ABI list selects `armeabi-v7a`. The display reported 3840×2160 at 59.94 Hz (mode 152; 1080p available). A 1280×720 screenrecord worked, but a static screen produced one frame: nominal Hz is not recording cadence. Jellyfin Android TV 0.20.0 is not the tested player. HDMI surround was `1`; both frame-rate-match settings were unset. A separate legacy ADB listener was observed on 5555. The harness never connects to it: verifying the supplied wireless endpoint closed does not prove legacy ADB closed.
 
 ## What the family update must demonstrate before release
