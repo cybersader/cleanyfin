@@ -105,6 +105,10 @@ def score(take, ref, code, mark, lo, hi, tau, first, seed):
     if v.lastPosition != end and v.detections == 0:
         raise fm.Unmeasured(f'sound did not reach the end of file ({v.lastPosition} != {end})')
     challenges = mo.run_challenges(y, packets, code, lo, hi, tau, seed=seed)
+    dump = os.environ.get('CLEANYFIN_R24_DEBUG_DIR')  # diagnosis only: synthetic-fixture PCM, never a movie
+    if dump and any(c['missed'] for c in challenges.values()):
+        np.savez_compressed(os.path.join(dump, f'miss-{lo}-{hi}-{seed}.npz'), y=y, packets=np.array(packets), lo=lo, hi=hi,
+                            u=code.u, lead=code.lead, tau=tau)
     return dict(markedFrames=marked_frames, unreadablePictures=unreadable, presentedPictures=len(seq),
                 landing=dict(expected=first, presented=seq[0]), playerRetries=retries,
                 sound=v.as_dict(), markedSoundDetections=v.detections,

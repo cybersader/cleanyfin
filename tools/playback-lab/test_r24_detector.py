@@ -126,6 +126,18 @@ class Oracle(unittest.TestCase):
                 self.assertEqual(row['missed'], 0, row)
                 self.assertGreater(row['planned'], 0)
 
+    def test_challenges_follow_a_run_that_already_lost_kept_frames(self):
+        # Measured on subtitle layouts: the run after the join started 128 kept frames late, its first 256 altered.
+        after = self.u[self.hi + 128:].copy()
+        after[:256] = np.clip(after[:256].astype(np.int32) + 9000, -32768, 32767)
+        y = np.concatenate([self.u[1:self.lo], after])
+        packets = packetize(y, first=self.lo - 1)
+        v = mo.judge(y, packets, self.code, self.lo, self.hi)
+        self.assertEqual((v.detections, v.keptLostAtJoins), (0, 128))
+        res = mo.run_challenges(y, packets, self.code, self.lo, self.hi, tau=32, interior=1)
+        self.assertEqual(sum(r['missed'] for r in res.values()), 0, res)
+        self.assertEqual(res['after-join-prefix-altered']['exactCount'], res['after-join-prefix-altered']['planned'])
+
     def test_fresh_start_challenges(self):
         y = self.u[self.hi + 5:]
         res = mo.run_challenges(y, packetize(y), self.code, self.lo, self.hi, tau=32, interior=1)

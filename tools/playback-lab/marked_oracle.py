@@ -137,6 +137,7 @@ class Verdict:
     leadIn: int = 0
     duplicates: int = 0
     keptGapSamples: int = 0
+    keptLostAtJoins: int = 0
     unanchoredPackets: int = 0
     splitPackets: int = 0
     valueAlignedPackets: int = 0
@@ -273,6 +274,9 @@ def judge(y, packets, code, mark_lo, mark_hi, tau=TAU_LSB):
         for part in (uniq[uniq < mark_lo], uniq[uniq >= mark_hi]):
             if len(part):
                 v.keptGapSamples += int(part[-1] - part[0] + 1 - len(part))
+    # Kept frames skipped where playback jumps across the mark (reported; R22 kept-sound loss, not marked).
+    for s in seams(ident, mark_lo, mark_hi):
+        v.keptLostAtJoins += max(0, int(mark_lo - 1 - ident[s])) + max(0, int(ident[s + 1] - mark_hi))
     v.markedPositions = sorted(set(int(p) for p in ident[m]))
     return v
 
@@ -360,15 +364,21 @@ def challenge_set(y, packets, code, mark_lo, mark_hi, kmax=8, interior=6, seed=0
         for k in range(1, min(kmax, span) + 1):
             yield ('end-overrun', k, len(y) - 1, *_insert(y, packets, len(y), code.u[mark_lo:mark_lo + k], 'left'))
     for s in sites:
+        # A run overrun or early start continues the run it belongs to: when kept frames were already lost at the
+        # join (measured: a subtitle-layout run starting 128 frames after the mark), the leak needs that gap plus k.
+        gap_a = int(mark_lo - 1 - ident[s])
+        gap_b = int(ident[s + 1] - mark_hi)
         for k in range(1, min(kmax, span) + 1):
-            if s >= 0 and mark_lo + k <= len(code.u):
-                yield ('before-join-extend', k, s, *_insert(y, packets, s + 1, code.u[mark_lo:mark_lo + k], 'left'))
-            if mark_hi - k >= 0:
-                block = code.u[mark_hi - k:mark_hi]
+            if 0 <= gap_a <= 4096 and mark_lo + k <= len(code.u):
+                block = code.u[ident[s] + 1:mark_lo + k]
+                yield ('before-join-extend', k, s, *_insert(y, packets, s + 1, block, 'left'))
+            if 0 <= gap_b <= 4096 and mark_hi - k >= 0:
+                block = code.u[mark_hi - k:ident[s + 1]]
                 yield ('after-join-prefix', k, s, *_insert(y, packets, s + 1, block, 'right'))
                 # As a restarted decoder would present it: altered by the take's own post-join deviation, or by an
                 # MKV-sized deviation (several hundred LSB) when this take's join decoded exactly.
-                altered = np.clip(block.astype(np.int32) + deviation(s + 1, k, block.shape), -32768, 32767).astype(np.int16)
+                dev = deviation(s + 1, len(block), block.shape)
+                altered = np.clip(block.astype(np.int32) + dev, -32768, 32767).astype(np.int16)
                 yield ('after-join-prefix-altered', k, s, *_insert(y, packets, s + 1, altered, 'right'))
             if s >= 0 and s + 1 + k <= len(y) and mark_lo + k <= mark_hi:
                 y2 = y.copy()
