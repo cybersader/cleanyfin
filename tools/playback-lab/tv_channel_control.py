@@ -26,7 +26,7 @@ def decode(directory,name):
 
 
 def samples(raw,ch,enc):
-    if ch not in (2,6) or enc not in (2,4) or not raw or len(raw)%(ch*(4 if enc==4 else 2)):raise ValueError('Incomplete capture sample frames')
+    if not 2<=ch<=6 or enc not in (2,4) or not raw or len(raw)%(ch*(4 if enc==4 else 2)):raise ValueError('Incomplete capture sample frames')
     x=np.frombuffer(raw,dtype='<f4' if enc==4 else '<i2').reshape(-1,ch)
     if not np.isfinite(x).all():raise ValueError('Invalid capture sample values')
     return x
@@ -63,15 +63,35 @@ def calibration(ref,raw,ch,enc):
             if k:held.append(float(np.sqrt(np.mean((actual-w[:,None]*passes[0][0][c])**2))))
         passes.append((np.array(rows),fits,lags,held))
     matrix,train,offsets,_=passes[0];held,_,offsets2,residual=passes[1];worst=float(np.max(np.abs(held-matrix)))
-    return matrix,{'trainingCoefficients':matrix.round(8).tolist(),'heldOutCoefficients':held.round(8).tolist(),
+    result={'trainingCoefficients':matrix.round(8).tolist(),'heldOutCoefficients':held.round(8).tolist(),
             'trainingResidualRms':train,'heldOutResidualRms':residual,'heldOutCoefficientMaxDelta':worst,
             'trainingOffsetsFrames':offsets,'heldOutOffsetsFrames':offsets2,
             'validated':worst<.015 and max(train+residual)<.002,'independentHeldOutPass':True}
+    if enc==2:
+        # Identify integer conversion on active samples, not on the silent lanes. Coefficients
+        # are already frozen. Select on pass one; require the same rule to predict pass two.
+        counts=[]
+        for k,lags in enumerate((offsets,offsets2)):
+            hits={rule:0 for rule in QUANTIZERS};total=0
+            for c,lag in enumerate(lags):
+                at=int(RATE*(1.15+c+k*6));v=x[at:at+24000].astype(float)@matrix*32768
+                actual=np.rint(y[at+lag:at+lag+24000]*32768);active=abs(v)>=2
+                for rule,fun in QUANTIZERS.items():hits[rule]+=int(np.count_nonzero(active & (np.clip(fun(v),-32768,32767)==actual)))
+                total+=int(np.count_nonzero(active))
+            counts.append({name:h/max(total,1) for name,h in hits.items()})
+        ordered=sorted(counts[0],key=counts[0].get,reverse=True);winner=ordered[0]
+        valid=counts[0][winner]>.99 and counts[1][winner]>.99 and counts[0][winner]-counts[0][ordered[1]]>.02
+        result.update(quantization=winner,quantizerExactFractions=counts,quantizerVerified=valid)
+        result['validated'] &= valid
+    return matrix,result
 
 
-def predict(raw,matrix,enc):
+QUANTIZERS={'nearest-even':np.rint,'toward-zero':np.trunc,'floor':np.floor}
+
+
+def predict(raw,matrix,enc,quantizer='nearest-even'):
     mixed=samples(raw,6,4).astype(float)@matrix
-    return (np.clip(np.rint(mixed*32768),-32768,32767).astype('<i2') if enc==2 else mixed.astype('<f4')).tobytes()
+    return (np.clip(QUANTIZERS[quantizer](mixed*32768),-32768,32767).astype('<i2') if enc==2 else mixed.astype('<f4')).tobytes()
 
 
 def observation(ref,raw,ch,enc):

@@ -35,15 +35,16 @@ public final class ProjectionRecorder extends Service {
             AudioPlaybackCaptureConfiguration config=new AudioPlaybackCaptureConfiguration.Builder(projection)
                 .addMatchingUid(uid).addMatchingUsage(AudioAttributes.USAGE_MEDIA).build();
             // The public SDK has no positional CHANNEL_IN_5POINT1. Ask for the six
-            // source lanes by index, then try stereo float and finally stereo s16.
+            // source lanes by index, descending to the widest available before stereo.
             // A successful builder is not enough: start and read actual frames.
             StringBuilder attempts=new StringBuilder(); int channels=0,encoding=0;
-            for(int[] mode:new int[][]{{6,4},{2,4},{2,2}}) {
+            for(int[] mode:new int[][]{{6,4},{5,4},{4,4},{3,4},{2,4},{2,2}}) {
                 try {
                     AudioFormat.Builder f=new AudioFormat.Builder().setSampleRate(48000).setEncoding(mode[1]);
-                    if(mode[0]==6) f.setChannelIndexMask(0x3f); else f.setChannelMask(AudioFormat.CHANNEL_IN_STEREO);
+                    if(mode[0]>2) f.setChannelIndexMask((1<<mode[0])-1); else f.setChannelMask(AudioFormat.CHANNEL_IN_STEREO);
                     record=new AudioRecord.Builder().setAudioPlaybackCaptureConfig(config).setAudioFormat(f.build())
                         .setBufferSizeInBytes(98304).build();
+                    if(record==null)throw new IllegalStateException();
                     record.startRecording();
                     if(record.getRecordingState()!=AudioRecord.RECORDSTATE_RECORDING || record.getSampleRate()!=48000 ||
                        record.getChannelCount()!=mode[0] || record.getAudioFormat()!=mode[1]) throw new IllegalStateException();

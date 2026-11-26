@@ -1,0 +1,65 @@
+{
+  "startedUtc": "20261126T052100Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "milestone": "private emulator and audio boot",
+    "blockerSites": [
+      "tv-harness.py:main:2038",
+      "tv-harness.py:eventually:167"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 2.35,
+    "cpus": 24,
+    "availableGiB": 14.61,
+    "ioFull10sPct": 0.22,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "declaredGpu": "host",
+  "llvmpipeThreadsRequested": 2,
+  "guestRamMiB": 1536,
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "privateAdbExited": true,
+  "scratchPeakBytesObserved": 1080975360,
+  "hostWorstObservedIo": {
+    "load1": 2.84,
+    "cpus": 24,
+    "availableGiB": 13.45,
+    "ioFull10sPct": 1.86,
+    "scopeMemoryFull10sPct": 0.97,
+    "scopeIOFull10sPct": 2.48,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 1.51,
+    "scopeIOFull10sPct": 2.48
+  },
+  "hostAfterRun": {
+    "load1": 4.1,
+    "cpus": 24,
+    "availableGiB": 13.96,
+    "ioFull10sPct": 0.18,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 84.0,
+  "blocker": "Disposable Android user not unlocked for package installation",
+  "claims": [
+    "not-measured R24 mp4-h264-eac351 \u2014 Disposable Android user not unlocked for package installation"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T052100Z-0b30407774",
+  "candidateWritten": false
+}

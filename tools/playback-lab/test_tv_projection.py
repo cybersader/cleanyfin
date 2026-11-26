@@ -40,3 +40,20 @@ class CaptureControl(TestCase):
             p=Playback(Mock(),Path('/unused'),guest=guest,family=family);p.active=True;p.projection_helper=mode;p.owned_install=owned;p.helper_installed=installed;p._call=Mock()
             with self.assertRaises(LabError):p.projection('grant-audio')
             p._call.assert_not_called()
+
+    def test_native_six_float_requires_all_six_lanes(self):
+        x=np.random.default_rng(40).random((72000,6),dtype=np.float32)-.5
+        self.assertEqual(observation(x.tobytes(),bytes(2400)+x.tobytes(),6,4)['outcome'],'bit-exact')
+        y=x.copy();y[:,5]=0;out=observation(x.tobytes(),y.tobytes(),6,4)
+        self.assertEqual(out['outcome'],'deviation');self.assertGreater(out['mismatchedValues'],71000)
+
+    def test_matrix_frozen_before_held_out_channel_pulses(self):
+        x=np.zeros((14*48000,6),np.float32);rng=np.random.default_rng(713)
+        for k in range(2):
+            for c in range(6):
+                a=(1+c+k*6)*48000;x[a:a+38400,c]=rng.uniform(-.15,.15,38400)
+        m=np.array([[1,0],[0,.8],[.5,.5],[0,0],[.3,0],[0,.2]]);raw=x.astype('<f4').tobytes()
+        y=predict(raw,m,2);recovered,result=calibration(raw,bytes(4096)+y,2,2)
+        self.assertTrue(result['validated']);self.assertEqual(result['quantization'],'nearest-even');np.testing.assert_allclose(recovered,m,atol=.0001)
+        cut=7*48000*4;bad=y[:cut]+predict(raw,m*.72,2)[cut:]
+        self.assertFalse(calibration(raw,bytes(4096)+bad,2,2)[1]['validated'])

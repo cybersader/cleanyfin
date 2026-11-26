@@ -2035,7 +2035,9 @@ def main():
                 tv.projection_control=opts.projection_control
                 tv.boot();summary['graphicsAdapter']=tv.graphicsAdapter
                 print('Emulator graphics:',tv.graphicsAdapter or opts.gpu+' requested; renderer not reported',file=sys.stderr,flush=True)
-                eventually(lambda:tv.adb('shell','cmd','user','is-user-unlocked','0').strip()==b'true',45,'Disposable Android user not unlocked for package installation')
+                # Verify package-service readiness using an already exercised stock read.
+                # A missing shell verb is not evidence that the Android user is locked.
+                eventually(lambda:b'package:android' in tv.adb('shell','pm','list','packages').splitlines(),45,'Stock Android package service not ready for installation')
                 tv.adb('install','--no-streaming',apk,timeout=75)
                 summary['androidFingerprint']=tv.adb('shell','getprop','ro.build.fingerprint').decode().strip();summary['audioInputFormat']=tv.call('pactl','list','short','sink-inputs').decode().strip().split('\t')[-1]
                 mem=re.search(rb'^MemTotal:\s+(\d+) kB',tv.adb('shell','cat','/proc/meminfo'),re.M)
@@ -2074,6 +2076,7 @@ def main():
         if isinstance(exc,sp.CalledProcessError):
             raw['childExit']=exc.returncode
             if hasattr(exc,'playback_read'):raw['failedStockRead']=exc.playback_read
+            if hasattr(exc,'install_category'):raw['installerCategory']=exc.install_category
         if isinstance(exc,sp.TimeoutExpired):error=timeout_label(raw.get('milestone','setup'),list(history))
         else:error=str(exc) if isinstance(exc,(RuntimeError,ValueError)) else type(exc).__name__
     finally:

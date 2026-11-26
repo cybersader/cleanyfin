@@ -131,12 +131,16 @@ class Playback:
         cmd=self.lab.client if bind is None else self.lab.bin[:-2]+['--ro-bind',str(bind),'/payload.apk','--','/adb','-H','127.0.0.1','-P',str(PRIVATE_PORT)]
         metadata=args[:4]==('shell','stat','-c','%F')
         try:
-            return sp.run(cmd+self.lab.target+list(args),env={'PATH':'/usr/bin:/bin'},stdin=sp.DEVNULL,stdout=sp.PIPE,stderr=sp.PIPE if metadata else sp.DEVNULL,timeout=min(240,timeout),check=True).stdout
+            return sp.run(cmd+self.lab.target+list(args),env={'PATH':'/usr/bin:/bin'},stdin=sp.DEVNULL,stdout=sp.PIPE,stderr=sp.PIPE if metadata or bind is not None else sp.DEVNULL,timeout=min(240,timeout),check=True).stdout
         except sp.CalledProcessError as exc:
             # Only compile-time operation names, never a path, endpoint, text, or child output.
             if metadata:
                 output=(exc.stderr or b'')+(exc.stdout or b'')
                 exc.exact_path_missing=(args[4].encode() in output and output.strip().endswith(b'No such file or directory'))
+                exc.stderr=exc.stdout=None
+            if bind is not None:
+                detail=(exc.stderr or b'')+(exc.stdout or b'');m=re.search(rb'\bINSTALL_(?:FAILED|PARSE_FAILED)_[A-Z_]{1,60}\b',detail)
+                exc.install_category=m[0].decode() if m else 'unclassified installer refusal'
                 exc.stderr=exc.stdout=None
             if tuple(args) in READS:exc.playback_read=' '.join(args)
             raise
@@ -205,7 +209,7 @@ class Playback:
         if len(s)==4 and s[:3]==('dumpsys','SurfaceFlinger','--latency'):safe=s[3] in self.timing_layers
         if len(s)==4 and s[:3]==('cmd','media_session','dispatch'):safe=s[3] in ('pause','play')
         if self.guest:
-            if s in (('cat','/proc/meminfo'),('cmd','user','is-user-unlocked','0')):safe=True
+            if s==('cat','/proc/meminfo'):safe=True
             if s[:5]==('cmd','media_session','volume','--stream','3') and len(s)==7:safe=(s[5]=='--set' and s[6].isdecimal() and int(s[6])<=100)
             if s[:2]==('input','keyevent') and s[2:] and len(s)<=102 and set(s[2:])=={'KEYCODE_VOLUME_UP'}:safe=True
             if len(s)==10 and s[:5]==('am','instrument','-w','-e','op') and s[5] in ('pause','play','state','save','click') and s[6:8]==('-e','value') and re.fullmatch('[A-Za-z0-9+/=]{1,4096}',s[8]) and s[9]=='org.cleanyfin.fixture/.TvInput':safe=True
