@@ -316,7 +316,7 @@ def summarize(layout, planned_positions):
     ctl = [c for c in layout.get('controls', {}).values() if 'tp' in c]
     for k in ('tp', 'fn', 'fp', 'tn', 'unmeasured'):
         s['control' + k.upper() if k != 'unmeasured' else 'controlUnmeasuredMarks'] = sum(c[k] for c in ctl)
-    s['controlsUnmeasured'] = sum('unmeasured' in c for c in layout.get('controls', {}).values())
+    s['controlsUnmeasured'] = sum('tp' not in c for c in layout.get('controls', {}).values())
     complete = (s['positionsAttempted'] == planned_positions and s['positionsClear'] == planned_positions)
     s['admitted'] = bool(complete and not s['markedFrames'] and not s['markedSeekPictures'] and
                          not s['markedSoundDetections'] and not s['challengesMissed'] and not s['controlFN'] and

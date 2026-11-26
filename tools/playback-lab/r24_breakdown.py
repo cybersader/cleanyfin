@@ -1,5 +1,7 @@
 """Count *filtered playback takes* in an R24 desktop receipt; never count positive controls as leaks.
 
+v1 receipts (list per layout) use breakdown() below; v2 receipts (dict per layout) use r24_detector.summarize().
+
 A score() exception aborts that position: its entry and subsequent takes have no scores.
 The outside-calibration reason identifies exactly one attempted filtered take. Other missing
 entries may not have run at all. Paused seek observations are not extra audio/video takes.
@@ -50,4 +52,12 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('receipt',type=Path);path=parser.parse_args().receipt
     data=path.read_bytes();doc=json.loads(gzip.decompress(data) if path.suffix=='.gz' else data)
     for line,run in doc['runs'].items():
-        for layout,entry in run.items():print(line,layout,json.dumps(breakdown(entry['result']['r24Sweep'])))
+        for layout,entry in run.items():
+            sweep=entry['result'].get('r24Sweep')
+            if isinstance(sweep,dict):  # detector v2 receipt (r24_detector.VERSION)
+                import r24_detector
+                print(line,layout,json.dumps(r24_detector.summarize(sweep,len(doc['plannedPositions']))))
+            elif sweep is not None:
+                print(line,layout,json.dumps(breakdown(sweep)))
+            else:
+                print(line,layout,json.dumps(dict(unmeasured=entry['result'].get('unmeasured','no sweep'))))

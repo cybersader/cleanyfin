@@ -155,6 +155,16 @@ class Controls(unittest.TestCase):
         self.assertFalse(s['admitted'])
         self.assertIn('no confirmed leak in retained observations', s['statement'])
 
+    def test_summary_admits_only_complete_clear_layouts_with_clean_controls(self):
+        take = dict(markedFrames=0, markedSoundDetections=0, challengesPlanned=3, challengesMissed=0, challengesRefused=0,
+                    sound=dict(alteredKept=0))
+        pos = [dict(mark=str(i), planned=['straight'], passed=True, takes={'straight': take}, seekLandings=[]) for i in range(2)]
+        control = dict(tp=5, fn=0, fp=0, tn=9, unmeasured=0)
+        self.assertTrue(detector.summarize(dict(positions=pos, controls={'c': control}), 2)['admitted'])
+        self.assertFalse(detector.summarize(dict(positions=pos, controls={'c': dict(unmeasured='x')}), 2)['admitted'])
+        self.assertFalse(detector.summarize(dict(positions=pos, controls={'c': control | dict(fp=1)}), 2)['admitted'])
+        self.assertFalse(detector.summarize(dict(positions=pos[:1], controls={'c': control}), 2)['admitted'])
+
 
 if __name__ == '__main__':
     unittest.main()
