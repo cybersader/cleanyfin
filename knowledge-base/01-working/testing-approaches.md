@@ -33,6 +33,13 @@ So, to see what a real box shows, you need a way that either records **before** 
 - The family's own Wholphin (1.0.9) and Jellyfin Android TV (0.20.0) are installed. The harness refuses to touch an existing Wholphin.
 - Output is 4K at 59.94 Hz; `encoded_surround_output=1`.
 
+## Outside tools worth knowing (owner-flagged, 2026-11-25)
+
+| Tool | What it is | When it helps us | Cautions |
+|---|---|---|---|
+| [cleanyourtv](https://github.com/Gathin23/cleanyourtv) | Debloats Android and Google TV over Wi-Fi debugging, with a replacement launcher. | Confirms the Google TV pairing flow our harness uses. Its `tools/adb-closed.py` idea checks that the debug port is really closed after testing, and we added that to our restore proof. Its pure-Python ADB client may help where stock `adb` is blocked. | Never run its debloat or launcher on the family box; take ideas, not actions. |
+| [REA (Reverse Engineer Anything)](https://github.com/morluto/rea) | An agent tool (MCP plus skills) for reverse engineering apps and native binaries, including Android. | Understanding closed behaviour we can't read as source: the box's audio path or vendor apps, a device's control protocol (for example webcam features beyond standard UVC), or why a closed player does something. For open-source apps (Wholphin, Jellyfin apps, mpv), read the source first. | Install and run it in a sandbox, and only from the official sources it lists. Reverse engineering for interoperability is generally fine; respect licences and terms, and never use it to defeat copy protection. |
+
 ## Rules that apply to every approach
 
 - Only record Cleanyfin's own synthetic test clips, never streaming services or the family's media.
