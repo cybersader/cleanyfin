@@ -23,8 +23,10 @@ public sealed record EvidenceResults(EvidenceResult MarkedPicture, EvidenceResul
         KeptPictureAtJoin.Outcome == Measurement.Pass && KeptSoundAtJoin.Outcome == Measurement.Pass;
 }
 
+public sealed record SeamReport(string Silence, string Pop, string KeptPicture, string Sync, string KeptSoundLoss);
+
 public sealed record EvidenceRow(EvidenceTuple Tuple, ImmutableArray<string> Actions, ImmutableArray<string> Controls,
-    EvidenceResults Results, string EvidenceRef, DateOnly Date, EvidenceStatus Status, string Observation);
+    EvidenceResults Results, string EvidenceRef, DateOnly Date, EvidenceStatus Status, string Observation, SeamReport? TestSeams = null);
 
 /// <summary>An immutable register from the closed v1 reader; only its exact rows can admit a request.</summary>
 public sealed class EvidenceRegister
@@ -43,7 +45,7 @@ public sealed class EvidenceRegister
     public Decision<EvidenceRow> Admit(EvidenceTuple request, ImmutableArray<string> requires, bool allowExperimental = false)
     {
         if (!_rows.TryGetValue(request, out var row)) return Decision<EvidenceRow>.Refuse(RefusalCode.EvidenceTupleUnknown);
-        if (row.Status == EvidenceStatus.Refused) return Decision<EvidenceRow>.Refuse(RefusalCode.EvidenceRefused);
+        if (row.TestSeams is not null || row.Status == EvidenceStatus.Refused) return Decision<EvidenceRow>.Refuse(RefusalCode.EvidenceRefused);
         if (requires.IsDefaultOrEmpty || requires.Any(feature => !row.Actions.Contains(feature, StringComparer.Ordinal)))
             return Decision<EvidenceRow>.Refuse(RefusalCode.EvidenceFeatureUncovered);
         if (row.Status == EvidenceStatus.Eligible && Complete(row)) return Decision<EvidenceRow>.Allow(row);
@@ -51,20 +53,34 @@ public sealed class EvidenceRegister
         return Decision<EvidenceRow>.Refuse(RefusalCode.EvidenceExperimentalOnly);
     }
 
-    public static Decision<EvidenceRegister> Parse(ReadOnlyMemory<byte> utf8)
+    // Only this explicit request can admit a v2 test row. Even allowExperimental in Admit is v1-only.
+    public Decision<EvidenceRow> AdmitTest(EvidenceTuple request, ImmutableArray<string> requires)
+    {
+        if (!_rows.TryGetValue(request, out var row)) return Decision<EvidenceRow>.Refuse(RefusalCode.EvidenceTupleUnknown);
+        if (row.TestSeams is null) return Decision<EvidenceRow>.Refuse(RefusalCode.EvidenceRefused);
+        if (requires.IsDefaultOrEmpty || requires.Any(f => !row.Actions.Contains(f, StringComparer.Ordinal)))
+            return Decision<EvidenceRow>.Refuse(RefusalCode.EvidenceFeatureUncovered);
+        return Decision<EvidenceRow>.Allow(row);
+    }
+
+    // The v2 supplemental register carries only positively measured test rows. Keep the v1 reader closed.
+    public static Decision<EvidenceRegister> ParseTest(ReadOnlyMemory<byte> utf8) => ParseVersion(utf8, true);
+    public static Decision<EvidenceRegister> Parse(ReadOnlyMemory<byte> utf8) => ParseVersion(utf8, false);
+
+    private static Decision<EvidenceRegister> ParseVersion(ReadOnlyMemory<byte> utf8, bool test)
     {
         if (utf8.Length > MaxDocumentBytes) return Decision<EvidenceRegister>.Refuse(RefusalCode.LimitExceeded);
         try
         {
             using var doc = ReadDocument(utf8);
             var root = ReadObject(doc.RootElement, "registerVersion", "rows");
-            Check(Integer(root["registerVersion"]) == 1, RefusalCode.UnsupportedVersion);
+            Check(Integer(root["registerVersion"]) == (test ? 2 : 1), RefusalCode.UnsupportedVersion);
             var items = root["rows"];
             var rows = ImmutableArray.CreateBuilder<EvidenceRow>(ArrayCount(items, MaxRows));
             var index = ImmutableDictionary.CreateBuilder<EvidenceTuple, EvidenceRow>();
             foreach (var item in items.EnumerateArray())
             {
-                var row = ReadRow(item);
+                var row = ReadRow(item, test);
                 Check(index.TryAdd(row.Tuple, row), RefusalCode.DuplicateEvidenceTuple);
                 rows.Add(row);
             }
@@ -78,9 +94,10 @@ public sealed class EvidenceRegister
     private static bool Complete(EvidenceRow row) => row.Results.AllPass && row.Controls.Length == ControlNames.Length &&
         row.Tuple.JellyfinVersion is not null && row.Tuple.PluginBuild is not null;
 
-    private static EvidenceRow ReadRow(JsonElement item)
+    private static EvidenceRow ReadRow(JsonElement item, bool test)
     {
-        var f = ReadObject(item, "tuple", "actions", "controls", "results", "evidenceRef", "date", "status", "observation");
+        string[] fields = ["tuple", "actions", "controls", "results", "evidenceRef", "date", "status", "observation"];
+        var f = ReadObject(item, test ? [.. fields, "tier", "gate", "seams"] : fields);
         var results = ReadObject(f["results"], "markedPicture", "markedSound", "keptPictureAtJoin", "keptSoundAtJoin");
         var path = Text(f["evidenceRef"]);
         Check(EvidencePath.IsMatch(path), RefusalCode.InvalidValue);
@@ -95,6 +112,20 @@ public sealed class EvidenceRegister
             new(ReadResult(results["markedPicture"]), ReadResult(results["markedSound"]), ReadResult(results["keptPictureAtJoin"]),
                 ReadResult(results["keptSoundAtJoin"])), path, date, status, Note(f["observation"]));
         Check(row.Status != EvidenceStatus.Eligible || Complete(row), RefusalCode.IncompleteEvidence);
+        if (test)
+        {
+            var gate = ReadObject(f["gate"], "positions", "allTakesMeasured", "markedFrames", "markedSoundDetections", "positiveControlsPassed");
+            Check(Text(f["tier"]) == "test" && status == EvidenceStatus.Experimental && row.Tuple.AppBuild != null &&
+                row.Tuple.PluginBuild != null && row.Tuple.JellyfinVersion != null && row.Tuple.Source.AudioCodec is ("ac3" or "eac3") &&
+                row.Controls.Length == ControlNames.Length && row.Results.MarkedPicture.Outcome == Measurement.Pass &&
+                row.Results.MarkedSound.Outcome == Measurement.Pass && Integer(gate["positions"]) == 24 &&
+                gate["allTakesMeasured"].ValueKind == JsonValueKind.True && Integer(gate["markedFrames"]) == 0 &&
+                Integer(gate["markedSoundDetections"]) == 0 && gate["positiveControlsPassed"].ValueKind == JsonValueKind.True,
+                RefusalCode.IncompleteEvidence);
+            var seams = ReadObject(f["seams"], "silence", "pop", "keptPicture", "sync", "keptSoundLoss");
+            row = row with { TestSeams = new(Note(seams["silence"]), Note(seams["pop"]), Note(seams["keptPicture"]),
+                Note(seams["sync"]), Note(seams["keptSoundLoss"])) };
+        }
         return row;
     }
 

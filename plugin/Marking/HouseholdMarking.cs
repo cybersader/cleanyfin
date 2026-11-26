@@ -161,7 +161,38 @@ internal sealed class HouseholdMarking(IUserManager users, ILibraryManager libra
     private static readonly object Lock = new();
 
     internal static string Root => Path.Combine(Plugin.Instance!.ConfigurationsPath, Directory);
+    // A private, atomically replaced household policy flag. Absence means off; corruption never enables it.
+    private static string TestFlag => Path.Combine(Root, "test-playback-v1.flag");
+    internal static bool TestPlayback => TestPlaybackRevision is not null;
+    internal static Guid? TestPlaybackRevision
+    {
+        get
+        {
+            ShelfStore.NoLinks(TestFlag);
+            try
+            {
+                using var f = File.OpenRead(TestFlag);
+                if (f.Length != 32) return null;
+                var b = new byte[32]; f.ReadExactly(b);
+                return Guid.TryParseExact(Encoding.ASCII.GetString(b), "N", out var rev) && rev != Guid.Empty ? rev : null;
+            }
+            catch (FileNotFoundException) { return null; }
+            catch (DirectoryNotFoundException) { return null; }
+        }
+    }
+    internal static void SetTestPlayback(bool enabled)
+    {
+        ShelfStore.NoLinks(TestFlag);
+        if (!enabled) { File.Delete(TestFlag); return; }
+        if (TestPlayback) return;
+        var temp = TestFlag + "." + Guid.NewGuid().ToString("N");
+        try { using (var f = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            { f.Write(Encoding.ASCII.GetBytes(Guid.NewGuid().ToString("N"))); f.Flush(true); } File.Move(temp, TestFlag, true); }
+        finally { File.Delete(temp); }
+    }
+
     internal string ServerRef => host.SystemId;
+    internal string ServerVersion => host.ApplicationVersionString;
 
     internal static string UserRef(Guid id) => "jf:user:" + id.ToString("N");
 

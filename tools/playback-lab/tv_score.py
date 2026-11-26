@@ -32,7 +32,7 @@ def parse_latency(raw):
     return period,set(actual)
 
 
-def picture(video,scorer):
+def picture(video,scorer,*,include_samples=False):
     raw=memoryview(scorer.media(video,'ffmpeg','-i','/lab','-map','0:v:0','-vf',
         f'scale={scorer.SCAN_WIDTH}:{scorer.SCAN_HEIGHT}:flags=area,format=gray,settb=1/25,setpts=N',
         '-fps_mode','passthrough','-enc_time_base:v','filter','-threads:v','1','-f','rawvideo','pipe:1',readonly=True))
@@ -46,6 +46,14 @@ def picture(video,scorer):
     if any(b<=a for a,b in zip(times,times[1:])):
         raise ValueError('Display capture timestamps are not strictly increasing')
     out=frame_summary(ids);runs=[];i=0
+    if include_samples:
+        out['samples']=ids
+        out['unreadableFrames']=ids.count(None)
+        # Black/single-level frames are separate from menus or an undecodable logo.
+        out['flatFrames']=sum(len(set(raw[i:i+size]))<=1 for i in range(0,len(raw),size))
+        # Include the menu-to-first and last-to-menu windows. An unobserved boundary refresh
+        # could contain a marked flash even with a perfect interior cadence.
+        if len(times)>1:out['fullCaptureMaxGapMs']=1000*max(b-a for a,b in zip(times,times[1:]))
     for ident,group in groupby(ids):
         j=i+sum(1 for _ in group)
         runs.append((ident,i,j));i=j

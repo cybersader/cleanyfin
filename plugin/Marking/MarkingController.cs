@@ -80,6 +80,29 @@ public sealed class MarkingController(IAuthorizationContext auth) : ControllerBa
         ["serverRef"] = h.ServerRef,
     })));
 
+    [HttpGet("test-playback")]
+    public async Task<IActionResult> TestPlayback() => await Act(null, (h, user) => h.Use(user, s =>
+    {
+        var enabled = HouseholdMarking.TestPlayback;
+        var reports = new JsonArray();
+        if (enabled && System.IO.File.Exists(Path.Combine(Plugin.Instance!.ShelfRoot, "evidence-register-v2.json")))
+            foreach (var row in PointerEvidence.Load(HttpContext, test: true).Register.Rows.Where(r => PointerEvidence.CurrentBuild(r.Tuple, h.ServerVersion)))
+                reports.Add(new JsonObject { ["layout"] = row.Tuple.Source.Container + ": " + row.Tuple.Source.TrackLayout,
+                    ["player"] = row.Tuple.AppId + " " + row.Tuple.AppVersion + " · " + row.Tuple.DeviceMode + " · Jellyfin " + row.Tuple.JellyfinVersion,
+                    ["silence"] = row.TestSeams!.Silence, ["pop"] = row.TestSeams.Pop, ["picture"] = row.TestSeams.KeptPicture,
+                    ["sync"] = row.TestSeams.Sync, ["loss"] = row.TestSeams.KeptSoundLoss });
+        return Json(new JsonObject { ["enabled"] = enabled, ["canChange"] = s.Roles.Contains(Roles.Admin), ["reports"] = reports });
+    }));
+
+    [HttpPost("test-playback/{setting}")]
+    public async Task<IActionResult> ChangeTestPlayback(string setting) => await Act(null, (h, user) => h.Use(user, s =>
+    {
+        if (!s.Roles.Contains(Roles.Admin)) return Refuse(MarkingRefusal.NotPermitted);
+        if (setting is not ("on" or "off")) return BadRequest();
+        HouseholdMarking.SetTestPlayback(setting == "on");
+        return NoContent();
+    }));
+
     // ---------------- captures ----------------
 
     /// <summary>One capture-v1, as taken. Re-sending the identical capture is harmless (offline queue retries).</summary>

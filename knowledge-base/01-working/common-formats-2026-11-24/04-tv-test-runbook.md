@@ -1,0 +1,16 @@
+# Test the onn. 4K Pro without an HDMI capture card
+
+**Not ready for the family box. Do not pair or run a test yet.** Wholphin 1.0.9 is the family's signed-in app. The owner chose an in-place update that leaves 1.1.2 installed, not a fresh install. Two isolated emulator rehearsals are required: one to verify recording and cleanup, another to verify the same upgrade and restore on an already signed-in synthetic profile. Neither has passed. The first emulator attempt stopped before playback.
+
+The test plays only synthetic barcodes and tones. It records Android’s screen and the decoded PCM that mpv writes instead of sending to the speakers. It does **not** measure HDMI, passthrough, AudioTrack, speaker timing or A/V sync. A black recording, missing barcode or gap cannot certify that a marked flash was absent.
+
+The owner’s read-only probe identified `jarvis2`, Android 14 / SDK 34 (2026-06-01 patch), Amlogic S905X5M but **32-bit userspace**. Its ABI list selects `armeabi-v7a`. The display reported 3840×2160 at 59.94 Hz (mode 152; 1080p available). A 1280×720 screenrecord worked, but a static screen produced one frame: nominal Hz is not recording cadence. Jellyfin Android TV 0.20.0 is not the tested player. HDMI surround was `1`; both frame-rate-match settings were unset. A separate legacy ADB listener was observed on 5555. The harness never connects to it: verifying the supplied wireless endpoint closed does not prove legacy ADB closed.
+
+## What the family update must demonstrate before release
+
+- **Before installation:** confirm the exact installed app and signing certificate against the official, digest-pinned release for the box’s userspace ABI. A signer mismatch, a different starting build, or an unreadable signed-in profile stops the update. No private app data or backups are pulled.
+- **After installation:** read the same active server, signed-in user, server list, player backend and `mpv.conf` through the stock UI. Compare them with the baseline *before* adding the uniquely named lab server. Only salted equality checks go in the receipt, not the family's names or settings text.
+- **After the synthetic playback:** restore the backend and options, remove only the lab server, return to the family profile, verify it again and verify both temporary recordings are gone. Leave 1.1.2 installed. Never clear data, uninstall or downgrade to recover. Unverified cleanup remains visible; it is not a successful restore.
+- **Owner restore:** while Wireless debugging is still enabled, use **Forget this PC under Paired devices** for the lab pairing (also forget an old personal-computer pairing if present), then turn Wireless debugging off. Only an explicit refusal at the exact supplied wireless endpoint verifies that port closed. A timeout, an open connection or the separately observed legacy listener is not equivalent.
+
+The six-digit pairing code is entered privately when the harness prompts, never in a command, log or message. A family run will use the shared isolated ADB client; the personal default ADB key must not be offered. Do not run the disposable fresh-install or HDMI procedure as a substitute. The separate HDMI path requires a real UVC/UAC signal: a capture-adapter logo, black/protected output or nominal capture resolution is not a measurement. No splitter or change to content protection is part of this test.

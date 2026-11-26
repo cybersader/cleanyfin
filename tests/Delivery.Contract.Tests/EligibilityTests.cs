@@ -179,6 +179,79 @@ public class EligibilityTests
             .Select(row => row.EvidenceRef);
     }
 
+    private static JsonObject R24()
+    {
+        var doc = EligibleTestDocument();
+        doc["registerVersion"] = 2;
+        var row = doc["rows"]![0]!;
+        row["status"] = "experimental";
+        row["tier"] = "test";
+        row["tuple"]!["source"]!["audioCodec"] = "eac3";
+        row["results"]!["keptSoundAtJoin"]!["outcome"] = "fail";
+        row["gate"] = new JsonObject { ["positions"] = 24, ["allTakesMeasured"] = true, ["markedFrames"] = 0,
+            ["markedSoundDetections"] = 0, ["positiveControlsPassed"] = true };
+        row["seams"] = new JsonObject { ["silence"] = "none", ["pop"] = "above control", ["keptPicture"] = "intact",
+            ["sync"] = "not measured", ["keptSoundLoss"] = "10 ms" };
+        return doc;
+    }
+
+    private static bool TestSchemaAccepts(JsonNode doc) => JsonSchema.FromText(File.ReadAllText(Path.Combine(
+        AppContext.BaseDirectory, "evidence-register-v2.schema.json"))).Evaluate(doc).IsValid;
+
+    [Fact]
+    public void TestAdmissionIsExactAndNeverFullEvenWithLabFlag()
+    {
+        var doc = R24();
+        Assert.True(TestSchemaAccepts(doc));
+        var register = EvidenceRegister.ParseTest(Bytes(doc)).Value!;
+        var tuple = register.Rows.Single().Tuple;
+        Assert.False(register.Admit(tuple, ["cut"]).Accepted);
+        Assert.False(register.Admit(tuple, ["cut"], allowExperimental: true).Accepted);
+        Assert.Equal("above control", register.AdmitTest(tuple, ["cut"]).Value!.TestSeams!.Pop);
+        Assert.False(register.AdmitTest(tuple with { DeviceMode = "Physical TV" }, ["cut"]).Accepted);
+        Assert.False(register.AdmitTest(tuple, ["mute"]).Accepted);
+        Assert.False(EvidenceRegister.Parse(Bytes(doc)).Accepted);
+        Assert.False(EvidenceRegister.ParseTest(Seed).Accepted);
+        var legacy = Read(Bytes(EligibleTestDocument()));
+        Assert.False(legacy.AdmitTest(legacy.Rows[0].Tuple, ["cut"]).Accepted);
+    }
+
+    [Theory]
+    [InlineData("markedFrames", "1")]
+    [InlineData("markedSoundDetections", "1")]
+    [InlineData("positiveControlsPassed", "false")]
+    [InlineData("allTakesMeasured", "false")]
+    [InlineData("positions", "23")]
+    public void IncompleteTestGateRejectsTheRow(string key, string value)
+    {
+        var doc = R24();
+        doc["rows"]![0]!["gate"]![key] = JsonNode.Parse(value);
+        Assert.False(TestSchemaAccepts(doc));
+        Assert.False(EvidenceRegister.ParseTest(Bytes(doc)).Accepted);
+    }
+
+    [Theory]
+    [InlineData("aac")]
+    [InlineData("flac")]
+    public void TestTierRejectsUnapprovedCodecs(string codec)
+    {
+        var doc = R24();
+        doc["rows"]![0]!["tuple"]!["source"]!["audioCodec"] = codec;
+        Assert.False(TestSchemaAccepts(doc));
+        Assert.False(EvidenceRegister.ParseTest(Bytes(doc)).Accepted);
+    }
+
+    [Fact]
+    public void SupplementalSeedConformsAndNamesExistingEvidence()
+    {
+        var root = RepoRoot();
+        var bytes = File.ReadAllBytes(Path.Combine(root, "delivery/evidence/register-v2.json"));
+        Assert.True(TestSchemaAccepts(JsonNode.Parse(bytes)!));
+        var seed = EvidenceRegister.ParseTest(bytes);
+        Assert.True(seed.Accepted);
+        foreach (var row in seed.Value!.Rows) Assert.True(File.Exists(Path.Combine(root, row.EvidenceRef)));
+    }
+
     private static JsonObject EligibleTestDocument()
     {
         var doc = Document();

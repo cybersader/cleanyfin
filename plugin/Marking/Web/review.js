@@ -334,11 +334,36 @@ document.addEventListener('keydown', (e) => {
   if (acts[k]) { e.preventDefault(); void acts[k](); }
 });
 
+async function showTestPlayback() {
+  const reply = await marking('test-playback');
+  if (reply.status !== 200) { $('testStatus').textContent = 'Could not read test playback policy.'; return; }
+  const { enabled, canChange, reports } = reply.body;
+  $('testPanel').hidden = !(canChange || enabled);
+  $('testControl').hidden = !canChange;
+  $('testPlayback').checked = enabled;
+  $('testStatus').textContent = !enabled ? 'Off.' : reports.length ? 'On for the measured layouts below only.' : 'On. No measured layouts are available.';
+  $('testReports').replaceChildren(...reports.map(r => {
+    const li = document.createElement('li');
+    li.textContent = `${r.layout} · ${r.player}. Silence: ${r.silence}; pop: ${r.pop}; picture: ${r.picture}; sync: ${r.sync}; kept sound lost: ${r.loss}.`;
+    return li;
+  }));
+}
+$('testPlayback').addEventListener('change', async e => {
+  const input = e.currentTarget;
+  input.disabled = true;
+  try {
+    const r = await marking('test-playback/' + (input.checked ? 'on' : 'off'), { method: 'POST' });
+    await showTestPlayback();
+    if (r.status !== 204) $('testStatus').textContent = 'Policy change refused.';
+  } finally { input.disabled = false; }
+});
+
 loginForm('Browser', async () => {
   const me = await marking('me');
   if (me.status !== 200) { status(`Cannot use marking (${me.refusal ?? me.status}).`, 'refused'); return; }
   state.me = me.body;
   $('who').textContent = `${session()?.name ?? ''} · ${me.body.roles.join(', ') || 'no role'}`;
+  await showTestPlayback();
   await loadTiming();
   const items = await marking('items');
   for (const it of items.body?.items ?? []) $('itemSelect').append(new Option(`${it.name} (${it.captures} captures, ${it.marks} marks)`, it.itemId));

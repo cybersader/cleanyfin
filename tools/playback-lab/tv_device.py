@@ -6,6 +6,7 @@ scans a network: the box is reached only at the address the owner types in.
 import ipaddress
 import os
 import re
+import subprocess
 from pathlib import Path
 
 APP = 'com.github.damontecres.wholphin'
@@ -13,6 +14,8 @@ WHOLPHIN_VERSION = '1.1.2'
 
 # Official Wholphin v1.1.2 release assets, by Android ABI. Unmodified builds only.
 ASSETS = {
+    'armeabi-v7a': ('Wholphin-armeabi-v7a.apk', '1f6506d0fc527675ef1b34056c1a074fcad7933ffd8c03bf1a950c01d6f1756d',
+                    42309070, 'lib/armeabi-v7a/libmpv.so'),
     'x86_64': ('Wholphin-x86_64.apk', '60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d',
                53836582, 'lib/x86_64/libmpv.so'),
     'arm64-v8a': ('Wholphin-arm64-v8a.apk', '5c1cec6cae94614fb7e561017bfb73adc8c621390ea31492893bb6307cff7144',
@@ -23,6 +26,7 @@ ASSETS = {
 # run-sheet asks for; MS2109 is the older USB 2.0 part (1080p60 only as MJPEG).
 # An adapter not listed here can be named with --capture-usb VID:PID.
 ADAPTERS = {
+    '2b89:5389': 'UGREEN 15389',
     '345f:2130': 'MacroSilicon MS2130 (USB 3.0)',
     '534d:2130': 'MacroSilicon MS2130 (USB 3.0)',
     '534d:2109': 'MacroSilicon MS2109 (USB 2.0)',
@@ -64,6 +68,7 @@ def connection(env, ask, ask_secret):
     code = env.get('CLEANYFIN_TV_CODE') or ask_secret('Six-digit Wi-Fi pairing code: ')
     connect = env.get('CLEANYFIN_TV_CONNECT') or ask('IP address & port shown at the top of "Wireless debugging": ')
     pair, connect = lan_address(pair, 'Pairing address'), lan_address(connect, 'Debugging address')
+    if pair.endswith(':5555') or connect.endswith(':5555'):raise ValueError('Legacy debugging port is not a wireless pairing endpoint')
     if pair.split(':')[0] != connect.split(':')[0]:
         raise ValueError('Pairing and debugging addresses are on different devices')
     code = (code or '').strip()
@@ -97,8 +102,9 @@ def identity(props, features, packages, *, emulator=False, expect_model=None):
     """Return (accepted, found, reason). Accept only the owner's Google TV box (or, in a
     dry run, the harness's own emulator). Prints nothing; caller shows `found`."""
     found = {k: props.get('ro.product.' + k, '') for k in ('manufacturer', 'brand', 'model', 'device')}
-    found.update(android=props.get('ro.build.version.release', ''), sdk=props.get('ro.build.version.sdk', ''),
-                 build=props.get('ro.build.fingerprint', ''), abi=props.get('ro.product.cpu.abi', ''),
+    abis=props.get('ro.product.cpu.abilist','').split(',')
+    found.update(soc=props.get('ro.soc.model'),securityPatch=props.get('ro.build.version.security_patch'),abiList=abis,android=props.get('ro.build.version.release', ''), sdk=props.get('ro.build.version.sdk', ''),
+                 build=props.get('ro.build.fingerprint', ''), abi=next((a for a in abis if a in ASSETS),None),
                  characteristics=props.get('ro.build.characteristics', ''),
                  leanback='feature:android.software.leanback' in features,
                  googleTvLauncher='com.google.android.apps.tv.launcherx' in packages,
@@ -146,7 +152,13 @@ def manifest(adb):
     volume = parse_volume(adb('shell', 'cmd', 'media_session', 'volume', '--stream', str(MUSIC_STREAM), '--get'))
     wholphin = parse_version_name(adb('shell', 'dumpsys', 'package', APP)) if APP in packages else None
     scratch = sorted(x for x in adb('shell', 'ls', '/data/local/tmp').split() if x.startswith(('lab-', 'cleanyfin')))
-    return dict(packages=packages, settings=settings, musicVolume=volume, wholphinVersion=wholphin, labScratch=scratch)
+    # Observe on-device; never probe 5555 or use it as a transport.
+    try:
+        table=adb('shell','ss','-ltn')
+        observed=('listening' if re.search(r'(?m)^LISTEN\s+\d+\s+\d+\s+\S+:5555\s+',table) else
+                  'not listed' if re.search(r'Local Address|^LISTEN ',table,re.M) else 'unknown')
+    except (OSError,subprocess.SubprocessError):observed='unknown'
+    return dict(legacyAdb5555=observed,packages=packages, settings=settings, musicVolume=volume, wholphinVersion=wholphin, labScratch=scratch)
 
 
 def diff(before, after):

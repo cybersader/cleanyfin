@@ -56,7 +56,7 @@ CARDS = """ 1 [PCH            ]: HDA-Intel - HDA Intel PCH
 ONN = {'ro.product.manufacturer': 'onn', 'ro.product.brand': 'onn', 'ro.product.model': 'onn. 4K Pro Streaming Device',
        'ro.product.device': 'tvpro', 'ro.build.version.release': '14', 'ro.build.version.sdk': '34',
        'ro.build.fingerprint': 'onn/tvpro/tvpro:14/UTT3.240625.001/1:user/release-keys',
-       'ro.product.cpu.abi': 'arm64-v8a', 'ro.build.characteristics': 'tv'}
+       'ro.product.cpu.abi': 'arm64-v8a', 'ro.product.cpu.abilist':'arm64-v8a,armeabi-v7a', 'ro.build.characteristics': 'tv'}
 TV_FEATURES = 'feature:android.software.leanback\nfeature:android.hardware.hdmi.cec\n'
 GTV = {'com.google.android.apps.tv.launcherx': '1', 'com.netflix.ninja': '9'}
 
@@ -171,13 +171,18 @@ class Identity(unittest.TestCase):
         self.assertTrue(ok, why)
         self.assertEqual(found['model'], 'onn. 4K Pro Streaming Device')
 
+    def test_32bit_userspace_selects_32bit_release_on_64bit_soc(self):
+        ok,found,_=dev.identity(dict(ONN,**{'ro.product.cpu.abilist':'armeabi-v7a,armeabi'}),TV_FEATURES,GTV)
+        self.assertTrue(ok);self.assertEqual(found['abi'],'armeabi-v7a')
+        self.assertEqual(dev.ASSETS[found['abi']][0],'Wholphin-armeabi-v7a.apk')
+
     def test_refusals(self):
         cases = [
             (dict(ONN, **{'ro.product.manufacturer': 'Google', 'ro.product.brand': 'google', 'ro.product.model': 'Chromecast'}), TV_FEATURES, GTV, 'not an onn.'),
             (ONN, 'feature:android.hardware.touchscreen\n', GTV, 'not a TV'),
             (ONN, TV_FEATURES, {'com.google.android.tvlauncher': '1'}, 'not Google TV'),
             (dict(ONN, **{'ro.kernel.qemu': '1'}), TV_FEATURES, GTV, 'emulator'),
-            (dict(ONN, **{'ro.product.cpu.abi': 'armeabi-v7a'}), TV_FEATURES, GTV, 'no pinned Wholphin'),
+            (dict(ONN, **{'ro.product.cpu.abilist': 'armeabi'}), TV_FEATURES, GTV, 'no pinned Wholphin'),
             (dict(ONN, **{'ro.product.brand': 'donnelly', 'ro.product.manufacturer': 'x', 'ro.product.model': 'y'}), TV_FEATURES, GTV, 'not an onn.'),
         ]
         for props, features, packages, reason in cases:
@@ -187,7 +192,7 @@ class Identity(unittest.TestCase):
         self.assertFalse(dev.identity(ONN, TV_FEATURES, GTV, expect_model='other')[0])
 
     def test_dry_run_accepts_only_the_emulator(self):
-        emu = dict(ONN, **{'ro.product.cpu.abi': 'x86_64', 'ro.hardware': 'ranchu', 'ro.product.brand': 'google'})
+        emu = dict(ONN, **{'ro.product.cpu.abi': 'x86_64', 'ro.product.cpu.abilist':'x86_64,x86', 'ro.hardware': 'ranchu', 'ro.product.brand': 'google'})
         self.assertTrue(dev.identity(emu, TV_FEATURES, GTV, emulator=True)[0])
         self.assertFalse(dev.identity(ONN, TV_FEATURES, GTV, emulator=True)[0])
 
@@ -207,7 +212,7 @@ class Connection(unittest.TestCase):
     def test_bad_inputs_refused_without_echo(self):
         for pair, code, connect in (('8.8.8.8:5555', '123456', '8.8.8.8:5556'), ('192.168.4.30:1', '12345', '192.168.4.30:2'),
                                     ('192.168.4.30:1', '123456', '192.168.4.31:2'), ('box.local:1', '123456', '192.168.4.30:2'),
-                                    ('127.0.0.1:5555', '123456', '127.0.0.1:5556')):
+                                    ('192.168.4.30:1234', '123456', '192.168.4.30:5555'), ('127.0.0.1:5555', '123456', '127.0.0.1:5556')):
             with self.assertRaises(ValueError) as ctx:
                 answers = iter([pair, connect])
                 dev.connection({}, lambda _p: next(answers), lambda _p: code)
@@ -262,6 +267,8 @@ class ManifestAndRestore(unittest.TestCase):
             key = 'list' if 'list' in args else 'volume' if 'volume' in args else 'ls' if 'ls' in args else 'get'
             return replies[key]
         m = dev.manifest(adb)
+        self.assertEqual(m['legacyAdb5555'],'unknown')
+        self.assertEqual(dev.manifest(lambda *a:'LISTEN 0 4 *:5555 *:*' if 'ss' in a else adb(*a))['legacyAdb5555'],'listening')
         self.assertEqual((m['packages'], m['musicVolume']['value'], m['labScratch'], m['wholphinVersion']),
                          ({'a': '1'}, 4, ['lab-ui.xml'], None))
         for args in calls:

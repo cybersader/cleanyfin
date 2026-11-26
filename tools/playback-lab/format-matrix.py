@@ -293,7 +293,7 @@ class FormatLab(cp.PointerLab):
                     backend='mpv', deviceMode=DEVICE_MODE, jellyfinVersion=self.server_version, pluginBuild=self.plugin_build,
                     source=source)
 
-    def offer(self, name, item):
+    def playback_request(self, name):
         spec = ff.LAYOUTS[name]
         profile = {'Name': 'mpv', 'DirectPlayProfiles': [{'Type': 'Video', 'Container': spec['container'],
                    'VideoCodec': 'h264,hevc', 'AudioCodec': 'aac,ac3,eac3,flac,opus'}],
@@ -304,6 +304,11 @@ class FormatLab(cp.PointerLab):
         status, h, raw = self.request('/Items/'+self.pointer+'/PlaybackInfo', 'POST',
                                       {'DeviceProfile': profile, 'MediaSourceId': self.pointer, 'MaxStreamingBitrate': 100000000,
                                        'AutoOpenLiveStream': True}, user=self.one)
+        return status, h, raw
+
+    def offer(self,name,item):
+        spec=ff.LAYOUTS[name]
+        status,h,raw=self.playback_request(name)
         sources = json.loads(raw).get('MediaSources', []) if status == 200 else []
         if len(sources) != 1:
             log = cp.docker('logs', self.cid, stderr=subprocess.STDOUT).decode(errors='replace')
@@ -321,7 +326,37 @@ class FormatLab(cp.PointerLab):
             raise fm.Unmeasured(f'cut list status {st}')
         return url, s, edl.decode()
 
-    def subtitle_routes(self, edl, list_url, projected, spec):
+    def check_test_offer(self,name,pending):
+        # Synthetic contract witness only, on this disposable server, never inserted into evidence or receipts.
+        from copy import deepcopy
+        row=deepcopy(pending); row.update(tier='test', controls=['straight-play','seek-forward','seek-back','resume','restart'],
+            gate=dict(positions=24,allTakesMeasured=True,markedFrames=0,markedSoundDetections=0,positiveControlsPassed=True),
+            seams={k:'synthetic integration test' for k in ('silence','pop','keptPicture','sync','keptSoundLoss')})
+        for key in ('markedPicture','markedSound'):row['results'][key]['outcome']='pass'
+        old=self.register_path.read_bytes();test=self.register_path.with_name('evidence-register-v2.json')
+        policy='/Cleanyfin/marking/test-playback'
+        def denied():
+            status,_,raw=self.playback_request(name);doc=json.loads(raw)
+            return status==200 and doc.get('MediaSources')==[] and doc.get('ErrorCode')=='NoCompatibleStream'
+        def project(): self.api('/Cleanyfin/lab/reconcile','POST',user=self.admin)
+        try:
+            self.put(self.register_path,b'{"registerVersion":1,"rows":[]}');self.put(test,json.dumps(dict(registerVersion=2,rows=[row])).encode())
+            assert not self.api(policy,user=self.one)['enabled'] and denied(), 'off admitted a test row'
+            assert self.request(policy+'/on','POST',{},user=self.one)[0]==403
+            self.api(policy+'/on','POST',{},user=self.admin);project()
+            reports=self.api(policy,user=self.one)['reports'];assert len(reports)==1 and reports[0]['pop']==row['seams']['pop']
+            indexed=self.api('/Users/'+self.viewer+'/Items/'+self.pointer,user=self.one)
+            assert 'Test filtering' in (indexed.get('Overview') or ''), 'unlabelled test shelf entry'
+            url,projected,_=self.offer(name,self.item);assert projected.get('Name')=='Test filtering'
+            self.api(policy+'/off','POST',{},user=self.admin)
+            assert denied(), 'test row offered after opt-out'
+            self.api(policy+'/on','POST',{},user=self.admin)
+            assert self.request(url)[0]!=200, 'old test grant revived after re-enable'
+            return dict(offRefuses=True,adminOnly=True,shelfLabel=True,sourceLabel=True,seams=True,revocation=True)
+        finally:
+            self.api(policy+'/off','POST',{},user=self.admin);test.unlink(missing_ok=True);self.put(self.register_path,old);project()
+
+    def subtitle_routes(self, edl, list_url, projected, spec, clock_mark=None):
         # Inspect only our loopback descriptor URLs; never store credentials or route payloads in the receipt.
         links = re.findall(r'%\d+%(http://[^,\n]+)', edl)
         source = next(u for u in links if '/source?t=' in u)
@@ -329,7 +364,7 @@ class FormatLab(cp.PointerLab):
         self.tokens.update(u.split('t=')[1] for u in links)
         tracks = [t for t in projected['MediaStreams'] if t['Type'] == 'Subtitle']
         assert len(subs) == len(tracks) == len(spec['subtitles']), 'EDL and PlaybackInfo must expose only rewritten tracks'
-        for link, track, (codec, flags, _) in zip(subs, tracks, spec['subtitles']):
+        for link, track, (codec, flags, cues) in zip(subs, tracks, spec['subtitles']):
             assert f"/subtitle-{track['Index']}.{'ass' if codec == 'ass' else 'srt'}?" in link
             assert (track['Codec'] == ('ass' if codec == 'ass' else 'subrip') and
                     track['IsDefault'] == (flags == 'default') and track['IsForced'] == (flags == 'forced') and
@@ -337,6 +372,12 @@ class FormatLab(cp.PointerLab):
             st, headers, content = self.request(link)
             hs, _, _ = self.request(link, method='HEAD')
             assert st == hs == 200 and content and headers.get('cache-control') == 'private, no-store'
+            if clock_mark is not None:
+                a,b=clock_mark
+                text=content.decode('utf-8-sig')
+                for start,end,cue in cues:
+                    if (cue in text) != (end < a or start > b):
+                        raise fm.Unmeasured('R19 rewritten track does not retain exactly the untouched cues')
             url_base = link.split('?')[0]
             for wrong in (list_url, source):
                 assert self.request(url_base + '?' + wrong.split('?')[1])[0] == 404, 'wrong subtitle ticket accepted'
@@ -406,6 +447,8 @@ class FormatLab(cp.PointerLab):
         probe = probe_json(self.fixtures, f"{name}.{spec['container']}")
         result = dict(tuple=tuple_, audioIndex=audio_index, projectedAudioIndex=projected.get('DefaultAudioStreamIndex'),
                       edl=redact(edl), form=form(spec))
+        if getattr(self,'r24_progress',None) and name=='mp4-h264-eac351':
+            result['syntheticPolicyChecks']=self.check_test_offer(name,pending)
         work = self.work/'capture'/name
         work.mkdir(parents=True)
         (work/'plan.json').write_text(json.dumps(ff.plan({'sha256': binding['sha256']})))
@@ -418,6 +461,23 @@ class FormatLab(cp.PointerLab):
             fresh = lambda: self.offer(name, item)[0]  # noqa: E731
             ref = fm.reference(runner, control_source=f"/media/{name}.{spec['container']}", probe=probe,
                                channels=channels, mpv_options=PLAYER_OPTIONS)
+
+            if getattr(self, 'r24_progress', None):
+                from r24_detector import sweep as detector_sweep
+                try:
+                    def progress(positions_done):
+                        self.r24_progress(name, result | dict(r24Sweep=positions_done))
+                    def arm_r24(s,e,to_end):
+                        end=binding['durationMs'] if to_end else av+e
+                        self.arm(item,binding,av+s,end)
+                        if spec['subtitles']:
+                            url,prj,descriptor=self.offer(name,item)
+                            zero=ref['cut']['zeroMs']
+                            self.subtitle_routes(descriptor,url,prj,spec,(av+s+zero,end+zero))
+                    result['r24Sweep'] = detector_sweep(runner, fresh, ref, positions, PLAYER_OPTIONS, arm_r24, progress)
+                    return result
+                finally:
+                    shutil.rmtree(work, ignore_errors=True)
 
             def joint(options):
                 # Another subtitle track needs its own uncut positive control (same sound, its own text).
@@ -447,6 +507,9 @@ class FormatLab(cp.PointerLab):
                 measured['subtitleTakes'] = takes
                 measured['subtitleChecks'] = check_subtitles(spec, measured)
         except (fm.Unmeasured, subprocess.TimeoutExpired) as e:
+            if getattr(self, 'r24_progress', None):
+                shutil.rmtree(work, ignore_errors=True)
+                return result | dict(unmeasured=redact(str(e)))
             measured['originalUnmeasured'] = redact(str(e))
         try:
             if ref is not None:
@@ -553,6 +616,7 @@ def main():
     p.add_argument('--layout', action='append', choices=sorted(ff.LAYOUTS), help='repeat to pick layouts (default: R22 cohort)')
     p.add_argument('--hard-aac', action='store_true', help='include the original AAC hard fixture in a custom selection')
     p.add_argument('--aac', action='store_true', help='measure the R20 AAC encoder profiles (with the AAC-LC baseline)')
+    p.add_argument('--r24', action='store_true', help='only the calibrated marked-detector sweep; requires a receipt; no R22 rows')
     p.add_argument('--local', action='store_true', help='plain files through mpv only; no Jellyfin, no plugin')
     p.add_argument('--case-timeout', type=int, default=600, help='seconds per mpv take; a timeout is "unmeasured"')
     p.add_argument('--receipt', type=Path, help='write the full receipt JSON here (default: print a summary only)')
@@ -562,7 +626,10 @@ def main():
     p.add_argument('--keep-going', action='store_false', dest='stop_on_fail', help=argparse.SUPPRESS)
     p.set_defaults(stop_on_fail=False)
     args = p.parse_args()
-    layouts = args.layout or (['mp4-h264-aac', *AAC_PROFILES] if args.aac else list(R22_LAYOUTS))
+    if args.r24 and (args.local or not args.receipt or args.rows or args.stop_on_fail or args.aac or args.hard_aac or
+                     any(n not in DOLBY_LAYOUTS for n in args.layout or [])):
+        p.error('--r24 needs a plugin run, Dolby layouts and --receipt; it cannot write full-tier rows')
+    layouts = args.layout or (['mp4-h264-aac', *AAC_PROFILES] if args.aac else list(DOLBY_LAYOUTS if args.r24 else R22_LAYOUTS))
     if args.hard_aac and ff.HARD_AAC not in layouts:
         layouts.append(ff.HARD_AAC)
     scratch = ROOT/'plugin/obj'
@@ -586,6 +653,10 @@ def main():
                    plannedPositions=POSITIONS, requestedPositionCount=min(args.positions, len(POSITIONS)),
                    fixtures={n: {k: f[k] for k in ('sha256', 'size', 'video', 'audio', 'subtitles', 'decoderNoise') if k in f}
                              for n, f in facts.items()}, runs={})
+    if args.r24:
+        receipt.update(admissionStandard='R24: zero marked pictures and zero marked sound detections in every take; calibrated positives required.',
+                       thresholds={'method': 'R24 decoded-vector detector, all selected channels, single-sample marked positives; per-position held-out seek-resume.'})
+        receipt['harnessSha256']['r24_detector.py'] = hashlib.sha256((LAB/'r24_detector.py').read_bytes()).hexdigest()
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     ok = True
     finished = set()
@@ -614,6 +685,11 @@ def main():
                 lab.case_timeout = args.case_timeout
                 run = receipt['runs'][line] = {}
                 passed = False
+                if args.r24:
+                    def progress(name, result):
+                        run[name] = dict(result=result, summary=dict(result='in progress; not admissible'))
+                        persist()
+                    lab.r24_progress = progress
                 try:
                     lab.setup()
                     lab.prepare()
@@ -625,7 +701,10 @@ def main():
                             result = lab.measure(name, POSITIONS[:args.positions], args.stop_on_fail)
                         except (fm.Unmeasured, RuntimeError, AssertionError, subprocess.SubprocessError, OSError, KeyError, ValueError) as e:
                             result = dict(unmeasured=redact(f'{type(e).__name__}: {e}')[:300])
-                        summary = summarize(name, result)
+                        summary = (dict(clear=len(result.get('r24Sweep', [])) == len(POSITIONS) and
+                                              all(s['passed'] for s in result['r24Sweep'])) if args.r24 else summarize(name, result))
+                        if args.r24:
+                            summary['result'] = 'r24-clear' if summary['clear'] else 'not admitted'
                         run[name] = dict(result=result, summary=summary)
                         print(json.dumps(summary), flush=True)
                         persist()
