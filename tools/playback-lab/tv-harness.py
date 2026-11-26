@@ -391,9 +391,14 @@ def install_input(tv):
     apk=root/'input.apk'; android=tv.sdk/'platforms/android-36/android.jar'; tools=tv.sdk/'build-tools/36.0.0'
     if not apk.exists():
         manifest=root/'AndroidManifest.xml'
-        manifest.write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.cleanyfin.fixture"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="Disposable TV fixture input"/><instrumentation android:name=".TvInput" android:targetPackage="org.cleanyfin.fixture"/></manifest>')
-        run('java','-m','jdk.compiler/com.sun.tools.javac.Main','-source','11','-target','11','-classpath',android,'-d',root,HERE/'TvInput.java')
-        run(tools/'d8','--lib',android,'--min-api','26','--output',root,root/'org/cleanyfin/fixture/TvInput.class')
+        sources=[HERE/'TvInput.java']
+        if getattr(tv,'projection_control',False):
+            shutil.copyfile(HERE/'ProjectionManifest.xml',manifest)
+            sources.extend([HERE/'ProjectionConsent.java',HERE/'ProjectionRecorder.java'])
+        else:
+            manifest.write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.cleanyfin.fixture"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="Disposable TV fixture input"/><instrumentation android:name=".TvInput" android:targetPackage="org.cleanyfin.fixture"/></manifest>')
+        run('java','-m','jdk.compiler/com.sun.tools.javac.Main','-source','11','-target','11','-classpath',android,'-d',root,*sources)
+        run(tools/'d8','--lib',android,'--min-api','34' if getattr(tv,'projection_control',False) else '26','--output',root,*sorted((root/'org/cleanyfin/fixture').glob('*.class')))
         plain=root/'plain.apk'; run(tools/'aapt2','link','--manifest',manifest,'-I',android,'-o',plain)
         with zipfile.ZipFile(plain,'a') as z:z.write(root/'classes.dex','classes.dex')
         key=root/'test.jks'; run('keytool','-genkeypair','-keystore',key,'-alias','fixture','-keyalg','RSA','-keysize','2048','-validity','2','-storepass','disposable','-keypass','disposable','-dname','CN=Disposable Fixture')
@@ -809,6 +814,9 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
                         if pid.isdecimal():
                             logs=tv.adb('logcat','-d','--pid='+pid,'-v','tag',timeout=2).decode(errors='replace')
                             app_runtime(logs,info)
+                        if getattr(tv,'projection_control',False) and pid.isdecimal() and not info.get('activeTrack'):
+                            from tv_projection import active_track
+                            info['activeTrack']=active_track(tv,info['captureUid'],int(pid))
                         if info.get('libmpvEof'):
                             info['endSignal']='libmpv EOF';break
                         sess=now(lab,item)
@@ -1896,6 +1904,7 @@ def main():
     parser.add_argument('--llvmpipe-threads',type=int,choices=(2,4),help='bound software raster workers in the owned emulator only')
     parser.add_argument('--ram-mib',type=int,choices=(1536,1792,2048),default=2048,help='guest RAM; part of the measured device mode')
     parser.add_argument('--split-capture',action='store_true',help='diagnostic: use separate 1x audio and display takes, without changing player outputs')
+    parser.add_argument('--projection-control',action='store_true',help='emulator-only uncut Dolby audio measurement, never admission')
     parser.add_argument('--r24',action='store_true',help='measure the Dolby test-tier gate; never installs evidence')
     parser.add_argument('--layout',choices=('mp4-h264-eac351','mkv-h264-ac351','mkv-h264-eac351'))
     parser.add_argument('--jellyfin',choices=('12.4','10.11'),help='R24 default: 12.4; legacy AAC default: 10.11')
@@ -1911,6 +1920,7 @@ def main():
     box.add_argument('--frame-rate-match',choices=('leave','never','seamless','always'),default='never',help='box "match content frame rate" for the run (default never: a constant 60 Hz signal for the adapter; restored afterwards)')
     box.add_argument('--after',choices=('keep','uninstall'),help='Wholphin at the end, if the harness installed it (default: ask; keep)')
     opts=parser.parse_args()
+    if opts.projection_control and (not opts.r24 or opts.device or opts.preflight or opts.keep or opts.capture_usb or opts.split_capture):parser.error('projection control needs only the fresh private R24 emulator')
     if opts.layout and not opts.r24:parser.error('--layout needs --r24')
     if opts.existing_wholphin and (not opts.no_capture or opts.after or opts.frame_rate_match!='leave'):
         parser.error('update requires --no-capture --frame-rate-match leave; never use --after on a family app')
@@ -1956,6 +1966,7 @@ def main():
     work=Path(tempfile.mkdtemp(prefix='cleanyfin-tv-'));sdk=Path(os.environ.get('ANDROID_HOME') or Path.home()/'Android/Sdk').resolve()
     output=HERE.parents[1]/'delivery/evidence/runs'/('tv-'+stamp+'-'+uid)
     summary={'startedUtc':stamp,'recording':'Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz'}
+    if opts.projection_control:summary.update(mode='projection-control',recording='AudioPlaybackCapture; uncut Wholphin UID/USAGE_MEDIA only; no picture, microphone or HDMI')
     if opts.device:
         summary.update(mode='device-internal' if opts.no_capture else 'device',dryRun=bool(opts.capture_file or opts.dry_run_emulator),
                        recording=('Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness' if opts.no_capture else 'DRY RUN: recorded files through the device capture path' if opts.capture_file else
@@ -2021,6 +2032,7 @@ def main():
                 summary.update(declaredGpu=opts.gpu,llvmpipeThreadsRequested=opts.llvmpipe_threads,guestRamMiB=opts.ram_mib);tv.host_history=history
                 from adb_lab_playback import Playback
                 tv.transport=Playback.guest_session(stack,work,sdk,receipt=summary)
+                tv.projection_control=opts.projection_control
                 tv.boot();summary['graphicsAdapter']=tv.graphicsAdapter
                 print('Emulator graphics:',tv.graphicsAdapter or opts.gpu+' requested; renderer not reported',file=sys.stderr,flush=True)
                 tv.adb('install','--no-streaming',apk,timeout=75)
@@ -2043,7 +2055,11 @@ def main():
                 raw['milestone']='separate stock transport test input install'
                 install_input(tv)
             summary['splitCapture']=opts.split_capture
-            if opts.r24:
+            if opts.projection_control:
+                import tv_projection
+                row=None;raw['milestone']='AudioPlaybackCapture uncut control'
+                tv_projection.measure(sys.modules[__name__],tv,lab,raw,module('format-matrix'))
+            elif opts.r24:
                 import tv_r24
                 row=None
                 tv_r24.measure(sys.modules[__name__],tv,lab,ui,raw,module('format-matrix'))
@@ -2073,7 +2089,11 @@ def main():
         else:shutil.rmtree(work)
         summary['scratchRemoved']=not work.exists()
     summary.update(elapsedSeconds=round(time.monotonic()-start,1),blocker=error)
-    if opts.r24:
+    if opts.projection_control:
+        row=None
+        result=raw.get('projection',{}).get('comparison',{}).get('outcome','unmeasured')
+        claims={'projection uncut control':('PASS' if result=='bit-exact' and not error else 'not-measured' if result=='unmeasured' or error else 'deviation',error or result)}
+    elif opts.r24:
         # No v1 candidate, even on interruption partway through TV setup. Receipts are reviewed separately.
         from tv_r24 import verdict
         if opts.no_capture and summary.get('restored') is not True:error=summary['blocker']=error or 'internal recording restore unverified'

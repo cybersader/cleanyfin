@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.cleanyfin.fixture">
+  <uses-sdk android:minSdkVersion="34" android:targetSdkVersion="35"/>
+  <queries><package android:name="com.github.damontecres.wholphin"/></queries>
+  <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
+  <application android:label="Disposable TV fixture input" android:debuggable="true" android:allowBackup="false">
+    <activity android:name=".ProjectionConsent" android:exported="true" android:permission="android.permission.DUMP"/>
+    <service android:name=".ProjectionRecorder" android:exported="false" android:foregroundServiceType="mediaProjection"/>
+  </application>
+  <instrumentation android:name=".TvInput" android:targetPackage="org.cleanyfin.fixture"/>
+</manifest>

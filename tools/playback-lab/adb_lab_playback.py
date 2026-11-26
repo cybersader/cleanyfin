@@ -38,7 +38,7 @@ class Playback:
         self.lab,self.work,self.guest,self.family=lab,Path(work).resolve(),guest,family
         self.capture=set();self.xml=set();self.public=set();self.ports=set();self.owned_install=False
         self.logpid=None;self.timing_layers=set();self.active=False;self.source_abi=None
-        self.local_inputs=set();self.baseline_lines=frozenset()
+        self.projection_helper=False;self.local_inputs=set();self.baseline_lines=frozenset()
 
     @classmethod
     def guest_session(cls,stack,work,sdk,*,family=False,receipt=None):
@@ -156,6 +156,7 @@ class Playback:
             if not updating and self._call(('shell','pm','list','packages',APP)).strip():refused()
             result=self._call((*args[:-1],'/payload.apk'),timeout=timeout,bind=dest)
             if not self.family and not helper and result.strip().splitlines()[-1:]==[b'Success']:self.owned_install=True
+            if helper and result.strip().splitlines()[-1:]==[b'Success']:self.helper_installed=True
             return result
         finally:dest.unlink(missing_ok=True)
 
@@ -210,6 +211,23 @@ class Playback:
             if len(s)==10 and s[:5]==('am','instrument','-w','-e','op') and s[5] in ('pause','play','state','save','click') and s[6:8]==('-e','value') and re.fullmatch('[A-Za-z0-9+/=]{1,4096}',s[8]) and s[9]=='org.cleanyfin.fixture/.TvInput':safe=True
         if not safe:refused()
         return self._call(a,timeout=timeout)
+
+    def projection(self,op):
+        # No projection capability on a box, update rehearsal, or ordinary playback run.
+        if not (self.guest and not self.family and self.active and self.owned_install and
+                self.projection_helper and getattr(self,'helper_installed',False)):refused()
+        pkg='org.cleanyfin.fixture'; activity=pkg+'/.ProjectionConsent'; perm='android.permission.RECORD_AUDIO'
+        ops={'grant-audio':('shell','pm','grant',pkg,perm),'revoke-audio':('shell','pm','revoke',pkg,perm),
+             'allow':('shell','appops','set',pkg,'PROJECT_MEDIA','allow'),
+             'default':('shell','appops','set',pkg,'PROJECT_MEDIA','default'),
+             'policy':('shell','appops','get',pkg,'PROJECT_MEDIA'),
+             'start':('shell','am','start','-n',activity),'finish':('shell','am','start','-n',activity,'-a','finish'),
+             'tracks':('shell','dumpsys','audio'),'stop':('shell','am','force-stop',pkg),
+             'pcm':('exec-out','run-as',pkg,'cat','files/control.pcm'),
+             'status':('exec-out','run-as',pkg,'cat','files/status'),
+             'remove':('uninstall',pkg),'present':('shell','pm','list','packages',pkg)}
+        if op not in ops:refused()
+        return self._call(ops[op],timeout=20)
 
     def allowed_ports(self):return {'tcp:18096','tcp:18097'} if self.guest and self.family else {'tcp:18096'}
 
