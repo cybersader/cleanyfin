@@ -111,9 +111,6 @@ class FamilyUI:
     def focus_profile(self,*,restart=True):
         if restart:self.restart()
         s=self.ui
-        for _ in range(5):
-            if s.get('Settings') is not None:break
-            s.key('DPAD_LEFT')
         for _ in range(18):
             ns=s.tree();focus=next((n for n in ns if n.get('package')==APP and n.get('focused')=='true'),None)
             names=labels(focus.iter()) if focus is not None else []
@@ -135,7 +132,10 @@ class FamilyUI:
                 f[0]<=b[0]<f[2] and f[3]<=top[1]<b[1]):
                 s.key('DPAD_CENTER');s.wait_label('Select User');page=labels(s.tree())
                 return identify_profile(names,page)
-            s.key('DPAD_UP')
+            # Compose exposes stock drawer labels while focus is still on a film tile.
+            # Enter the drawer horizontally before walking up; neither move activates anything.
+            inside=len(f)==len(b)==len(top)==4 and f[0]<=b[0]<b[2]<=f[2] and f[0]<=top[0]<top[2]<=f[2]
+            s.key('DPAD_UP' if inside else 'DPAD_LEFT')
         raise ValueError('cannot read back an authenticated active profile')
 
     def servers_page(self):
@@ -245,7 +245,7 @@ class FamilyUI:
             page=labels(self.ui.tree())
             if 'Select Server' in page:return self.server_entries()
             if 'Select User' in page:self.servers_page();return self.server_entries()
-            if 'Home' in page:self.focus_profile();self.servers_page();return self.server_entries()
+            if 'Home' in page:self.focus_profile(restart=False);self.servers_page();return self.server_entries()
             self.ui.key('DPAD_LEFT')  # focus only
         raise ValueError('stock server inventory unavailable')
 
@@ -258,7 +258,7 @@ class FamilyUI:
         try:
             if original_backend is not None:
                 server,user=self.focus_profile()
-                if server!=self.lab_name:raise ValueError('not in owned lab profile')
+                if (server,user)!=(self.lab_name,self.lab_user):raise ValueError('not in owned lab profile')
                 self.servers_page();self.select_known_profile(server,user)
                 try:
                     if baseline is not None:

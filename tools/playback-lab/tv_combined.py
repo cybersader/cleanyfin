@@ -31,7 +31,7 @@ class CombinedCapture(InternalCapture):
     def begin(self,h,tv,s,label,limit,info,*,sound,display):
         if not sound or not display:raise ValueError('combined capture requires both taps')
         ui=tv.family.ui;server,user=ui.focus_profile()
-        if server!=ui.lab_name:raise ValueError('capture not armed on verified lab profile')
+        if (server,user)!=(ui.lab_name,ui.lab_user):raise ValueError('capture not armed on verified lab profile')
         ui.servers_page();ui.select_known_profile(server,user)
         self.verify_missing(tv,self.paths.video);call=tv.transport.projection
         self.start_consent(h,tv,call)

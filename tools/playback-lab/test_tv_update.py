@@ -143,3 +143,15 @@ class FamilyProtection(unittest.TestCase):
             for icon in (Counter(),Counter([''])):self.assertTrue(exact_delete_popup(bg+expected+icon,before,title))
         for invalid in (['Delete','Switch servers'],['other','Switch servers','Delete'],[title,'Delete'],[title,'Switch servers','delete'],[title,'Switch servers','Delete','unknown']):
             self.assertFalse(exact_delete_popup(Counter(invalid),before,title))
+
+    def test_visible_drawer_labels_do_not_mean_drawer_has_focus(self):
+        import xml.etree.ElementTree as ET
+        from tv_family_ui import FamilyUI
+        def node(label,rect,**more):return ET.Element('node',dict(package=APP,text=label,bounds=rect,**more))
+        def snapshot(focus,home,search):return [focus,node('Home',home),node('Search',search),node('Settings','[0,500][298,555]')]
+        content=snapshot(node('Fixture','[117,403][420,573]',focused='true'),'[64,195][85,220]','[64,90][85,120]')
+        drawer=snapshot(node('Home','[0,170][298,245]',focused='true'),'[75,195][133,220]','[75,115][133,140]')
+        header=node('','[0,0][298,85]',focused='true');header.extend([node('Lab','[75,0][133,30]'),node('one','[75,30][133,60]')]);profile=snapshot(header,'[75,195][133,220]','[75,115][133,140]')
+        picker=[node(s,'[0,0][10,10]') for s in ('Select User','Lab','one')];ui=Mock();ui.tv.emulator=None;ui.tree.side_effect=[content,drawer,profile,picker]
+        self.assertEqual(FamilyUI(ui).focus_profile(restart=False),('Lab','one'))
+        self.assertEqual([c.args for c in ui.key.call_args_list],[('DPAD_LEFT',),('DPAD_UP',),('DPAD_CENTER',)])
