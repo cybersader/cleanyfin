@@ -73,12 +73,15 @@ class FamilyProtection(unittest.TestCase):
         from tv_family_ui import FamilyUI
         for words,okay in ((['Select User','A','person'],True),(['Select User','B','person'],False),
                             (['Select User','A','person','person'],False),(['Select User','A','Add User'],False)):
-            ui=Mock();ui.tree.return_value=[{'package':APP,'text':w} for w in words];ui.home_drawer.return_value=True
+            import xml.etree.ElementTree as ET
+            nodes=[ET.Element('node',{'package':APP,'text':w,'bounds':'[0,105][60,120]'}) for w in words]
+            card=ET.Element('node',{'package':APP,'focusable':'true','focused':'true','clickable':'true','bounds':'[0,0][100,100]'})
+            ui=Mock();ui.tree.return_value=[*nodes,card];ui.home_drawer.return_value=True
             family=FamilyUI(ui);family.server_entries=Mock()
-            if okay:family.select_known_profile('A','person');ui.activate.assert_called_once_with('person')
+            if okay:family.select_known_profile('A','person');self.assertEqual(ui.key.call_args.args,('DPAD_CENTER',))
             else:
                 with self.assertRaises(ValueError):family.select_known_profile('A','person')
-                ui.activate.assert_not_called()
+                self.assertNotIn(('DPAD_CENTER',),[c.args for c in ui.key.call_args_list])
             family.server_entries.assert_called_once_with('A')
 
     def test_complete_non_scrolling_picker_can_put_add_first(self):

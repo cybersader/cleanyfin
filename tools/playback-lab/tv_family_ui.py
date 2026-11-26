@@ -26,6 +26,33 @@ def identify_profile(names,page):
     return server,candidates[0]
 
 
+def exact_user_card(nodes,server,user):
+    app=[n for n in nodes if n.get('package')==APP];page=labels(app)
+    if page.count('Select User')!=1:raise ValueError('ambiguous signed-in profile')
+    i=page.index('Select User')
+    if i+1>=len(page) or page[i+1]!=server or page[i+2:].count(user)!=1 or user in ('Add User','Switch servers'):raise ValueError('ambiguous signed-in profile')
+    caption=next(n for n in app if n.get('text')==user);rect=lambda n:tuple(map(int,re.findall(r'-?\d+',n.get('bounds',''))));c=rect(caption);hits=[]
+    for n in app:
+        r=rect(n)
+        if n.get('focusable')!='true' or n.get('clickable')!='true' or len(r)!=4 or len(c)!=4:continue
+        l,t,w,b=r;inside=caption in tuple(n.iter());badge=labels(n.iter())
+        if not inside and not (l<=(c[0]+c[2])/2<=w and b<=c[1]<b+(b-t)/2 and
+                               (not badge or all(x.casefold()==user[:1].casefold() for x in badge))):continue
+        hits.append(n)
+    if len(hits)!=1:raise ValueError('ambiguous signed-in profile')
+    return hits[0]
+
+
+def focus_step(ui,nodes,target):
+    focus=next((n for n in nodes if n.get('package')==APP and n.get('focused')=='true'),None)
+    if focus is target:return True
+    if focus is None:raise ValueError('picker has no focused card')
+    rect=lambda n:list(map(int,re.findall(r'-?\d+',n.get('bounds',''))))
+    x,y,r,b=rect(target);l,t,w,h=rect(focus);cx=(x+r)//2;cy=(y+b)//2
+    if l<=cx<=w and t<=cy<=h:raise ValueError('ambiguous picker focus')
+    ui.key('DPAD_UP' if cy<t else 'DPAD_DOWN' if cy>h else 'DPAD_LEFT' if cx<l else 'DPAD_RIGHT');return False
+
+
 def picker_cards(nodes):
     # Require one complete non-scrolling stock server picker. Never infer that
     # Add Server is the last card or claim hidden servers were enumerated.
@@ -116,13 +143,7 @@ class FamilyUI:
             cards=picker_cards(nodes)
             if select is None:return tuple(sorted(cards))
             if select not in cards:raise ValueError('expected server is not listed')
-            target=cards[select];focus=next((n for n in nodes if n.get('package')==APP and n.get('focused')=='true'),None)
-            if focus is None:raise ValueError('server list has no focused card')
-            if focus is not target:
-                rect=lambda n:list(map(int,re.findall(r'-?\d+',n.get('bounds',''))))
-                x,y,r,b=rect(target);l,t,w,h=rect(focus);cx=(x+r)//2;cy=(y+b)//2
-                if l<=cx<=w and t<=cy<=h:raise ValueError('ambiguous server card')
-                s.key('DPAD_UP' if cy<t else 'DPAD_DOWN' if cy>h else 'DPAD_LEFT' if cx<l else 'DPAD_RIGHT');continue
+            if not focus_step(s,nodes,cards[select]):continue
             if not delete:s.key('DPAD_CENTER');return
             if not self.lab_name or select!=self.lab_name:raise ValueError('refusing to remove a non-lab server')
             before=Counter(labels(nodes));self.tv.adb('shell','input','keyevent','--longpress','DPAD_CENTER');s.wait_label('Delete')
@@ -138,10 +159,14 @@ class FamilyUI:
         self.ui.wait_label('Select Server')
         for _ in range(12):self.ui.key('DPAD_LEFT')
         self.server_entries(server);self.ui.wait_label('Select User')
-        page=labels(self.ui.tree());i=page.index('Select User')
-        if i+1>=len(page) or page[i+1]!=server or page[i+2:].count(user)!=1:raise ValueError('ambiguous signed-in profile')
-        self.ui.activate(user)
-        if not self.ui.home_drawer():raise ValueError('authenticated Home not verified')
+        for _ in range(16):
+            nodes=self.ui.tree();target=exact_user_card(nodes,server,user)
+            if focus_step(self.ui,nodes,target):self.ui.key('DPAD_CENTER');break
+        else:raise ValueError('ambiguous signed-in profile')
+        end=time.monotonic()+28
+        while time.monotonic()<end:
+            if self.ui.home_drawer():return
+        raise ValueError('authenticated Home not verified')
 
     def read_settings(self):
         self.restart();s=self.ui;s.enter_advanced();backend=s.focus_backend()

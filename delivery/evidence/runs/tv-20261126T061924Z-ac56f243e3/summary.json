@@ -1,0 +1,254 @@
+{
+  "startedUtc": "20261126T061924Z",
+  "recording": "Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness",
+  "mode": "device-internal",
+  "dryRun": true,
+  "captureHarnessSha256": "e44416ee457ddf1e308f7e7ee774d7375d4853e81849a12e758dcbc243eb4465",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "box connection, identity and change manifest",
+    "blockerSites": [
+      "tv-harness.py:main:2029",
+      "tv-harness.py:device_session:1571",
+      "tv_update.py:begin:105",
+      "tv_family_ui.py:snapshot:168"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 2.29,
+    "cpus": 24,
+    "availableGiB": 18.28,
+    "ioFull10sPct": 0.37,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "device": {
+    "uiSize": "1280x720",
+    "manufacturer": "Google",
+    "brand": "google",
+    "model": "sdk_google_atv64_amati_x86_64",
+    "device": "emu64xa",
+    "soc": "ranchu",
+    "securityPatch": "2026-04-01",
+    "abiList": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "android": "16",
+    "sdk": "36",
+    "build": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+    "abi": "x86_64",
+    "characteristics": "emulator",
+    "leanback": true,
+    "googleTvLauncher": true,
+    "emulator": true
+  },
+  "familyUpdate": {
+    "authenticatedSyntheticSession": true,
+    "syntheticBaselineSeeded": true,
+    "syntheticDrawerShapes": [
+      {
+        "focusRect": [
+          0,
+          170,
+          298,
+          245
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": [
+          "Home"
+        ]
+      },
+      {
+        "focusRect": [
+          0,
+          90,
+          298,
+          165
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": [
+          "Search"
+        ]
+      },
+      {
+        "focusRect": [
+          0,
+          0,
+          298,
+          85
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 3,
+        "seedLabels": [
+          "Synthetic Household",
+          "one"
+        ]
+      }
+    ],
+    "syntheticPickerCaptions": [
+      {
+        "rect": "[503,89][778,145]",
+        "label": "Select Server"
+      },
+      {
+        "rect": "[457,447][619,504]",
+        "label": "Synthetic Household"
+      },
+      {
+        "rect": "[510,276][567,383]",
+        "label": "S"
+      },
+      {
+        "rect": "[661,447][823,472]",
+        "label": "Add Server"
+      }
+    ],
+    "syntheticPickerShapes": [
+      {
+        "rect": "[452,243][624,415]",
+        "click": "true",
+        "longClick": "true",
+        "scroll": "false",
+        "labelCount": 1,
+        "seedLabels": [
+          "S"
+        ]
+      },
+      {
+        "rect": "[656,243][828,415]",
+        "click": "true",
+        "longClick": "true",
+        "scroll": "false",
+        "labelCount": 0,
+        "seedLabels": []
+      }
+    ],
+    "rehearsalScreenAtStop": {
+      "appVisible": true,
+      "appNodeCount": 26,
+      "labelCount": 7,
+      "hasProgressIndicator": false,
+      "errorTextPresent": false,
+      "stockLabels": [
+        "Add User",
+        "Select User",
+        "Switch servers"
+      ],
+      "visibleCategories": [
+        "household",
+        "one",
+        "select",
+        "synthetic",
+        "user"
+      ]
+    },
+    "restoreAttempted": true
+  },
+  "manifestBefore": {
+    "packageCount": 109,
+    "packageListSha256": "701575339c72ab3ec5e3fd6de71ea2e83f93e7c5a0d1b427c55b96a7c284ef55",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.0.9-0-g2d87d526"
+  },
+  "internalRestore": {
+    "wholphinAbsentBefore": false,
+    "pathsVerifiedAbsentBeforeOptions": false
+  },
+  "manifestAfter": {
+    "packageCount": 109,
+    "packageListSha256": "701575339c72ab3ec5e3fd6de71ea2e83f93e7c5a0d1b427c55b96a7c284ef55",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.0.9-0-g2d87d526"
+  },
+  "manifestDiff": [],
+  "unexpectedResidue": [],
+  "restored": false,
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 1267744768,
+  "hostWorstObservedIo": {
+    "load1": 7.29,
+    "cpus": 24,
+    "availableGiB": 15.44,
+    "ioFull10sPct": 3.8,
+    "scopeMemoryFull10sPct": 0.4,
+    "scopeIOFull10sPct": 0.4,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 0.83,
+    "scopeIOFull10sPct": 0.62
+  },
+  "hostAfterRun": {
+    "load1": 3.75,
+    "cpus": 24,
+    "availableGiB": 17.26,
+    "ioFull10sPct": 0.0,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 298.0,
+  "blocker": "Stock UI did not verify return from server inventory (RuntimeError)",
+  "claims": [
+    "not-measured R24 mp4-h264-eac351 \u2014 Stock UI did not verify return from server inventory (RuntimeError)"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T061924Z-ac56f243e3",
+  "candidateWritten": false
+}

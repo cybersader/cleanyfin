@@ -60,6 +60,8 @@ The [completed ordinary MP4 rehearsal](../../delivery/evidence/runs/tv-20261126T
 - The family's own Wholphin (1.0.9) and Jellyfin Android TV (0.20.0) are installed. A future family run requires a signer-verified in-place update, never clear/uninstall/reinstall.
 - Output is 4K at 59.94 Hz; `encoded_surround_output=1`.
 
+The [signed-in update rehearsal](../../delivery/evidence/runs/tv-20261126T062510Z-327a0f1ff3/summary.json) verified a complete visible 1.0.9 baseline and installed 1.1.2 in place. After the update the emulator displayed **Select Server**, not authenticated Home. It showed the synthetic server, but did not prove preservation of the active user or settings. The only package-manifest difference was the expected version increase. No household playback or upgrade is released by this result.
+
 ## Outside tools worth knowing (owner-flagged, 2026-11-25)
 
 | Tool | What it is | When it helps us | Cautions |
