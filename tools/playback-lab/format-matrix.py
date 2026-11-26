@@ -472,8 +472,12 @@ class FormatLab(cp.PointerLab):
                         self.arm(item,binding,av+s,end)
                         if spec['subtitles']:
                             url,prj,descriptor=self.offer(name,item)
-                            zero=ref['cut']['zeroMs']
-                            self.subtitle_routes(descriptor,url,prj,spec,(av+s+zero,end+zero))
+                            # Cue times are file time. Use the lab probe's own anchor with its own zero: on 12.4 the
+                            # server reads Matroska priming as 0 (anchor 0) while the lab probe reads -5 ms, so the
+                            # server anchor plus the lab zero put the mark 5 ms early at touching cues.
+                            cut=ref['cut'];zero=cut['zeroMs']
+                            clock=(cut['videoAnchorMs']+s+zero,(cut['durationMs'] if to_end else cut['videoAnchorMs']+e)+zero)
+                            self.subtitle_routes(descriptor,url,prj,spec,clock)
                     result['r24Sweep'] = detector_sweep(runner, fresh, ref, positions, PLAYER_OPTIONS, arm_r24, progress,
                                                         fixtures=self.fixtures, file=f"{name}.{spec['container']}")
                     return result

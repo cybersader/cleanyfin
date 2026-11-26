@@ -2,6 +2,10 @@
 
 **2026-11-25 · desktop mpv lab only.** The split cut-list renderer is unchanged. R22 replaces sample-exact kept sound as the admission bar; zero marked material is still absolute. No experiment on this page qualifies a TV, Wholphin, HDMI or passthrough path.
 
+## R24 test tier: marked-sound detector v2 (2026-11-26)
+
+The R24 opt-in test tier gates only on marked material and reports seam measures. Detector v2 identifies the source position of every presented sample frame after lossy decoding (exact frame identity on a source-time code fixture, then packet-run position for decoder-altered frames). Each take must also catch injected marked positives down to one frame. The design, its limits, the controls and the per-layout results on both lines are on the [marked-sound detector page](05-marked-detector.md). Full-tier admission under R22/R23 below is unchanged.
+
 ## R22 viewer rule, amended by R23
 
 [R22](../../../.claude/41-QUESTIONS-RESOLVED.md) requires every straight cut, fresh start and seek-and-resume at the 24 positions to satisfy six checks. Only Dolby can be admitted, and only as `experimental` for the exact tested desktop-mpv tuple. FLAC and AAC measurements are diagnostic only; both remain refused. Every fixture sharing a tuple must pass before that tuple can be admitted.
