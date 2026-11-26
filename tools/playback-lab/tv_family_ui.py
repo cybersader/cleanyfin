@@ -4,7 +4,7 @@ import re
 import time
 
 from tv_device import APP
-from tv_update import Visible
+from tv_update import Profile
 
 
 def labels(nodes):
@@ -147,8 +147,10 @@ class FamilyUI:
             if not delete:s.key('DPAD_CENTER');return
             if not self.lab_name or select!=self.lab_name:raise ValueError('refusing to remove a non-lab server')
             before=Counter(labels(nodes));self.tv.adb('shell','input','keyevent','--longpress','DPAD_CENTER');s.wait_label('Delete')
-            extra=list((Counter(labels(s.tree()))-before).elements())
-            if sorted(extra)!=sorted([select,'Switch servers','Delete']):raise ValueError('cannot identify exact server popup')
+            popup=Counter(labels(s.tree()));expected=Counter([select,'Switch servers','Delete'])
+            # Stock DialogPopup may replace the accessibility window entirely.
+            # In either representation require its full exact lab title plus BOTH actions.
+            if popup!=expected and popup!=before+expected:raise ValueError('cannot identify exact server popup')
             s.dpad('Delete',cap=4);return
         raise ValueError('server list cannot be completely enumerated')
 
@@ -168,6 +170,14 @@ class FamilyUI:
             if self.ui.home_drawer():return
         raise ValueError('authenticated Home not verified')
 
+    def read_backend(self):
+        self.restart();self.ui.enter_advanced();return self.ui.focus_backend()
+
+    def change_backend(self,expected,target):
+        if {expected,target}!={'MPV','ExoPlayer'} or self.read_backend()!=expected:raise ValueError('cannot verify backend before change')
+        self.ui.key('DPAD_CENTER');self.ui.wait_label('Prefer MPV');self.ui.dpad(target,cap=5)
+        if self.read_backend()!=target:raise ValueError('backend change not verified')
+
     def read_settings(self):
         self.restart();s=self.ui;s.enter_advanced();backend=s.focus_backend()
         s.dpad('Edit mpv.conf');s.wait_label('Save');edits=[n for n in s.tree() if n.get('package')==APP and n.get('class')=='android.widget.EditText']
@@ -180,10 +190,8 @@ class FamilyUI:
             phase='server selection';self.servers_page()
             phase='server inventory';servers=self.server_entries()
             phase='return from server inventory';self.select_known_profile(active,user)
-            phase='player settings';backend,options=self.read_settings()
-            phase='signed-in Home';self.restart()
             phase='visible state'
-            return Visible(servers,active,user,backend,options).validate()
+            return Profile(servers,active,user).validate()
         except Exception as exc:
             # No screen text, names or personal settings in exceptions or receipts.
             codes={'authenticated Home not verified','ambiguous signed-in profile','cannot read back an authenticated active profile',
@@ -192,25 +200,45 @@ class FamilyUI:
             detail=str(exc) if str(exc) in codes else type(exc).__name__
             raise ValueError('Stock UI did not verify '+phase+' ('+detail+')') from None
 
-    def prepare_lab(self,name,original):
-        if not name.startswith('Cleanyfin Lab ') or name in original.servers:raise ValueError('lab server name is not unique')
-        if self.focus_profile()!=(original.active,original.user):raise ValueError('active profile changed before lab setup')
-        self.servers_page();self.lab_name=name
+    def inventory(self):
+        # After the update never select a family server or profile to manufacture proof.
+        self.tv.adb('shell','am','force-stop',APP)
+        self.tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity',timeout=20)
+        end=time.monotonic()+30
+        while time.monotonic()<end:
+            page=labels(self.ui.tree())
+            if 'Select Server' in page:return self.server_entries()
+            if 'Select User' in page:self.servers_page();return self.server_entries()
+            if 'Home' in page:self.focus_profile();self.servers_page();return self.server_entries()
+            self.ui.key('DPAD_LEFT')  # focus only
+        raise ValueError('stock server inventory unavailable')
 
-    def restore(self,original):
+    def prepare_lab(self,name,original):
+        if not re.fullmatch('Cleanyfin Lab [a-f0-9]{10}',name) or name in original.servers:raise ValueError('lab server name is not unique')
+        if self.inventory()!=original.servers:raise ValueError('server list changed before lab setup')
+        self.lab_name=name
+
+    def restore(self,original,baseline,original_backend):
         try:
-            # Stop the lab PCM writer and restore its settings before returning to family
-            # media. No member's playback should be captured to the temporary WAV.
-            backend,options=self.read_settings()
-            self.tv.transport.bind_original_options(original)
-            if options!=original.options:
-                self.restart();self.ui.enter_advanced();self.ui.save_mpv(original.options)
-            if backend!=original.backend:
-                self.restart();self.ui.enter_advanced();self.ui.dpad(backend);self.ui.dpad(original.backend,cap=5)
-            self.focus_profile();self.servers_page();servers=self.server_entries()
+            if original_backend is not None:
+                server,user=self.focus_profile()
+                if server!=self.lab_name:raise ValueError('not in owned lab profile')
+                self.servers_page();self.select_known_profile(server,user)
+                try:
+                    if baseline is not None:
+                        backend,options=self.read_settings()
+                        if backend!='MPV':raise ValueError('lab options not accessible')
+                        if options!=baseline.options:
+                            self.restart();self.ui.enter_advanced();self.ui.save_mpv(baseline.options)
+                        if self.read_settings()!=('MPV',baseline.options):raise ValueError('changed player options not restored')
+                finally:
+                    backend=self.read_backend()
+                    if backend!=original_backend:self.change_backend(backend,original_backend)
+                    if self.read_backend()!=original_backend:raise ValueError('changed player backend not restored')
+                if baseline is not None:self.tv.family.receipt['labSettingsAfter']=baseline.proof(self.tv.family.salt)
+        finally:
+            servers=self.inventory()
             if set(servers)==set(original.servers)|{self.lab_name}:
-                for _ in range(12):self.ui.key('DPAD_LEFT')
                 self.server_entries(self.lab_name,delete=True);self.ui.wait_label('Select Server')
-            elif set(servers)!=set(original.servers):raise ValueError('unexpected family server list change')
-            self.select_known_profile(original.active,original.user)
-        except Exception:raise ValueError('could not restore and verify family UI; no clear or uninstall attempted') from None
+            if self.server_entries()!=original.servers:raise ValueError('unexpected server inventory after lab cleanup')
+            self.tv.family.receipt['labAbsentAfter']=True

@@ -23,10 +23,10 @@ public final class ProjectionRecorder extends Service {
         nm.createNotificationChannel(new NotificationChannel("control","Synthetic audio control",NotificationManager.IMPORTANCE_LOW));
         startForeground(1,new Notification.Builder(this,"control").setSmallIcon(android.R.drawable.ic_media_play)
             .setContentTitle("Recording synthetic Wholphin playback").build(),ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
-        new Thread(()->capture(i.getParcelableExtra("grant",Intent.class))).start();
+        new Thread(()->capture(i.getParcelableExtra("grant",Intent.class), i.getBooleanExtra("stereo", false))).start();
         return START_NOT_STICKY;
     }
-    private void capture(Intent grant) {
+    private void capture(Intent grant, boolean stereo) {
         MediaProjection projection=null; AudioRecord record=null; String result="failed";
         try {
             projection=getSystemService(MediaProjectionManager.class).getMediaProjection(Activity.RESULT_OK,grant);
@@ -38,7 +38,7 @@ public final class ProjectionRecorder extends Service {
             // source lanes by index, descending to the widest available before stereo.
             // A successful builder is not enough: start and read actual frames.
             StringBuilder attempts=new StringBuilder(); int channels=0,encoding=0;
-            for(int[] mode:new int[][]{{6,4},{5,4},{4,4},{3,4},{2,4},{2,2}}) {
+            for(int[] mode:stereo ? new int[][]{{2,2}} : new int[][]{{6,4},{5,4},{4,4},{3,4},{2,4},{2,2}}) {
                 try {
                     AudioFormat.Builder f=new AudioFormat.Builder().setSampleRate(48000).setEncoding(mode[1]);
                     if(mode[0]>2) f.setChannelIndexMask((1<<mode[0])-1); else f.setChannelMask(AudioFormat.CHANNEL_IN_STEREO);

@@ -48,11 +48,11 @@ class PlaybackScope(TestCase):
             self.assertEqual(getattr(ctx.exception,'playback_read',None),expected)
 
     def test_stock_ui_enters_only_lab_values_or_the_verified_original(self):
-        from tv_update import Visible
+        from tv_update import PlayerSettings
         for text in ('http://127.0.0.1:18096/labbase','ao=pcm','ao-pcm-file='+self.paths.wav):
             self.p.run('shell','input','text',text)
         with self.assertRaises(LabError):self.p.run('shell','input','text','speed=1')
-        self.p.bind_original_options(Visible(('one',),'one','user','MPV','speed=1'))
+        self.p.bind_original_options(PlayerSettings('MPV','speed=1'))
         self.p.run('shell','input','text','speed=1')
         with self.assertRaises(LabError):self.p.run('shell','input','text','http://127.0.0.1:18097/labbase')
 

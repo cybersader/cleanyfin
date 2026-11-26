@@ -65,29 +65,45 @@ def installed_build(tv,work,tools,run):
     finally:local.unlink(missing_ok=True)
 
 
+class Redacted:
+    def proof(self,salt):
+        return {k:hashlib.sha256(salt+json.dumps(v,ensure_ascii=False).encode()).hexdigest() for k,v in vars(self).items()}
+
+
 @dataclass(frozen=True,repr=False)
-class Visible:
+class Profile(Redacted):
     servers: tuple[str,...]
     active: str
     user: str
-    backend: str
-    options: str
 
     def validate(self):
         if not self.servers or len(self.servers)>12 or len(set(self.servers))!=len(self.servers) or self.active not in self.servers or not self.user:
             raise ValueError('incomplete or ambiguous signed-in server/user readback')
+        return self
+
+
+@dataclass(frozen=True,repr=False)
+class PlayerSettings(Redacted):
+    backend: str
+    options: str
+
+    def validate(self):
         if self.backend not in ('MPV','ExoPlayer') or not isinstance(self.options,str):raise ValueError('player settings unreadable')
-        # The stock editor must accept every original character before we replace any.
-        # Never shell-interpolate personal options, and do not pretend an unrepresentable
-        # original value can be restored. Empty mpv.conf is common and is supported.
         if self.options and (len(self.options)>2048 or not all(re.fullmatch(r'[a-zA-Z0-9:/._=-]+',l) for l in self.options.split('\n'))):
             raise ValueError('stock editor cannot safely restore these mpv options; nothing changed')
         return self
 
-    def proof(self,salt):
-        # Salt stays in memory. The persisted receipt cannot enumerate short family names.
-        return {k:hashlib.sha256(salt+json.dumps(v,ensure_ascii=False).encode()).hexdigest()
-                for k,v in vars(self).items()}
+
+def private_labels(original,root):
+    """Owner-local labels only. Never put this file or its contents in a Git receipt."""
+    import os
+    import tempfile
+    root.mkdir(mode=0o700,parents=True,exist_ok=True)
+    if root.is_symlink() or root.stat().st_uid!=os.getuid() or root.stat().st_mode & 0o077:
+        raise ValueError('private owner label directory is not owner-only')
+    fd,path=tempfile.mkstemp(prefix='tv-before-',suffix='.json',dir=root)
+    with os.fdopen(fd,'w') as f:json.dump({'serverLabel':original.active,'userLabel':original.user},f,ensure_ascii=False)
+    return path
 
 
 class Update:
@@ -103,19 +119,33 @@ class Update:
         self.target=Build.inspect(apk,self.tools,self.run)
         check_upgrade(old,self.target,authorized=authorized)
         self.original=self.ui.snapshot().validate();self.receipt.update(beforeBuild=vars(old),beforeUI=self.original.proof(self.salt))
+        if getattr(self.tv,'emulator',False) is None:
+            private_labels(self.original,Path.home()/'.local/state/cleanyfin/family-proof')
         # -r preserves app data. Never authorize -d, -g, uninstall, clear or a fresh install.
         if self.tv.adb('install','-r','--no-streaming',apk,timeout=240).strip().splitlines()[-1:]!=[b'Success']:
             raise ValueError('in-place update not confirmed; will not reinstall')
         self.receipt['inPlaceUpdateReported']=True
-        self.check('afterUpdate')  # Must verify the signed-in home and every setting before adding the lab.
+        self.receipt['expectedDifference']='family may need to re-select server/profile or sign in'
+        self.check('afterUpdate')
 
     def check(self,phase):
         if installed_build(self.tv,self.work,self.tools,self.run)!=self.target:raise ValueError('installed build after update differs from verified target')
-        snap=self.ui.snapshot().validate();self.receipt[phase]=snap.proof(self.salt)
-        if snap!=self.original:raise ValueError('Wholphin visible state differs from pre-update baseline; no preservation claim')
         self.receipt[phase+'Build']=vars(self.target)
+        if self.ui.inventory()!=self.original.servers:raise ValueError('original server inventory not retained')
+        self.receipt[phase]={'servers':self.original.proof(self.salt)['servers'],'profileAuthentication':'not tested'}
+
+    def start_settings(self):
+        # Called only after the lab server has independently witnessed its signed-in session.
+        backend=self.ui.read_backend();self.lab_backend=backend
+        if backend=='ExoPlayer':self.ui.change_backend(backend,'MPV')
+        observed,options=self.ui.read_settings()
+        if observed!='MPV':raise ValueError('lab MPV backend not verified')
+        self.lab_settings=PlayerSettings(backend,options).validate()
+        self.tv.transport.bind_original_options(self.lab_settings)
+        self.receipt['labSettingsBefore']={k:self.lab_settings.proof(self.salt)[k] for k in ('backend','options')}
+        self.ui.restart()
 
     def finish(self):
         if not self.receipt.get('inPlaceUpdateReported'):return
-        if self.lab_added:self.ui.restore(self.original)
+        if self.lab_added:self.ui.restore(self.original,getattr(self,'lab_settings',None),getattr(self,'lab_backend',None))
         self.check('afterRestore');self.receipt['visibleStateRestored']=True

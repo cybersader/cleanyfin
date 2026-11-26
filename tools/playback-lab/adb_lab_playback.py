@@ -105,9 +105,15 @@ class Playback:
         if not m or paths.wav not in {d+'/'+m[1]+'.wav' for d in PCM_DIRS}:refused()
         self.capture={paths.wav,paths.video}
 
+    def bind_video(self,path):
+        if not re.fullmatch(r'/data/local/tmp/cleanyfin-[a-f0-9]{24}\.mp4',path):refused()
+        self.capture={path}
+
     def capture_kind(self,path):
         # Metadata only. Do not list any other app storage, filenames or contents.
-        if not self.active or not self.capture or path not in self.capture.union(PCM_DIRS,{'/data/local/tmp'}):refused()
+        parents={'/data/local/tmp'}|{str(Path(p).parent) for p in self.capture}
+        if any(p.endswith('.wav') for p in self.capture):parents.update(PCM_DIRS)
+        if not self.active or not self.capture or path not in self.capture.union(parents):refused()
         try:return self._call(('shell','stat','-c','%F',path),timeout=5).decode().strip()
         except sp.CalledProcessError as exc:
             if getattr(exc,'exact_path_missing',False):return 'missing'
@@ -242,10 +248,28 @@ class Playback:
         if not safe:refused()
         return self._call(a,timeout=timeout)
 
+    def helper_absent(self):
+        rows=self._call(('shell','pm','list','packages')).splitlines()
+        if b'package:android' not in rows or not all(re.fullmatch(rb'package:[A-Za-z0-9_.]+',r) for r in rows):refused()
+        return b'package:org.cleanyfin.fixture' not in rows
+
+    def install_capture_helper(self,apk,sha):
+        if not (self.family and self.active and Path(apk)==self.work/'input/input.apk' and
+                not Path(apk).is_symlink() and self.helper_absent()):refused()
+        data=Path(apk).read_bytes()
+        if hashlib.sha256(data).hexdigest()!=sha:refused()
+        with tempfile.NamedTemporaryFile(dir=self.work,suffix='.apk') as f:
+            f.write(data);f.flush()
+            result=self._call(('install','--no-streaming','/payload.apk'),timeout=60,bind=Path(f.name))
+        if result.strip().splitlines()[-1:]!=[b'Success']:refused()
+        self.family_capture_helper=True;self.helper_installed=True;self.projection_helper=True
+
     def projection(self,op):
-        # No projection capability on a box, update rehearsal, or ordinary playback run.
-        if not (self.guest and not self.family and self.active and self.owned_install and
-                self.projection_helper and getattr(self,'helper_installed',False)):refused()
+        # Only an owned freshly installed helper. The family route never sets PROJECT_MEDIA via shell.
+        family_capture=self.family and getattr(self,'family_capture_helper',False)
+        if not (self.active and self.projection_helper and getattr(self,'helper_installed',False) and
+                (family_capture or (self.guest and not self.family and self.owned_install))):refused()
+        if family_capture and op in ('allow','default','policy'):refused()
         pkg='org.cleanyfin.fixture'; activity=pkg+'/.ProjectionConsent'; perm='android.permission.RECORD_AUDIO'
         ops={'grant-audio':('shell','pm','grant',pkg,perm),'revoke-audio':('shell','pm','revoke',pkg,perm),
              'allow':('shell','appops','set',pkg,'PROJECT_MEDIA','allow'),
@@ -256,6 +280,7 @@ class Playback:
              'pcm':('exec-out','run-as',pkg,'cat','files/control.pcm'),
              'status':('exec-out','run-as',pkg,'cat','files/status'),
              'remove':('uninstall',pkg),'present':('shell','pm','list','packages',pkg)}
+        if family_capture:ops['start']=('shell','am','start','-n',activity,'-a','stereo')
         if op not in ops:refused()
         return self._call(ops[op],timeout=20)
 

@@ -21,7 +21,7 @@ public final class ProjectionConsent extends Activity {
     @Override protected void onActivityResult(int request, int result, Intent grant) {
         super.onActivityResult(request, result, grant);
         if (request==1 && result==RESULT_OK && grant!=null) {
-            startForegroundService(new Intent(this, ProjectionRecorder.class).putExtra("grant",grant));
+            startForegroundService(new Intent(this, ProjectionRecorder.class).putExtra("grant",grant).putExtra("stereo", "stereo".equals(getIntent().getAction())));
         }
         finish();
     }

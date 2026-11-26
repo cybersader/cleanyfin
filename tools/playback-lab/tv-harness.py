@@ -384,25 +384,30 @@ def lossless_control(lab):
 APP='com.github.damontecres.wholphin'
 INPUT='org.cleanyfin.fixture'
 
-def install_input(tv):
-    if tv.no_test_packages:
+def install_input(tv,*,capture_only=False):
+    if tv.no_test_packages and not capture_only:
         raise RuntimeError('Wholphin did not expose Save for the verified mpv.conf text; device mode installs no helper package')
     root=tv.work/'input'; root.mkdir(exist_ok=True)
     apk=root/'input.apk'; android=tv.sdk/'platforms/android-36/android.jar'; tools=tv.sdk/'build-tools/36.0.0'
     if not apk.exists():
         manifest=root/'AndroidManifest.xml'
         sources=[HERE/'TvInput.java']
-        if getattr(tv,'projection_control',False):
+        if capture_only or getattr(tv,'projection_control',False):
             shutil.copyfile(HERE/'ProjectionManifest.xml',manifest)
+            if capture_only:
+                import xml.etree.ElementTree as ET
+                xml=ET.parse(manifest);xml.getroot().remove(xml.getroot().find('instrumentation'));xml.write(manifest);sources=[]
             sources.extend([HERE/'ProjectionConsent.java',HERE/'ProjectionRecorder.java'])
         else:
             manifest.write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.cleanyfin.fixture"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="Disposable TV fixture input"/><instrumentation android:name=".TvInput" android:targetPackage="org.cleanyfin.fixture"/></manifest>')
         run('java','-m','jdk.compiler/com.sun.tools.javac.Main','-source','11','-target','11','-classpath',android,'-d',root,*sources)
-        run(tools/'d8','--lib',android,'--min-api','34' if getattr(tv,'projection_control',False) else '26','--output',root,*sorted((root/'org/cleanyfin/fixture').glob('*.class')))
+        run(tools/'d8','--lib',android,'--min-api','34' if capture_only or getattr(tv,'projection_control',False) else '26','--output',root,*sorted((root/'org/cleanyfin/fixture').glob('*.class')))
         plain=root/'plain.apk'; run(tools/'aapt2','link','--manifest',manifest,'-I',android,'-o',plain)
         with zipfile.ZipFile(plain,'a') as z:z.write(root/'classes.dex','classes.dex')
         key=root/'test.jks'; run('keytool','-genkeypair','-keystore',key,'-alias','fixture','-keyalg','RSA','-keysize','2048','-validity','2','-storepass','disposable','-keypass','disposable','-dname','CN=Disposable Fixture')
         run(tools/'apksigner','sign','--ks',key,'--ks-pass','pass:disposable','--out',apk,plain)
+    if capture_only:
+        tv.transport.install_capture_helper(apk,hashlib.sha256(apk.read_bytes()).hexdigest());return
     if hasattr(tv,'transport') and tv.transport.guest:tv.transport.local_inputs.add(apk)
     tv.adb('install','-r','--no-streaming',apk,timeout=60)
 
@@ -497,7 +502,15 @@ class Screen:
         if not getattr(self.tv,'family',None):self.tv.adb('shell','am','start','-n',APP+'/.MainActivity')
         self.activate('Add Server');self.activate('Enter server address')
         eventually(lambda:self.get(edit=0) is not None,20,'Server URL field unavailable')
-        self.text(lab.public_origin);self.key('ENTER');self.activate('Add User')
+        self.text(lab.public_origin);self.key('ENTER')
+        if getattr(self.tv,'family',None):
+            from tv_family_ui import labels
+            expected=self.tv.family.ui.lab_name
+            def lab_user_picker():
+                words=labels(self.tree())
+                return words.count('Select User')==1 and words[words.index('Select User')+1:][:1]==[expected]
+            eventually(lab_user_picker,20,'new user picker is not the unique lab server')
+        self.activate('Add User')
         def code():
             return next((n.get('text') for n in self.tree() if n.get('package')==APP and re.fullmatch(r'\d{6}',n.get('text',''))),None)
         qc=eventually(code,30,'No Wholphin Quick Connect code')
@@ -513,6 +526,7 @@ class Screen:
                          'deviceIdSha256':hashlib.sha256(lab.tv_device.encode()).hexdigest(),
                          'exactDeviceEnrollment':(lab.data/'profiles'/lab.viewer/'device.txt').read_text()==lab.tv_device,
                          'labTuple':lab.stub_register()['rows'][0]['tuple']}
+        if getattr(self.tv,'family',None):self.tv.family.start_settings()
         self.enter_settings()
         if not hasattr(lab,'r24_layout'):
             try:self.seek_settings={'verifiedSkipForwardMs':self.skip_forward_five_seconds()}
@@ -522,7 +536,7 @@ class Screen:
             self.key('DPAD_CENTER');self.wait_label('Prefer MPV');self.dpad('MPV',cap=5)
         self.wait_label('Edit mpv.conf');self.key('BACK');self.dpad('Advanced Settings')
         options=MPV_OPTIONS + ("\nad-lavc-o=cons_noisegen=1" if hasattr(lab, "r24_layout") else "")
-        if getattr(self.tv,'internal',False):
+        if getattr(self.tv,'internal',False) and not getattr(self.tv,'combined',False):
             cap=self.tv.capture;cap.choose_pcm_directory(self.tv)
             for path in (cap.paths.wav,cap.paths.video):cap.verify_missing(self.tv,path)
             self.tv.internal_state['pathsVerifiedAbsentBeforeOptions']=True
@@ -735,7 +749,7 @@ def app_runtime(logs,info):
         driver,fmt=a[-1]
         info['observedAudioDriver']=driver
         expected=info.get('expectedAudioDriver','audiotrack')
-        if driver==expected and re.match(r'48000Hz stereo 2ch s16(?:le)?\b' if expected=='pcm' else r'\d+Hz stereo 2ch [\w-]+',fmt):
+        if driver==expected and re.match(r'48000Hz stereo 2ch s16(?:le)?\b' if expected=='pcm' else r'48000Hz 5\.1 6ch [\w-]+' if info.get('captureUid') else r'\d+Hz stereo 2ch [\w-]+',fmt):
             info['libmpvAO']=driver+' '+fmt.strip()
         else:info.pop('libmpvAO',None)
     if v:info['libmpvVO']=' '.join(v[-1])
@@ -814,7 +828,7 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
                         if pid.isdecimal():
                             logs=tv.adb('logcat','-d','--pid='+pid,'-v','tag',timeout=2).decode(errors='replace')
                             app_runtime(logs,info)
-                        if getattr(tv,'projection_control',False) and pid.isdecimal() and not info.get('activeTrack'):
+                        if (getattr(tv,'projection_control',False) or getattr(tv,'combined',False)) and pid.isdecimal() and not info.get('activeTrack'):
                             from tv_projection import active_track
                             info['activeTrack']=active_track(tv,info['captureUid'],int(pid))
                         if info.get('libmpvEof'):
@@ -1297,7 +1311,8 @@ class DeviceTV:
         self.work,self.sdk,self.stack,self.prefix,self.env,self.port=work,sdk,stack,list(prefix),env,port
         self.capture,self.emulator,self.serial,self.found=capture,emulator,None,{}
         from tv_internal import InternalCapture
-        self.internal=isinstance(capture,InternalCapture)
+        from tv_combined import CombinedCapture
+        self.internal=isinstance(capture,InternalCapture);self.combined=isinstance(capture,CombinedCapture)
         self.ui_scale=(1,1); self.misses=0
 
     def spawn(self,cmd,label):
@@ -1323,7 +1338,8 @@ class DeviceTV:
 
     def bind(self,transport):
         self.transport=transport
-        if self.internal:transport.bind_capture(self.capture.paths)
+        if self.combined:transport.bind_video(self.capture.paths.video)
+        elif self.internal:transport.bind_capture(self.capture.paths)
         size=re.findall(rb'(\d+)x(\d+)',self.initial_read('wm','size'))
         if size:
             w,h=map(int,size[-1]);self.ui_scale=(w/1280,h/720);self.found['uiSize']=f'{w}x{h}'
@@ -1355,10 +1371,12 @@ class DeviceTV:
         return [{'capture':self.capture.label}]
 
     def audio_route_ok(self,info):
+        if self.combined:return bool(info.get('arrivingAudio',{}).get('ok') and info.get('transferComplete') and (info.get('activeTrack') or {}).get('usage')=='USAGE_MEDIA' and info.get('observedAudioDriver')=='audiotrack')
         return bool(info.get('arrivingAudio',{}).get('ok') and (not self.internal or
                     (info.get('observedAudioDriver')=='pcm' and info.get('pcmRemoved') and info.get('videoRemoved'))))
 
     def configure_audio(self):
+        if self.combined:return {'level':'unchanged Android playback mix; not HDMI output gain'}
         if self.internal:return {'level':'mpv decoded PCM file; Android volume unchanged, not output gain'}
         from tv_device import parse_volume,MUSIC_STREAM
         cmd=['shell','cmd','media_session','volume','--stream',str(MUSIC_STREAM)]
@@ -1498,7 +1516,8 @@ def device_session(opts,work,sdk,stack,summary,history):
     import tv_device as dev
     if opts.no_capture:
         from tv_internal import InternalCapture,Paths
-        capture=InternalCapture(Paths(os.urandom(12).hex()))
+        from tv_combined import CombinedCapture
+        capture=(CombinedCapture if opts.existing_wholphin else InternalCapture)(Paths(os.urandom(12).hex()))
     elif opts.capture_file:capture=FileCapture(work,dev.capture_files(opts.capture_file))
     else:capture=adapter_capture(work,opts,summary)
     from adb_lab import AdbLab
@@ -1536,6 +1555,7 @@ def device_session(opts,work,sdk,stack,summary,history):
     if opts.existing_wholphin:
         from tv_update import check_update_target
         check_update_target(found,rehearsal=opts.dry_run_emulator)
+        if not tv.transport.helper_absent():raise ValueError('test capture package is already installed; refusing before update')
     if opts.dry_run_emulator and opts.existing_wholphin:
         receipt=summary['familyUpdate']={}
         seed_update_rehearsal(tv,work,stack,receipt);receipt['syntheticBaselineSeeded']=True
@@ -1555,7 +1575,7 @@ def device_session(opts,work,sdk,stack,summary,history):
             def closed():
                 from tv_internal import closed_endpoint
                 import select
-                print('Turn Wireless debugging OFF on the TV now, then press Enter (2 minute limit).',file=sys.stderr,flush=True)
+                print('Forget this PC under Paired devices (cleanyfin@lab), turn Wireless debugging OFF, then press Enter (2 minute limit).',file=sys.stderr,flush=True)
                 status='unverified'
                 if sys.stdin.isatty() and select.select([sys.stdin],[],[],120)[0] and sys.stdin.readline():status=closed_endpoint(address)
                 summary['debugEndpointAfterOff']=status
@@ -1637,8 +1657,9 @@ def finish_family(tv,before,state,summary,text):
         expected['wholphinVersion']=tx.target.version;expected['packages'][package]=str(tx.target.code)
     summary['unexpectedResidue']=diff(expected,after)
     summary['restored']=bool(tx.receipt.get('visibleStateRestored') and not summary['unexpectedResidue'] and
-                             tv.internal_state.get('pcmRemoved') and tv.internal_state.get('screenrecordRemoved'))
-    print('Family sign-in, server list, player settings and device restore verified:',summary['restored'],file=sys.stderr)
+                             (tv.internal_state.get('combinedCleanupVerified') if tv.combined else
+                              tv.internal_state.get('pcmRemoved') and tv.internal_state.get('screenrecordRemoved')))
+    print('Original server list, lab settings and device restore verified (authentication not tested):',summary['restored'],file=sys.stderr)
 
 
 def finish_device(tv,before,state,opts,summary,text):
@@ -1942,8 +1963,8 @@ def main():
         if not feed.is_dir():parser.error('R24 requires a pre-staged offline NuGet feed')
         os.environ['CLEANYFIN_NUGET_FEED']=str(feed.resolve())
     if opts.preflight:return preflight(opts)
-    if opts.device and not opts.dry_run_emulator:
-        parser.error('Physical playback remains closed pending verified emulator capture and update rehearsals; no device contacted')
+    if opts.device and not opts.dry_run_emulator and not (opts.no_capture and opts.existing_wholphin=='update'):
+        parser.error('Physical playback remains closed outside the exact rehearsed family-update path; no device contacted')
     if (opts.capture_file or opts.dry_run_emulator) and not opts.device:parser.error('--capture-file and --dry-run-emulator need --device')
     if opts.dry_run_emulator and not (opts.capture_file or opts.no_capture):parser.error('--dry-run-emulator has no HDMI adapter; give --capture-file')
     try:import numpy  # Fail before starting services if PCM analysis cannot run.
@@ -1956,8 +1977,7 @@ def main():
         digest=harness_digest(HERE)
         if not opts.dry_run_emulator:
             runs=HERE.parents[1]/'delivery/evidence/runs'
-            proof={'capture':prior_dry_run(runs,digest)}
-            if opts.existing_wholphin:proof['familyPreservation']=prior_dry_run(runs,digest,update=True)
+            proof={'signedUpdateAndCombinedCapture':prior_dry_run(runs,digest,update=True,layout=opts.layout)}
             if not all(proof.values()):parser.error('Required isolated emulator capture/preservation rehearsal missing for this harness; the physical box was not contacted')
     if opts.r24:
         from tv_device import ASSETS
@@ -1978,6 +1998,7 @@ def main():
                        recording=('Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness' if opts.no_capture else 'DRY RUN: recorded files through the device capture path' if opts.capture_file else
                                   'Synthetic fixture only; box HDMI output via USB capture adapter: UVC video stored 320x180 gray FFV1, UAC s16le stereo 48000 Hz'))
     if opts.no_capture:summary.update(captureHarnessSha256=digest,emulatorProof=proof)
+    if opts.existing_wholphin:summary.update(mode='device-combined',recording='Android screenrecord + Wholphin UID/USAGE_MEDIA playback mix; no shared clock or HDMI')
     from collections import deque
     raw=summary['observations']={};row=None;error=None;peak=0;over=threading.Event();done=threading.Event()
     history=deque(maxlen=5);worst_io=host_health()
@@ -2063,6 +2084,7 @@ def main():
             if not opts.device:
                 raw['milestone']='separate stock transport test input install'
                 install_input(tv)
+            if getattr(tv,'combined',False):tv.capture.prepare(sys.modules[__name__],tv,stack)
             summary['splitCapture']=opts.split_capture
             if opts.projection_control:
                 import tv_projection
@@ -2098,6 +2120,7 @@ def main():
         if opts.keep:summary['privateScratch']=str(work)
         else:shutil.rmtree(work)
         summary['scratchRemoved']=not work.exists()
+    if opts.no_capture and harness_digest(HERE)!=digest:error=error or 'harness changed during rehearsal; cannot arm a physical run'
     summary.update(elapsedSeconds=round(time.monotonic()-start,1),blocker=error)
     if opts.projection_control:
         row=None

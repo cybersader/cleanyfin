@@ -122,7 +122,7 @@ class InternalCapture:
 
 def harness_digest(here):
     h=hashlib.sha256()
-    for name in ('tv-harness.py','tv_internal.py','tv_r24.py','tv_device.py','tv_score.py','tv_pcm.py','tv_family_ui.py','tv_update.py','adb_lab.py','adb_lab_playback.py','tv-wire.py'):
+    for name in ('tv-harness.py','tv_internal.py','tv_r24.py','tv_device.py','tv_score.py','tv_pcm.py','tv_family_ui.py','tv_update.py','adb_lab.py','adb_lab_playback.py','tv-wire.py','tv_combined.py','tv_marked.py','r24_detector.py','marked_oracle.py','format_fixtures.py','format_measure.py','format-matrix.py','tv_dolby_control.py','ProjectionConsent.java','ProjectionRecorder.java','ProjectionManifest.xml'):
         h.update((here/name).read_bytes());h.update(b'\0')
     return h.hexdigest()
 
@@ -132,20 +132,30 @@ def emulator_proof(row,digest,*,update=False):
     obs=row.get('observations',{});controls=obs.get('controls',{});restore=row.get('internalRestore',{})
     family=row.get('familyUpdate',{})
     if update:
+        from tv_update import TARGET,OFFICIAL_CERT
+        key=family.get('beforeUI',{}).get('servers');settings=family.get('labSettingsBefore');after=family.get('afterUpdateBuild',{});before=family.get('beforeBuild',{})
         if not (family.get('visibleStateRestored') is True and family.get('inPlaceUpdateReported') is True and
-                family.get('beforeUI') and family['beforeUI']==family.get('afterUpdate')==family.get('afterRestore') and
-                family.get('syntheticBaselineSeeded') is True and restore.get('wholphinAbsentBefore') is False):return False
-    elif not (restore.get('wholphinAbsentBefore') is True and restore.get('labAppAndMpvOptionsRemoved') is True):return False
-    return (row.get('mode')=='device-internal' and row.get('dryRun') is True and row.get('device',{}).get('emulator') is True
+                family.get('labAbsentAfter') is True and {'servers','active','user'}==set(family.get('beforeUI',{})) and key and key==family.get('afterUpdate',{}).get('servers')==family.get('afterRestore',{}).get('servers') and
+                before.get('code')==60 and before.get('certificate')==OFFICIAL_CERT and after.get('code')==63 and after.get('version')==TARGET and after.get('certificate')==OFFICIAL_CERT and after==family.get('afterRestoreBuild') and
+                settings and set(settings)=={'backend','options'} and settings==family.get('labSettingsAfter') and restore.get('combinedCleanupVerified') is True and
+                family.get('syntheticBaselineSeeded') is True and restore.get('wholphinAbsentBefore') is False and
+                obs.get('procedureCompleted') is True and obs.get('audioSignature')=='timecode' and row.get('unexpectedResidue')==[] and not row.get('blocker')):return False
+        mode='device-combined';keys=('screenrecordAbsentBefore','helperAbsentBefore','helperAbsentAfter','screenrecordRemoved')
+    else:
+        if not (restore.get('wholphinAbsentBefore') is True and restore.get('labAppAndMpvOptionsRemoved') is True):return False
+        mode='device-internal';keys=('pathsVerifiedAbsentBeforeOptions','pcmRemoved','screenrecordRemoved')
+    return (row.get('mode')==mode and row.get('dryRun') is True and row.get('device',{}).get('emulator') is True
             and row.get('captureHarnessSha256')==digest and row.get('restored') is True and row.get('scratchRemoved') is True
             and row.get('privateAdbExited') is True and row.get('privateNamespaceExited') is True and row.get('emulatorExited') is True and row.get('ownedContainersRemaining')==0
-            and all(restore.get(k) is True for k in ('pathsVerifiedAbsentBeforeOptions','pcmRemoved','screenrecordRemoved'))
+            and all(restore.get(k) is True for k in keys)
             and all(controls.get(k,{}).get('tapVerified') is True for k in ('positive','held-out')))
 
 
-def prior_dry_run(runs,digest,*,update=False):
+def prior_dry_run(runs,digest,*,update=False,layout=None):
     for path in sorted(runs.glob('tv-*/summary.json'),reverse=True):
         try:
-            if emulator_proof(json.loads(path.read_bytes()),digest,update=update):return path.parent.name
+            row=json.loads(path.read_bytes())
+            if layout and row.get('observations',{}).get('layout')!=layout:continue
+            if emulator_proof(row,digest,update=update):return path.parent.name
         except (ValueError,OSError,AttributeError):continue
     return None

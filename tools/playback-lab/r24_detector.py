@@ -87,12 +87,16 @@ def align_start(y, code, near=None):
     return lo + int(np.argmax(total)) - skip
 
 
-def score(take, ref, code, mark, lo, hi, tau, first, seed):
-    seq, pcm, (packets, _), retries = take
+def require_audio_trace(pcm, packets):
     if not pcm:
         raise fm.Unmeasured('empty audio')
     if not packets:
         raise fm.Unmeasured('no AO packet trace')
+
+
+def score(take, ref, code, mark, lo, hi, tau, first, seed):
+    seq, pcm, (packets, _), retries = take
+    require_audio_trace(pcm, packets)
     y = r22.pcm_array(pcm, ref['channels'])
     marked_frames = sum(f in mark.marked_frames for f in seq if f is not None)
     unreadable = sum(f is None for f in seq)

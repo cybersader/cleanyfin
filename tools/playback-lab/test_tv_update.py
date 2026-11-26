@@ -5,11 +5,11 @@ import tempfile
 import unittest
 from unittest.mock import Mock,patch
 
-from tv_update import APP,Build,Update,Visible,OFFICIAL_CERT,TARGET,check_upgrade,installed_build
+from tv_update import APP,Build,Update,Profile,PlayerSettings,OFFICIAL_CERT,TARGET,check_upgrade,installed_build
 
 OLD=Build(APP,'1.0.9-0-g2d87d526',60,OFFICIAL_CERT)
 NEW=Build(APP,TARGET,63,OFFICIAL_CERT)
-BASE=Visible(('A','B'),'B','synthetic','MPV','hwdec=no')
+BASE=Profile(('A','B'),'B','synthetic')
 
 
 class FamilyProtection(unittest.TestCase):
@@ -29,7 +29,7 @@ class FamilyProtection(unittest.TestCase):
 
     def test_incomplete_or_unrestorable_state_cannot_arm_update(self):
         for bad in (replace(BASE,servers=('A','A')),replace(BASE,active='missing'),replace(BASE,user=''),
-                    replace(BASE,backend='unknown'),replace(BASE,options='unknown option with spaces')):
+                    PlayerSettings('unknown',''),PlayerSettings('MPV','unknown option with spaces')):
             with self.assertRaises(ValueError):bad.validate()
         self.assertNotEqual(BASE.proof(b'a'),BASE.proof(b'b'));self.assertNotIn('synthetic',str(BASE.proof(b'a')))
 
@@ -39,17 +39,18 @@ class FamilyProtection(unittest.TestCase):
         self.assertEqual(tv.adb.call_count,1)
 
     def test_only_in_place_install_then_prove_state_before_lab_and_after_restore(self):
-        tv=Mock();tv.adb.return_value=b'Performing Streamed Install\nSuccess\n';ui=Mock();ui.snapshot.return_value=BASE
+        tv=Mock();tv.adb.return_value=b'Performing Streamed Install\nSuccess\n';ui=Mock();ui.snapshot.return_value=BASE;ui.inventory.return_value=BASE.servers
         receipt={};tx=Update(tv,ui,None,None,None,receipt)
         manifest={'wholphinVersion':OLD.version,'packages':{APP:'60'}}
         with patch('tv_update.installed_build',side_effect=[OLD,NEW,NEW]),patch.object(Build,'inspect',return_value=NEW):
             tx.begin('test.apk',manifest,authorized=True);tx.lab_added=True;tx.finish()
         tv.adb.assert_called_once_with('install','-r','--no-streaming','test.apk',timeout=240)
-        ui.restore.assert_called_once_with(BASE);self.assertTrue(receipt['visibleStateRestored'])
-        self.assertEqual(receipt['beforeUI'],receipt['afterUpdate']);self.assertEqual(receipt['beforeUI'],receipt['afterRestore'])
+        ui.restore.assert_called_once_with(BASE,None,None);self.assertTrue(receipt['visibleStateRestored'])
+        self.assertEqual(receipt['beforeUI']['servers'],receipt['afterUpdate']['servers']);self.assertEqual(receipt['afterUpdate'],receipt['afterRestore'])
+        ui.snapshot.assert_called_once();self.assertEqual(ui.inventory.call_count,2);self.assertIn('re-select',receipt['expectedDifference'])
 
-    def test_signin_changed_after_upgrade_refuses_testing_without_wipe_fallback(self):
-        tv=Mock();tv.adb.return_value=b'Success\n';ui=Mock();ui.snapshot.side_effect=[BASE,replace(BASE,user='changed')]
+    def test_missing_server_refuses_testing_without_wipe_fallback(self):
+        tv=Mock();tv.adb.return_value=b'Success\n';ui=Mock();ui.snapshot.return_value=BASE;ui.inventory.return_value=('A',)
         receipt={};tx=Update(tv,ui,None,None,None,receipt)
         with patch('tv_update.installed_build',side_effect=[OLD,NEW]),patch.object(Build,'inspect',return_value=NEW),self.assertRaises(ValueError):
             tx.begin('test.apk',{'wholphinVersion':OLD.version,'packages':{APP:'60'}},authorized=True)
@@ -105,3 +106,18 @@ class FamilyProtection(unittest.TestCase):
         self.assertEqual(picker_cards([title,add,card,caption]),{'Server One':card})
         for more in ([],[caption,caption],[node(text='Server One',bounds='[300,257][420,276]')]):
             with self.assertRaises(ValueError):picker_cards([title,add,card,*more])
+
+    def test_private_label_record_contains_no_settings_or_credentials(self):
+        import json,stat
+        from tv_update import private_labels
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)/'records';path=Path(private_labels(BASE,root))
+            self.assertEqual(json.loads(path.read_bytes()),{'serverLabel':'B','userLabel':'synthetic'})
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode),0o600);root.chmod(0o755)
+            with self.assertRaises(ValueError):private_labels(BASE,root)
+
+    def test_lab_baseline_from_active_test_profile_not_preupgrade_family_options(self):
+        tx=Update(Mock(),Mock(),None,None,None,{});tx.original=BASE;tx.ui.read_backend.return_value='MPV';tx.ui.read_settings.return_value=('MPV','speed=1')
+        tx.start_settings();self.assertEqual(tx.lab_settings.options,'speed=1');self.assertFalse(hasattr(tx.original,'options'))
+        tx.tv.transport.bind_original_options.assert_called_once_with(tx.lab_settings)
+        self.assertEqual(set(tx.receipt['labSettingsBefore']),{'options','backend'});self.assertNotIn('speed=1',str(tx.receipt))
