@@ -5,16 +5,13 @@ For each Jellyfin line, one disposable loopback server with this plugin build an
 layout copies of the hard fixture (format_fixtures.py). Each layout in turn: the household verifier hashes and
 probes the file, a single reviewed mark removes exactly source frames [137, 263) on that file's own clock, the
 plugin's real PlaybackInfo answers a desktop-mpv profile with a ticketed cut list, and mpv in the server's private
-loopback namespace plays it. Measured per layout, with picture and sound from the same playback: the straight cut
-(every kept frame once and in order, no marked frame, every kept sample of every channel equal to mpv's uninterrupted
-decode on the true source clock minus exactly the marked samples), fresh starts before, at and after the join, and
-paused exact seeks across and onto the join; subtitle layouts also every offered track. Then the admission sweep:
-the same mark is republished at each of POSITIONS (on and off frame and audio-packet edges, one-frame and
-one-millisecond marks, marks at the very start and end) and each is played straight, started fresh around the join,
-seeked around it and resumed. Every position must satisfy R21; only one extra kept sample before a fresh start or
-resume near a join is allowed. Timeouts and incomplete captures are unmeasured, never passes.
+loopback namespace plays it. Picture and sound are captured from the same playback on straight cuts, fresh starts,
+and paused seeks; subtitle layouts also exercise every offered track. The mark is then republished at each sweep
+position (on and off frame and packet edges, one-frame and one-millisecond marks, and marks at either endpoint).
+R22, amended by R23, judges every straight, fresh-start and seek-and-resume take against the same-layout uncut control and the ideal
+hard cut. Timeouts and incomplete captures are unmeasured, never passes. The host oracle needs NumPy and SciPy.
 
-    python3 tools/playback-lab/format-matrix.py --hard-aac          # both lines, plus the original AAC fixture
+    python3 tools/playback-lab/format-matrix.py                    # both lines, 14 named R22 fixtures
     python3 tools/playback-lab/format-matrix.py --jellyfin 12.4 --layout mkv-h264-eac351
     python3 tools/playback-lab/format-matrix.py --local              # plain files, no Jellyfin (diagnosis)
 
@@ -43,7 +40,8 @@ sys.path.insert(0, str(LAB))
 import format_fixtures as ff  # noqa: E402
 import format_measure as fm  # noqa: E402
 import aac_noise  # noqa: E402
-from r21_oracle import R21, deviation  # noqa: E402
+from r21_oracle import deviation  # noqa: E402
+from r22_oracle import R23, THRESHOLDS  # noqa: E402
 from evidence_label import describe as describe_source  # noqa: E402
 from hard_fixture_lab import DEFAULT_JELLYFIN, JELLYFIN, media  # noqa: E402
 
@@ -56,13 +54,16 @@ _spec.loader.exec_module(cp)
 PLAYER_OPTIONS = ['--ad-lavc-o=cons_noisegen=1']
 DEVICE_MODE = 'Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1'
 DIAGNOSTIC = {'mp4-h264-aacnopns', 'mkv-h264-aacnopns', ff.HARD_AAC}  # measured to explain a result; never a register row
+DOLBY_LAYOUTS = ('mkv-h264-ac351', 'mkv-h264-eac351', 'mkv-hevc10-eac351', 'mkv-hevc10-hdr10-eac351',
+                 'mp4-h264-eac351', 'mkv-h264-eac351+aac-srt', 'mkv-h264-eac351-ass+srt', 'mp4-h264-eac351-mov_text')
+R22_LAYOUTS = (*DOLBY_LAYOUTS, 'mkv-h264-flac', 'mp4-h264-aac', 'mkv-h264-aac', 'mkv-hevc10-aac', 'mp4-hevc10-aac', ff.HARD_AAC)
 # Owner decision R20: real AAC encoder profiles. Not in the default run (--aac or --layout picks them).
 AAC_PROFILES = ['mp4-h264-aacnopns', 'mp4-h264-aac51', 'mp4-h264-fdkaac', 'mp4-h264-fdkaaclow', 'mp4-h264-fdkaac51',
                 'mkv-h264-aacnopns', 'mkv-h264-fdkaac']
 CONTROLS = ['straight-play', 'seek-forward', 'seek-back']
 # The admission sweep: marks [start, end) in ms after the first picture (frames every 40 ms; AC-3/E-AC-3 packets every
 # 32 ms, at 32k ms in MP4 and 32k - 5.333 ms in Matroska, where the encoder priming is stored). A layout is admitted only
-# if every one is exact on that server line: straight cut, fresh starts around the join, paused exact seeks around it.
+# if every one passes R23 on that server line: straight cut, fresh starts, and paused exact seeks with resume.
 POSITIONS = [
     (5480, 10520),   # the hard fixture's own mark: on frames, inside a GOP and an audio packet
     (1000, 1960),    # on frames, short
@@ -119,18 +120,28 @@ def summarize(name, result):
     if 'unmeasured' in result:
         return dict(layout=name, result='unmeasured', why=result['unmeasured'], positions=counts,
                     deviationTypes=['unmeasured'])
-    v = fm.verdict(result)
     subtitle_checks = result.get('subtitleChecks', ['no filtered sidecars measured'] if ff.LAYOUTS[name]['subtitles'] else [])
-    swept = passed == len(POSITIONS)
-    v = dict(v, sweep=swept, subtitles=not subtitle_checks, exact=v['exact'] and swept and not subtitle_checks)
+    original_takes = [t['r22'] for t in [result.get('straight', {}), *result.get('starts', [])] if 'r22' in t]
+    original_unmeasured = (bool(result.get('originalUnmeasured')) or not original_takes or
+                           any(t['unmeasured'] for t in original_takes))
+    original_ok = (not original_unmeasured and all(t['passed'] for t in original_takes)
+                   and result.get('seek', {}).get('ok', False))
+    v = dict(sweep=passed == len(POSITIONS), subtitles=not subtitle_checks, originalMark=original_ok)
     kinds = {d['kind'] for p in positions for d in p['deviations']}
-    kinds.update(d['kind'] for t in [result['straight'], *result['starts']] for d in t['deviations'])
+    kinds.update(k for t in original_takes for k, ok in t['criteria'].items() if not ok)
     if subtitle_checks:
         kinds.add('subtitle-deviation')
-    if measured < len(POSITIONS):
+    if measured < len(POSITIONS) or original_unmeasured:
         kinds.add('unmeasured')
-    return dict(layout=name, result='r21-pass' if v['exact'] else 'unmeasured' if measured < len(POSITIONS) else 'inexact',
-                verdict=v, deviationTypes=sorted(kinds), positions=counts)
+    metrics = [t['metrics'] for p in positions for t in p.get('r22Takes', {}).values()]
+    keys = ('keptSoundLossMs', 'worstAvOffsetMs', 'transientExcessRms')
+    worst = {k: max((m[k] for m in metrics if k in m), default=None) for k in keys}
+    worst['transientMarginRms'] = min((m['transientMarginRms'] for m in metrics if 'transientMarginRms' in m),
+                                      default=None)
+    return dict(layout=name, result='r23-pass' if all(v.values()) else 'unmeasured' if 'unmeasured' in kinds else 'r23-fail',
+                verdict=v, deviationTypes=sorted(kinds), positions=counts, worst=worst,
+                worstMeasuredTakes={k: sum(k in m for m in metrics) for k in keys},
+                originalUnmeasured=result.get('originalUnmeasured'))
 
 
 def check_subtitles(spec, result):
@@ -168,33 +179,57 @@ def check_subtitles(spec, result):
             traces.append(l['subtitle'] or '')
         if not take['subtitleSeek']['ok']:
             problems.append(f'track {sid}: wrong seek picture')
-        if 'jointVerdict' in take and not take['jointVerdict']['exact']:
-            problems.append(f'track {sid}: selected-track picture/sound was not exact')
+        if not take['jointPassed']:
+            problems.append(f'track {sid}: selected-track picture/sound did not pass R22')
         leaks = [text for text in forbidden if any(text in line for line in traces)]
         if leaks:
             problems.append(f'track {sid}: forbidden subtitle text shown: {", ".join(leaks)}')
     return problems
 
 
-def register_row(name, summary, result, tuple_, evidence_ref, today):
-    """A candidate row for the reviewed register: experimental if every claim measured exact, refused otherwise."""
-    admitted = summary['result'] == 'r21-pass'
+def register_row(name, summary, tuple_, evidence_ref, today, complete_line):
+    """Only Dolby tuples passing all six criteria may become an experimental candidate."""
+    dolby = name in DOLBY_LAYOUTS
+    admitted = complete_line and dolby and summary['result'] == 'r23-pass'
     n = summary['positions']
     swept = f"{n['passed']}/{n['total']} positions passed"
     kinds = ', '.join(summary['deviationTypes']) or 'none'
-    failure = f'{swept}; observed deviation types: {kinds}.'
+    failure = f'R23: {swept}; deviations: {kinds}.'
+    if not dolby:
+        failure += ' Not authorized for admission (FLAC waits for owner; AAC stays off).'
     outcome = 'pass' if admitted else ('not-measured' if summary['result'] == 'unmeasured' else 'fail')
-    limits = dict(markedPicture='No marked pictures at any straight cut, fresh start or paused seek landing.',
-                  markedSound='Zero marked samples in the straight and fresh-start/resume PCM captures.',
-                  keptPictureAtJoin='Exact kept-frame sequence at all cuts and starts, exact paused seek landings.',
-                  keptSoundAtJoin='Exact kept samples on the source clock at straight cuts. ' + R21)
-    results = {key: dict(outcome=outcome, limit=(f'{swept}. {text}' if admitted else failure)[:512])
+    limits = dict(markedPicture='Zero marked frames, including paused seek landings.',
+                  markedSound='Zero marked samples proven by an exact all-channel source match; unresolved residuals never pass.',
+                  keptPictureAtJoin='Zero extra missing, repeated or frozen kept frames; <=1 ms timestamp resolution beyond uncut control.',
+                  keptSoundAtJoin='No longer zero or -60 dBFS silence; 2 kHz/5 ms RMS no higher than ideal splice or same-picture uncut onset, within repeat-control noise; exempt only the first onset sample at the join and only with a proven kept prefix of at most one extra sample; A/V within calibrated jitter in 100 ms and stays; <=40 ms kept loss.')
+    results = {key: dict(outcome=outcome, limit=(f'R23: {swept}. {text}' if admitted else failure))
                for key, text in limits.items()}
     return dict(tuple=tuple_, actions=['cut'], controls=CONTROLS, results=results, evidenceRef=evidence_ref, date=today,
                 status='experimental' if admitted else 'refused',
-                observation=f'Desktop mpv lab decoded PCM only, {name}: {swept}. {R21} '
+                observation=f'Desktop mpv lab decoded PCM only, {name}: {swept}. {R23} '
                             'No TV, HDMI, passthrough or persisted-resume claim.' +
                             (' R19: offered subtitle tracks tested.' if ff.LAYOUTS[name]['subtitles'] else ''))
+
+
+def candidate_rows(run, evidence_ref, today, finished):
+    # Several named fixtures can resolve to the same observed tuple (e.g. HDR and SDR on 12.4).
+    # A partial line or an unbound fixture cannot establish which named tests cover that tuple.
+    complete_line = finished and all('tuple' in run.get(name, {}).get('result', {}) for name in DOLBY_LAYOUTS)
+    by_tuple = {}
+    for name, entry in run.items():
+        if name in DIAGNOSTIC or 'tuple' not in entry['result']:
+            continue
+        tuple_ = entry['result']['tuple']
+        row = register_row(name, entry['summary'], tuple_, evidence_ref, today, complete_line)
+        by_tuple.setdefault(json.dumps(tuple_, sort_keys=True), []).append((name, row))
+    rows = []
+    for group in by_tuple.values():
+        # A refusal on a shared tuple wins over a pass; do not emit duplicate tuples.
+        row = min((r for _, r in group), key=lambda r: r['status'] != 'refused')
+        if len(group) > 1:
+            row['observation'] += ' Shared tuple fixtures: ' + ', '.join(name for name, _ in group) + '.'
+        rows.append(row)
+    return rows
 
 
 
@@ -376,6 +411,8 @@ class FormatLab(cp.PointerLab):
         (work/'plan.json').write_text(json.dumps(ff.plan({'sha256': binding['sha256']})))
         runner = fm.Runner(work, network='container:'+self.cid, timeout=self.case_timeout, mounts=['-v', f'{self.fixtures}:/media:ro,z'])
         channels = spec['audio'][0][1]
+        ref = None
+        measured = {}
         try:
             # Each take re-asks PlaybackInfo, so a slow host cannot outlive a ticket.
             fresh = lambda: self.offer(name, item)[0]  # noqa: E731
@@ -404,19 +441,22 @@ class FormatLab(cp.PointerLab):
                     seek = fm.seeks(runner, fresh(), PLAYER_OPTIONS, points, switch_sid=sid if sid > 1 else None)
                     takes.append(dict(control=only_subs(run['control']), straight=only_subs(run['straight']),
                                       starts=[only_subs(s) for s in run['starts']], subtitleSeek=seek,
-                                      jointVerdict=fm.verdict(run | {'seek': seek}),
+                                      jointPassed=all(t['r22']['passed'] for t in [run['straight'], *run['starts']]),
+                                      jointR22=[t['r22'] for t in [run['straight'], *run['starts']]],
                                       straightPicture=run['straight']['picture'], straightSound=run['straight']['sound']))
                 measured['subtitleTakes'] = takes
                 measured['subtitleChecks'] = check_subtitles(spec, measured)
-            measured['sweep'] = sweep(runner, fresh, ref, spec, positions, stop_on_fail,
-                                      arm=lambda s, e, to_end: self.arm(item, binding, av + s,
-                                                                        binding['durationMs'] if to_end else av + e))
-        except fm.Unmeasured as e:
-            return result | dict(unmeasured=str(e))
+        except (fm.Unmeasured, subprocess.TimeoutExpired) as e:
+            measured['originalUnmeasured'] = redact(str(e))
+        try:
+            if ref is not None:
+                measured['sweep'] = sweep(runner, fresh, ref, spec, positions, stop_on_fail,
+                                          arm=lambda s, e, to_end: self.arm(item, binding, av + s,
+                                                                            binding['durationMs'] if to_end else av + e))
         finally:
             shutil.rmtree(work, ignore_errors=True)
         measured.pop('control', None)
-        return result | measured | dict(control=ref['control'])
+        return result | measured | (dict(control=ref['control']) if ref is not None else {})
 
 
 def form(spec):
@@ -432,7 +472,9 @@ def subtitle_leaks(spec, mark, zero_ms, position):
     cues = spec['subtitles'][0][2]
     forbidden = [t for start, end, t in cues if start <= b and end >= a]
     kept = [t for start, end, t in cues if not (start <= b and end >= a)]
-    traces = position['straight'].get('subtitles', []) + [x for s in position['starts'] for x in s.get('subtitles', [])]
+    traces = (position['straight'].get('subtitles', []) +
+              [x for s in position['starts'] for x in s.get('subtitles', [])] +
+              [l['subtitle'] or '' for l in position.get('seek', {}).get('landings', [])])
     shown = [line.rsplit(' @', 1)[0] for line in position['straight'].get('subtitles', [])]
     problems = [f'forbidden subtitle text shown: {t}' for t in forbidden if any(t in line for line in traces)]
     problems += [f'kept subtitle not shown: {t}' for t in kept if t not in shown]
@@ -458,9 +500,9 @@ def sweep(runner, source, ref, spec, positions, stop_on_fail, arm=None, seek=Tru
             position = fm.sweep_position(runner, source, ref, mark, mpv_options=PLAYER_OPTIONS, seek=seeker)
             leaks = subtitle_leaks(spec, mark, cut['zeroMs'], position)
             issues = position['deviations'] + [deviation('subtitle-deviation', detail=text) for text in leaks]
-            compact = dict(mark=position['mark'], result='pass' if position['passed'] and not leaks else 'fail',
-                           deviations=issues, takes=1 + len(position['starts']) + int('resume' in position),
-                           seeks=len(position.get('seek', {}).get('landings', [])))
+            outcome = 'unmeasured' if position['unmeasured'] else 'pass' if position['passed'] and not leaks else 'fail'
+            compact = dict(mark=position['mark'], result=outcome, deviations=issues, r22Takes=position['r22Takes'],
+                           takes=len(position['r22Takes']), seekLandings=position.get('seek', {}).get('landings', []))
         except (fm.Unmeasured, subprocess.TimeoutExpired) as exc:
             compact = dict(mark=mark.label(), result='unmeasured', deviations=[deviation('unmeasured', detail=redact(str(exc)))])
         out.append(compact)
@@ -508,8 +550,8 @@ def main():
         raise SystemExit('Run without Python optimization: fixture assertions are required.')
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--jellyfin', choices=[*sorted(JELLYFIN), 'both'], default='both')
-    p.add_argument('--layout', action='append', choices=sorted(ff.LAYOUTS), help='repeat to pick layouts (default: all)')
-    p.add_argument('--hard-aac', action='store_true', help='also sweep the original stereo AAC hard fixture')
+    p.add_argument('--layout', action='append', choices=sorted(ff.LAYOUTS), help='repeat to pick layouts (default: R22 cohort)')
+    p.add_argument('--hard-aac', action='store_true', help='include the original AAC hard fixture in a custom selection')
     p.add_argument('--aac', action='store_true', help='measure the R20 AAC encoder profiles (with the AAC-LC baseline)')
     p.add_argument('--local', action='store_true', help='plain files through mpv only; no Jellyfin, no plugin')
     p.add_argument('--case-timeout', type=int, default=600, help='seconds per mpv take; a timeout is "unmeasured"')
@@ -520,8 +562,7 @@ def main():
     p.add_argument('--keep-going', action='store_false', dest='stop_on_fail', help=argparse.SUPPRESS)
     p.set_defaults(stop_on_fail=False)
     args = p.parse_args()
-    layouts = args.layout or (['mp4-h264-aac', *AAC_PROFILES] if args.aac else
-                              [n for n in ff.LAYOUTS if n not in DIAGNOSTIC and n not in AAC_PROFILES])
+    layouts = args.layout or (['mp4-h264-aac', *AAC_PROFILES] if args.aac else list(R22_LAYOUTS))
     if args.hard_aac and ff.HARD_AAC not in layouts:
         layouts.append(ff.HARD_AAC)
     scratch = ROOT/'plugin/obj'
@@ -537,18 +578,30 @@ def main():
             # Does the default AAC track make the decoder draw random noise (PNS)? See aac_noise.py.
             facts[name]['decoderNoise'] = aac_noise.scan(fixtures, facts[name]['file'])
         print(f"  {name}: {facts[name]['sha256'][:16]}... {facts[name]['size']} bytes", flush=True)
-    receipt = dict(admissionStandard=R21, method=fm.__doc__.strip().splitlines()[0], playerOptions=PLAYER_OPTIONS, deviceMode=DEVICE_MODE,
+    measurement_source = ('format-matrix.py', 'format_measure.py', 'format_fixtures.py',
+                          'r22_oracle.py', 'r21_oracle.py', 'exact_audio.py')
+    receipt = dict(admissionStandard=R23, thresholds=THRESHOLDS, method=fm.__doc__.strip().splitlines()[0],
+                   harnessSha256={f: hashlib.sha256((LAB/f).read_bytes()).hexdigest() for f in measurement_source},
+                   playerOptions=PLAYER_OPTIONS, deviceMode=DEVICE_MODE, plannedLayouts=layouts,
+                   plannedPositions=POSITIONS, requestedPositionCount=min(args.positions, len(POSITIONS)),
                    fixtures={n: {k: f[k] for k in ('sha256', 'size', 'video', 'audio', 'subtitles', 'decoderNoise') if k in f}
                              for n, f in facts.items()}, runs={})
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    rows, ok = [], True
+    ok = True
+    finished = set()
+    evidence_ref = 'tools/playback-lab/format-matrix.py'
+    if args.receipt and args.receipt.resolve().is_relative_to(ROOT):
+        evidence_ref = args.receipt.resolve().relative_to(ROOT).as_posix()
 
     def persist():
+        rows = [row for line, run in receipt['runs'].items() if line != 'local'
+                for row in candidate_rows(run, evidence_ref, today, line in finished)] if args.rows else []
         for path, doc, indent in ((args.receipt, receipt, 1), (args.rows, rows, 2)):
             if path:
                 pending = path.with_name(path.name + '.pending')
                 pending.write_text(json.dumps(doc, indent=indent) + '\n')
                 pending.replace(path)
+    persist()
     try:
         if args.local:
             receipt['runs']['local'] = {n: dict(result=r, summary=summarize(n, r)) for n, r in local(layouts, fixtures, args.case_timeout, POSITIONS[:args.positions], args.stop_on_fail).items()}
@@ -565,21 +618,20 @@ def main():
                     lab.setup()
                     lab.prepare()
                     receipt.setdefault('pluginBuild', {})[line] = lab.plugin_build
+                    persist()
                     for name in layouts:
                         print(f'[{line}] {name}: measuring through PlaybackInfo and the ticketed cut list', flush=True)
                         try:
                             result = lab.measure(name, POSITIONS[:args.positions], args.stop_on_fail)
                         except (fm.Unmeasured, RuntimeError, AssertionError, subprocess.SubprocessError, OSError, KeyError, ValueError) as e:
-                            result = dict(unmeasured=f'{type(e).__name__}: {e}'[:300])
+                            result = dict(unmeasured=redact(f'{type(e).__name__}: {e}')[:300])
                         summary = summarize(name, result)
                         run[name] = dict(result=result, summary=summary)
                         print(json.dumps(summary), flush=True)
-                        if 'tuple' in result and name not in DIAGNOSTIC:
-                            rows.append(register_row(name, summary, result, result['tuple'],
-                                                     'tools/playback-lab/format-matrix.py', today))
                         persist()
                     cp.docker('stop', lab.cid)
                     lab.inspect()
+                    finished.add(line)
                     passed = True
                 finally:
                     if lab.cid:
