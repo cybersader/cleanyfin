@@ -80,3 +80,25 @@ class FamilyProtection(unittest.TestCase):
                 with self.assertRaises(ValueError):family.select_known_profile('A','person')
                 ui.activate.assert_not_called()
             family.server_entries.assert_called_once_with('A')
+
+    def test_complete_non_scrolling_picker_can_put_add_first(self):
+        import xml.etree.ElementTree as ET
+        from tv_family_ui import picker_cards
+        def card(*values):
+            n=ET.Element('node',{'package':APP,'focusable':'true','clickable':'true'})
+            for v in values:ET.SubElement(n,'node',{'package':APP,'text':v})
+            return n
+        title=ET.Element('node',{'package':APP,'text':'Select Server'});a=card('Add Server');b=card('S','Server','http://local');c=card('Other')
+        for items in ([a,b,c],[b,c,a]):self.assertEqual(set(picker_cards([title,*items])),{'Server','Other'})
+        for items in ([b,c],[a,b,b],[a,b,card('unrelated','labels')],[a,b,ET.Element('node',{'package':APP,'scrollable':'true'})]):
+            with self.assertRaises(ValueError):picker_cards([title,*items])
+
+    def test_initial_only_server_card_needs_one_matching_visible_caption(self):
+        import xml.etree.ElementTree as ET
+        from tv_family_ui import picker_cards
+        def node(**kw):return ET.Element('node',dict(package=APP,**kw))
+        title=node(text='Select Server');card=node(focusable='true',bounds='[100,100][250,250]');card.append(node(text='S'))
+        add=node(focusable='true',**{'content-desc':'Add Server'});caption=node(text='Server One',bounds='[114,257][235,276]')
+        self.assertEqual(picker_cards([title,add,card,caption]),{'Server One':card})
+        for more in ([],[caption,caption],[node(text='Server One',bounds='[300,257][420,276]')]):
+            with self.assertRaises(ValueError):picker_cards([title,add,card,*more])

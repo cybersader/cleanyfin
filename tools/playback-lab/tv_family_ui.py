@@ -26,6 +26,37 @@ def identify_profile(names,page):
     return server,candidates[0]
 
 
+def picker_cards(nodes):
+    # Require one complete non-scrolling stock server picker. Never infer that
+    # Add Server is the last card or claim hidden servers were enumerated.
+    app=[n for n in nodes if n.get('package')==APP]
+    if labels(app).count('Select Server')!=1 or any(n.get('scrollable')=='true' for n in app):raise ValueError('server picker not wholly visible')
+    cards={};added=0
+    for n in app:
+        if n.get('focusable')!='true':continue
+        values=labels(n.iter());desc=[c.get('content-desc') for c in n.iter()]
+        if 'Add Server' in values+desc:added+=1;continue
+        if not values and n.get('clickable')!='true':continue
+        titles=[x for x in values if not x.startswith(('http://','https://'))]
+        if len(titles)>1:titles=[x for x in titles if len(x)>1]
+        if len(titles)==1 and len(titles[0])==1:
+            # Wholphin's focusable tile contains only the avatar. Its full name is
+            # a separate visible caption beneath the tile in the same column.
+            rect=lambda e:tuple(map(int,re.findall(r'-?\d+',e.get('bounds',''))))
+            box=rect(n);captions=[]
+            if len(box)==4:
+                l,t,r,b=box
+                for e in app:
+                    v=e.get('text','');xy=rect(e)
+                    if len(xy)==4 and v and v[:1].casefold()==titles[0].casefold() and l<=(xy[0]+xy[2])/2<=r and b<=xy[1]<b+(b-t)/2:captions.append(v)
+            if len(captions)!=1:raise ValueError('ambiguous server card')
+            titles=captions
+        if len(titles)!=1 or titles[0] in cards:raise ValueError('ambiguous server card')
+        cards[titles[0]]=n
+    if added!=1 or not 1<=len(cards)<=12:raise ValueError('server picker not wholly visible')
+    return cards
+
+
 class FamilyUI:
     def __init__(self,screen):self.ui=screen;self.tv=screen.tv;self.lab_name=None
 
@@ -72,25 +103,32 @@ class FamilyUI:
         for _ in range(12):self.ui.key('DPAD_LEFT')
 
     def server_entries(self,select=None,delete=False):
-        s=self.ui;seen=[]
-        for _ in range(13):
-            nodes=s.tree();focus=next((n for n in nodes if n.get('package')==APP and n.get('focused')=='true'),None)
+        s=self.ui
+        for _ in range(16):
+            nodes=s.tree()
+            if getattr(self.tv,'emulator',None) is not None and self.tv.found.get('emulator'):
+                known={'Add Server','Select Server','Synthetic Household','S'}
+                self.tv.family.receipt['syntheticPickerCaptions']=[{'rect':n.get('bounds'),'label':n.get('text')} for n in nodes if n.get('package')==APP and n.get('text') in known][:20]
+                self.tv.family.receipt['syntheticPickerShapes']=[{'rect':n.get('bounds'),'click':n.get('clickable'),
+                    'longClick':n.get('long-clickable'),'scroll':n.get('scrollable'),
+                    'labelCount':len(labels(n.iter())),'seedLabels':sorted(set(labels(n.iter()))&known)} for n in nodes
+                    if n.get('package')==APP and (n.get('focusable')=='true' or n.get('scrollable')=='true')][:22]
+            cards=picker_cards(nodes)
+            if select is None:return tuple(sorted(cards))
+            if select not in cards:raise ValueError('expected server is not listed')
+            target=cards[select];focus=next((n for n in nodes if n.get('package')==APP and n.get('focused')=='true'),None)
             if focus is None:raise ValueError('server list has no focused card')
-            if any(n.get('resource-id','').endswith('add_server') or n.get('content-desc')=='Add Server' for n in focus.iter()):
-                if select is not None:raise ValueError('expected server is not listed')
-                return tuple(sorted(seen))
+            if focus is not target:
+                rect=lambda n:list(map(int,re.findall(r'-?\d+',n.get('bounds',''))))
+                x,y,r,b=rect(target);l,t,w,h=rect(focus);cx=(x+r)//2;cy=(y+b)//2
+                if l<=cx<=w and t<=cy<=h:raise ValueError('ambiguous server card')
+                s.key('DPAD_UP' if cy<t else 'DPAD_DOWN' if cy>h else 'DPAD_LEFT' if cx<l else 'DPAD_RIGHT');continue
+            if not delete:s.key('DPAD_CENTER');return
+            if not self.lab_name or select!=self.lab_name:raise ValueError('refusing to remove a non-lab server')
             before=Counter(labels(nodes));self.tv.adb('shell','input','keyevent','--longpress','DPAD_CENTER');s.wait_label('Delete')
-            # A generic Delete button or the selected card's initial is not enough. The
-            # *new dialog* must introduce exactly the non-family lab name plus its actions.
-            extra=list((Counter(labels(s.tree()))-before).elements());title=[x for x in extra if x not in ('Delete','Switch servers')]
-            if len(title)!=1 or 'Delete' not in extra or 'Switch servers' not in extra:raise ValueError('cannot identify exact server popup')
-            name=title[0]
-            if name in seen:raise ValueError('duplicate server labels')
-            seen.append(name)
-            if name==select:
-                if delete and (not self.lab_name or name!=self.lab_name):raise ValueError('refusing to remove a non-lab server')
-                s.dpad('Delete' if delete else 'Switch servers',cap=4);return
-            s.key('BACK');s.wait_label('Select Server');s.key('DPAD_RIGHT')
+            extra=list((Counter(labels(s.tree()))-before).elements())
+            if sorted(extra)!=sorted([select,'Switch servers','Delete']):raise ValueError('cannot identify exact server popup')
+            s.dpad('Delete',cap=4);return
         raise ValueError('server list cannot be completely enumerated')
 
     def select_known_profile(self,server,user):
@@ -124,7 +162,8 @@ class FamilyUI:
         except Exception as exc:
             # No screen text, names or personal settings in exceptions or receipts.
             codes={'authenticated Home not verified','ambiguous signed-in profile','cannot read back an authenticated active profile',
-                   'server list has no focused card','cannot identify exact server popup','duplicate server labels','server list cannot be completely enumerated'}
+                   'server picker not wholly visible','ambiguous server card','expected server is not listed','server list has no focused card',
+                   'cannot identify exact server popup','duplicate server labels','server list cannot be completely enumerated'}
             detail=str(exc) if str(exc) in codes else type(exc).__name__
             raise ValueError('Stock UI did not verify '+phase+' ('+detail+')') from None
 
