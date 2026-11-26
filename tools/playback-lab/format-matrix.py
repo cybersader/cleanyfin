@@ -408,7 +408,7 @@ class FormatLab(cp.PointerLab):
         p.update(EnableAllFolders=False, EnabledFolders=[self.folders['Movies'], self.folders['Playback samples '+self.viewer]])
         self.api('/Users/'+self.viewer+'/Policy', 'POST', p, user=self.admin)
 
-    def measure(self, name, positions=(), stop_on_fail=True):
+    def measure(self, name, positions=(), stop_on_fail=True, reference=fm.reference):
         spec = ff.LAYOUTS[name]
         item = self.items.get(name)
         if not item:
@@ -459,8 +459,8 @@ class FormatLab(cp.PointerLab):
         try:
             # Each take re-asks PlaybackInfo, so a slow host cannot outlive a ticket.
             fresh = lambda: self.offer(name, item)[0]  # noqa: E731
-            ref = fm.reference(runner, control_source=f"/media/{name}.{spec['container']}", probe=probe,
-                               channels=channels, mpv_options=PLAYER_OPTIONS)
+            ref = reference(runner, control_source=f"/media/{name}.{spec['container']}", probe=probe,
+                            channels=channels, mpv_options=PLAYER_OPTIONS)
 
             if getattr(self, 'r24_progress', None):
                 from r24_detector import sweep as detector_sweep
@@ -478,8 +478,9 @@ class FormatLab(cp.PointerLab):
                             cut=ref['cut'];zero=cut['zeroMs']
                             clock=(cut['videoAnchorMs']+s+zero,(cut['durationMs'] if to_end else cut['videoAnchorMs']+e)+zero)
                             self.subtitle_routes(descriptor,url,prj,spec,clock)
-                    result['r24Sweep'] = detector_sweep(runner, fresh, ref, positions, PLAYER_OPTIONS, arm_r24, progress,
-                                                        fixtures=self.fixtures, file=f"{name}.{spec['container']}")
+                    sweep = getattr(self, 'r24_sweep', detector_sweep)
+                    result['r24Sweep'] = sweep(runner, fresh, ref, positions, PLAYER_OPTIONS, arm_r24, progress,
+                                               fixtures=self.fixtures, file=f"{name}.{spec['container']}")
                     return result
                 finally:
                     shutil.rmtree(work, ignore_errors=True)
