@@ -160,6 +160,11 @@ public class CommonFormatTests
             partitions: MpvPartitions.SplitPictureAndSound, soundSampleRate: 48000));
         Assert.Equal("# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n" +
             $"{Src},0.999998,19.000002\n!new_stream\n!delay_open,media_type=audio\n{Src},1.000010,18.999990\n", lead);
+        // A mark starting on the first picture leaves only the 5 ms of sound priming before it: nothing presentable.
+        // It must not become a negative picture segment (mpv refuses the whole list); the output equals the above.
+        var onFirstPicture = Text(MpvEdlRenderer.Render(MkvPlan(20005, 5, 1005, MkvAc3Clocks), Origin, Ids, Identity, noChapters: true,
+            partitions: MpvPartitions.SplitPictureAndSound, soundSampleRate: 48000));
+        Assert.Equal(lead, onFirstPicture);
         var tail = Text(MpvEdlRenderer.Render(MkvPlan(20005, 5485, 20005, MkvAc3Clocks), Origin, Ids, Identity, noChapters: true,
             partitions: MpvPartitions.SplitPictureAndSound, soundSampleRate: 48000));
         Assert.Equal("# mpv EDL v0\n!no_chapters\n!delay_open,media_type=video\n" +
