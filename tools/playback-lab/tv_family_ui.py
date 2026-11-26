@@ -85,7 +85,7 @@ def picker_cards(nodes):
 
 
 class FamilyUI:
-    def __init__(self,screen):self.ui=screen;self.tv=screen.tv;self.lab_name=None
+    def __init__(self,screen):self.ui=screen;self.tv=screen.tv;self.lab_name=None;self.lab_user=None
 
     def restart(self):
         self.tv.adb('shell','am','force-stop',APP);self.tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity',timeout=20)
@@ -93,6 +93,10 @@ class FamilyUI:
         # cannot sign in or choose a user, and are bounded by elapsed time.
         end=time.monotonic()+35
         while time.monotonic()<end:
+            if self.lab_user:
+                page=labels(self.ui.tree())
+                if 'Select Server' in page:self.select_known_profile(self.lab_name,self.lab_user);return
+                if 'Select User' in page:self.select_user(self.lab_name,self.lab_user);return
             if self.ui.home_drawer():return
         raise ValueError('authenticated Home not verified')
 
@@ -160,7 +164,9 @@ class FamilyUI:
         # identified original server and already-signed-in user; never authenticate.
         self.ui.wait_label('Select Server')
         for _ in range(12):self.ui.key('DPAD_LEFT')
-        self.server_entries(server);self.ui.wait_label('Select User')
+        self.server_entries(server);self.ui.wait_label('Select User');self.select_user(server,user)
+
+    def select_user(self,server,user):
         for _ in range(16):
             nodes=self.ui.tree();target=exact_user_card(nodes,server,user)
             if focus_step(self.ui,nodes,target):self.ui.key('DPAD_CENTER');break
@@ -169,6 +175,12 @@ class FamilyUI:
         while time.monotonic()<end:
             if self.ui.home_drawer():return
         raise ValueError('authenticated Home not verified')
+
+    def verify_lab_home(self,user):
+        if not self.lab_name or not user:raise ValueError('synthetic session lacks its verified user label')
+        self.lab_user=user
+        if self.focus_profile()!=(self.lab_name,user):raise ValueError('active profile is not the signed-in lab session')
+        self.select_user(self.lab_name,user)
 
     def read_backend(self):
         self.restart();self.ui.enter_advanced();return self.ui.focus_backend()

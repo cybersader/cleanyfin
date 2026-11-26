@@ -526,7 +526,8 @@ class Screen:
                          'deviceIdSha256':hashlib.sha256(lab.tv_device.encode()).hexdigest(),
                          'exactDeviceEnrollment':(lab.data/'profiles'/lab.viewer/'device.txt').read_text()==lab.tv_device,
                          'labTuple':lab.stub_register()['rows'][0]['tuple']}
-        if getattr(self.tv,'family',None):self.tv.family.start_settings()
+        if getattr(self.tv,'family',None):
+            self.tv.family.ui.verify_lab_home(actual.get('UserName'));self.tv.family.start_settings()
         self.enter_settings()
         if not hasattr(lab,'r24_layout'):
             try:self.seek_settings={'verifiedSkipForwardMs':self.skip_forward_five_seconds()}
@@ -1631,7 +1632,9 @@ def restore_family_ui(tv):
         try:tv.adb('shell','am','force-stop',APP)
         except (OSError,sp.SubprocessError):pass
     try:tx.finish()
-    except Exception:
+    except Exception as exc:
+        import traceback
+        tx.receipt['restoreStopSites']=[f'{Path(f.filename).name}:{f.name}:{f.lineno}' for f in traceback.extract_tb(exc.__traceback__) if Path(f.filename).parent==HERE][-6:]
         tx.receipt['visibleStateRestored']=False
         print('Family app restore not verified. Do not clear, uninstall or downgrade Wholphin.',file=sys.stderr)
     finally:
@@ -2079,7 +2082,14 @@ def main():
                 if lab.api('/System/Info/Public').get('ServerName')!=name:raise RuntimeError('unique lab server identity not verified')
                 tv.family.ui.prepare_lab(name,tv.family.original)
                 tv.family.lab_added=True;stack.callback(restore_family_ui,tv)
-            ui=(DeviceScreen if opts.device else Screen)(tv);ui.setup(lab);raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
+            ui=(DeviceScreen if opts.device else Screen)(tv)
+            try:ui.setup(lab)
+            except Exception:
+                if opts.dry_run_emulator and opts.existing_wholphin:
+                    try:raw['syntheticSetupStop']=stock_labels(ui,work/('release-'+tv.found['abi'])/ASSETS[tv.found['abi']][0])
+                    except Exception:pass
+                raise
+            raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
             print('Disposable TV enrollment:',json.dumps(lab.tv_identity),file=sys.stderr,flush=True)
             if not opts.device:
                 raw['milestone']='separate stock transport test input install'

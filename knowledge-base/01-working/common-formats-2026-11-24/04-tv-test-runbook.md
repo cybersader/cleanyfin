@@ -6,6 +6,8 @@
 
 **The family accepts possible re-sign-in.** The new gate is retention of the original server entries, not automatic authenticated Home. The owner still needs evidence of the signed update, lab-only cleanup and fresh concurrent capture for the intended procedure. The historical signed upgrade and audio-only receipts do not establish that. Do not substitute a desktop result, a successful APK install or a private emulator's audio timing for either gate.
 
+The [first revised-gate rehearsal](../../../delivery/evidence/runs/tv-20261126T125353Z-edfe6b6c3d/summary.json) verified the original server list on the newly installed, same-signer 1.1.2. It got as far as a signed-in synthetic Jellyfin session, but could not verify Home in that **lab** profile. No capture ran. Lab-server cleanup was unverified, even though the Android package manifest showed only the expected version increase. This distinguishes app-internal state from what package-manager checks can prove.
+
 The owner’s read-only probe identified `jarvis2`, Android 14 / SDK 34 (2026-06-01 patch), Amlogic S905X5M but **32-bit userspace**. Its ABI list selects `armeabi-v7a`. The display reported 3840×2160 at 59.94 Hz (mode 152; 1080p available). A 1280×720 screenrecord worked, but a static screen produced one frame: nominal Hz is not recording cadence. Jellyfin Android TV 0.20.0 is not the tested player. HDMI surround was `1`; both frame-rate-match settings were unset. A separate legacy ADB listener was observed on 5555. The harness never connects to it: verifying the supplied wireless endpoint closed does not prove legacy ADB closed.
 
 ## What the family update must demonstrate before release

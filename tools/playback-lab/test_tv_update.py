@@ -121,3 +121,16 @@ class FamilyProtection(unittest.TestCase):
         tx.start_settings();self.assertEqual(tx.lab_settings.options,'speed=1');self.assertFalse(hasattr(tx.original,'options'))
         tx.tv.transport.bind_original_options.assert_called_once_with(tx.lab_settings)
         self.assertEqual(set(tx.receipt['labSettingsBefore']),{'options','backend'});self.assertNotIn('speed=1',str(tx.receipt))
+
+    def test_before_snapshot_reads_labels_only_not_family_settings(self):
+        from tv_family_ui import FamilyUI
+        family=FamilyUI(Mock());family.focus_profile=Mock(return_value=('B','synthetic'));family.servers_page=Mock()
+        family.server_entries=Mock(return_value=('A','B'));family.select_known_profile=Mock();family.read_settings=Mock()
+        self.assertEqual(family.snapshot(),BASE);family.read_settings.assert_not_called()
+
+    def test_lab_server_reentry_never_selects_household_user_card(self):
+        from tv_family_ui import FamilyUI
+        family=FamilyUI(Mock());family.lab_name='Cleanyfin Lab 0000000000';family.focus_profile=Mock(return_value=('B','synthetic'))
+        family.select_user=Mock()
+        with self.assertRaises(ValueError):family.verify_lab_home('synthetic')
+        family.select_user.assert_not_called()
