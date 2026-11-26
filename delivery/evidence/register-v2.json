@@ -1,4 +1,273 @@
 {
   "registerVersion": 2,
-  "rows": []
+  "rows": [
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "7cc42c152862ff90aef508d8dbb72f458bcbef423d16e63b4f55890975272427",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back",
+        "resume",
+        "restart"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "pass",
+          "limit": "Zero marked picture in 137 measured takes and 161 paused seek landings at 24 positions."
+        },
+        "markedSound": {
+          "outcome": "pass",
+          "limit": "R24 r24-marked-v2: zero marked PCM frames; 12,464/12,464 injected positives detected. R25: no marked-code restart smearing at the measured MP4 joins."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "1/137 measured takes did not keep every picture; test-tier seam only."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "257 altered kept frames across two resumes; negative transient margin and up to 40 ms measured loss; test-tier seams only."
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r24v2-10.11-2026-11-26.json.gz",
+      "date": "2026-11-26",
+      "status": "experimental",
+      "observation": "Desktop mpv only, decoded 5.1 PCM; R24 with r24-marked-v2 and R25 with r25-mdct-projection-v1. MP4 splice has no history-less Matroska restart. Admin opt-in test playback, not full eligibility or TV evidence.",
+      "tier": "test",
+      "gate": {
+        "positions": 24,
+        "allTakesMeasured": true,
+        "markedFrames": 0,
+        "markedSoundDetections": 0,
+        "positiveControlsPassed": true
+      },
+      "seams": {
+        "silence": "0 added zero or quiet samples in 137/137 measured takes.",
+        "pop": "Worst transient margin -0.00883 full-scale RMS (24/137 measured; no bound on other takes).",
+        "keptPicture": "Not intact in 1/137 measured takes; up to 0.031 ms added picture timing deviation.",
+        "sync": "Worst added A/V offset 0.031 ms, recovery 18.67 ms (136/137 measured; sync held in all 136).",
+        "keptSoundLoss": "Up to 40 ms (135/137 measured; remaining two lower bounds up to 18.67 ms)."
+      }
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "5",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "10.11.11",
+        "pluginBuild": "7cc42c152862ff90aef508d8dbb72f458bcbef423d16e63b4f55890975272427",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays, 2 subtitle mov_text default",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back",
+        "resume",
+        "restart"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "pass",
+          "limit": "Zero marked picture in 137 measured takes and 161 paused seek landings at 24 positions."
+        },
+        "markedSound": {
+          "outcome": "pass",
+          "limit": "R24 r24-marked-v2: zero marked PCM frames; 12,464/12,464 injected positives detected. R25: no marked-code restart smearing at the measured MP4 joins."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "1/137 measured takes did not keep every picture; test-tier seam only."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "257 altered kept frames across two resumes; negative transient margin and up to 40 ms measured loss; test-tier seams only."
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r24v2-10.11-2026-11-26.json.gz",
+      "date": "2026-11-26",
+      "status": "experimental",
+      "observation": "Desktop mpv only, decoded 5.1 PCM; R24 with r24-marked-v2 and R25 with r25-mdct-projection-v1. MP4 splice has no history-less Matroska restart. Admin opt-in test playback, not full eligibility or TV evidence.",
+      "tier": "test",
+      "gate": {
+        "positions": 24,
+        "allTakesMeasured": true,
+        "markedFrames": 0,
+        "markedSoundDetections": 0,
+        "positiveControlsPassed": true
+      },
+      "seams": {
+        "silence": "0 added zero or quiet samples in 137/137 measured takes.",
+        "pop": "Worst transient margin -0.00883 full-scale RMS (24/137 measured; no bound on other takes).",
+        "keptPicture": "Not intact in 1/137 measured takes; up to 0.031 ms added picture timing deviation.",
+        "sync": "Worst added A/V offset 0.031 ms, recovery 18.67 ms (136/137 measured; sync held in all 136).",
+        "keptSoundLoss": "Up to 40 ms (135/137 measured; remaining two lower bounds up to 18.67 ms)."
+      }
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back",
+        "resume",
+        "restart"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "pass",
+          "limit": "Zero marked picture in 137 measured takes and 161 paused seek landings at 24 positions."
+        },
+        "markedSound": {
+          "outcome": "pass",
+          "limit": "R24 r24-marked-v2: zero marked PCM frames; 12,464/12,464 injected positives detected. R25: no marked-code restart smearing at the measured MP4 joins."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "1/137 measured takes did not keep every picture; test-tier seam only."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "257 altered kept frames across two resumes; negative transient margin and up to 40 ms measured loss; test-tier seams only."
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r24v2-12.4-2026-11-26.json.gz",
+      "date": "2026-11-26",
+      "status": "experimental",
+      "observation": "Desktop mpv only, decoded 5.1 PCM; R24 with r24-marked-v2 and R25 with r25-mdct-projection-v1. MP4 splice has no history-less Matroska restart. Admin opt-in test playback, not full eligibility or TV evidence.",
+      "tier": "test",
+      "gate": {
+        "positions": 24,
+        "allTakesMeasured": true,
+        "markedFrames": 0,
+        "markedSoundDetections": 0,
+        "positiveControlsPassed": true
+      },
+      "seams": {
+        "silence": "0 added zero or quiet samples in 137/137 measured takes.",
+        "pop": "Worst transient margin -0.00883 full-scale RMS (24/137 measured; no bound on other takes).",
+        "keptPicture": "Not intact in 1/137 measured takes; up to 0.031 ms added picture timing deviation.",
+        "sync": "Worst added A/V offset 0.031 ms, recovery 18.67 ms (136/137 measured; sync held in all 136).",
+        "keptSoundLoss": "Up to 40 ms (135/137 measured; remaining two lower bounds up to 18.67 ms)."
+      }
+    },
+    {
+      "tuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "5",
+        "appId": "mpv",
+        "appVersion": "0.40.0",
+        "appBuild": "dd6013a58b8e0132cd943f2b5dab481516b10dc56350b21dc3a490861a8f295c",
+        "backend": "mpv",
+        "deviceMode": "Linux lab container, desktop mpv, decoded PCM capture, ad-lavc-o cons_noisegen 1",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+        "source": {
+          "container": "mp4",
+          "videoCodec": "h264",
+          "audioCodec": "eac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/12800 at 0 ms, 1 audio eac3 6 ch 48000 Hz tb 1/48000 at 0 ms plays, 2 subtitle mov_text default",
+          "durationMs": 20000
+        }
+      },
+      "actions": [
+        "cut"
+      ],
+      "controls": [
+        "straight-play",
+        "seek-forward",
+        "seek-back",
+        "resume",
+        "restart"
+      ],
+      "results": {
+        "markedPicture": {
+          "outcome": "pass",
+          "limit": "Zero marked picture in 137 measured takes and 161 paused seek landings at 24 positions."
+        },
+        "markedSound": {
+          "outcome": "pass",
+          "limit": "R24 r24-marked-v2: zero marked PCM frames; 12,464/12,464 injected positives detected. R25: no marked-code restart smearing at the measured MP4 joins."
+        },
+        "keptPictureAtJoin": {
+          "outcome": "fail",
+          "limit": "1/137 measured takes did not keep every picture; test-tier seam only."
+        },
+        "keptSoundAtJoin": {
+          "outcome": "fail",
+          "limit": "257 altered kept frames across two resumes; negative transient margin and up to 40 ms measured loss; test-tier seams only."
+        }
+      },
+      "evidenceRef": "tools/playback-lab/prototypes/common-formats/receipt-r24v2-12.4-2026-11-26.json.gz",
+      "date": "2026-11-26",
+      "status": "experimental",
+      "observation": "Desktop mpv only, decoded 5.1 PCM; R24 with r24-marked-v2 and R25 with r25-mdct-projection-v1. MP4 splice has no history-less Matroska restart. Admin opt-in test playback, not full eligibility or TV evidence.",
+      "tier": "test",
+      "gate": {
+        "positions": 24,
+        "allTakesMeasured": true,
+        "markedFrames": 0,
+        "markedSoundDetections": 0,
+        "positiveControlsPassed": true
+      },
+      "seams": {
+        "silence": "0 added zero or quiet samples in 137/137 measured takes.",
+        "pop": "Worst transient margin -0.00883 full-scale RMS (24/137 measured; no bound on other takes).",
+        "keptPicture": "Not intact in 1/137 measured takes; up to 0.031 ms added picture timing deviation.",
+        "sync": "Worst added A/V offset 0.031 ms, recovery 18.67 ms (136/137 measured; sync held in all 136).",
+        "keptSoundLoss": "Up to 40 ms (135/137 measured; remaining two lower bounds up to 18.67 ms)."
+      }
+    }
+  ]
 }

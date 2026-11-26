@@ -4,7 +4,7 @@
 
 ## R24 test tier: marked-sound detector v2 (2026-11-26)
 
-The R24 opt-in test tier gates only on marked material and reports seam measures. Detector v2 identifies the source position of every presented sample frame after lossy decoding (exact frame identity on a source-time code fixture, then packet-run position for decoder-altered frames). Each take must also catch injected marked positives down to one frame. The design, its limits, the controls and the per-layout results on both lines are on the [marked-sound detector page](05-marked-detector.md). Full-tier admission under R22/R23 below is unchanged.
+The R24 opt-in test tier gates only on marked material and reports seam measures. Detector v2 identifies the source position of every presented sample frame after lossy decoding (exact identity on a source-time code fixture, then packet-run position for altered frames). Each take must also catch injected marked positives down to one frame. R25 additionally requires an inaudibility bound for marked-correlated restart smear. Only the plain and `mov_text` MP4 E-AC-3 layouts earned desktop test rows on both lines; Matroska Dolby did not. See the [detectors, controls, and per-layout results](05-marked-detector.md). Full-tier admission under R22/R23 below is unchanged.
 
 ## R22 viewer rule, amended by R23
 

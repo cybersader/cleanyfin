@@ -158,17 +158,22 @@ def probe(out, name, *args):
     return json.loads(media(out, 'ffprobe', *args, '-of', 'json', f'/lab/{name}', readonly=True))
 
 
-def generate(out, name, signature='tone'):
+def generate(out, name, signature='tone', *, program_pcm=None):
     """Write NAME.mkv or NAME.mp4 into the existing directory OUT and return its facts (incl. SHA-256).
 
     signature='timecode' replaces the default audio track's pilot channels by the source-time code (6-channel
-    Dolby layouts only); the layout, its packets and its picture are otherwise identical."""
+    Dolby layouts only); the layout, its packets and its picture are otherwise identical. A synthetic program
+    can instead supply interleaved 48 kHz float32 5.1 PCM for a listening demonstration, not admission."""
     if signature not in SIGNATURES:
         raise ValueError(f'unknown audio signature {signature}')
+    if program_pcm is not None:
+        if signature != 'tone' or program_pcm.shape != (SOURCE_SAMPLES, 6):
+            raise ValueError('synthetic program requires 20 seconds of six-channel PCM, not a coded signature')
+        signature = 'program'
     spec = LAYOUTS[name]
     file = f"{name}.{spec['container']}"
-    if signature == 'timecode' and (name == HARD_AAC or spec['audio'][0] not in (('ac3', 6), ('eac3', 6))):
-        raise ValueError(f'{name}: the timecode signature is defined for 5.1 AC-3/E-AC-3 default tracks only')
+    if signature in ('timecode', 'program') and (name == HARD_AAC or spec['audio'][0] not in (('ac3', 6), ('eac3', 6))):
+        raise ValueError(f'{name}: custom PCM requires a 5.1 AC-3/E-AC-3 default track')
     if name == HARD_AAC:
         # Re-test the original periodic stereo AAC source behind the legacy eligibility rows, not its pilot copy.
         legacy = out/'hard-aac-source'
@@ -187,9 +192,10 @@ def generate(out, name, signature='tone'):
     code = None
     for i, (codec, channels) in enumerate(spec['audio']):
         layout_name, levels = CHANNELS[channels]
-        if signature == 'timecode' and i == 0:
-            code = out/f'{name}-timecode.f32'
-            code.write_bytes(timecode_pcm(channels).astype('<f4').tobytes())
+        if signature in ('timecode', 'program') and i == 0:
+            code = out/f'{name}-{signature}.f32'
+            pcm = timecode_pcm(channels) if program_pcm is None else program_pcm
+            code.write_bytes(pcm.astype('<f4').tobytes())
             inputs += ['-f', 'f32le', '-ar', str(HZ), '-ch_layout', layout_name, '-i', f'/lab/{code.name}']
         else:
             exprs = '|'.join(tone(level, c) for c, level in enumerate(levels))

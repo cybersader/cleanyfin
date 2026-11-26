@@ -249,7 +249,13 @@ public class EligibilityTests
         Assert.True(TestSchemaAccepts(JsonNode.Parse(bytes)!));
         var seed = EvidenceRegister.ParseTest(bytes);
         Assert.True(seed.Accepted);
-        foreach (var row in seed.Value!.Rows) Assert.True(File.Exists(Path.Combine(root, row.EvidenceRef)));
+        foreach (var row in seed.Value!.Rows)
+        {
+            Assert.True(File.Exists(Path.Combine(root, row.EvidenceRef)));
+            Assert.True(seed.Value.AdmitTest(row.Tuple, ["cut"]).Accepted);
+            Assert.False(seed.Value.Admit(row.Tuple, ["cut"], allowExperimental: true).Accepted);
+            Assert.False(seed.Value.AdmitTest(row.Tuple with { DeviceMode = "Unmeasured output" }, ["cut"]).Accepted);
+        }
     }
 
     private static JsonObject EligibleTestDocument()
