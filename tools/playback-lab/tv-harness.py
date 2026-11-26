@@ -474,6 +474,12 @@ class Screen:
             if values or i==cap:raise RuntimeError('focused playback backend value is ambiguous or unavailable')
             self.key('DPAD_DOWN')
 
+    def home_drawer(self,cap=4):
+        for i in range(cap+1):
+            if self.get('Home') is not None:return True
+            if i<cap:self.key('DPAD_LEFT')  # Focus only; never activate a profile or media card.
+        return False
+
     def wait_label(self,label):
         eventually(lambda:self.get(label) is not None,18,'Wholphin did not display '+label)
 
@@ -512,7 +518,7 @@ class Screen:
         self.wait_label('Edit mpv.conf');self.key('BACK');self.dpad('Advanced Settings')
         options=MPV_OPTIONS + ("\nad-lavc-o=cons_noisegen=1" if hasattr(lab, "r24_layout") else "")
         if getattr(self.tv,'internal',False):
-            cap=self.tv.capture
+            cap=self.tv.capture;cap.choose_pcm_directory(self.tv)
             for path in (cap.paths.wav,cap.paths.video):cap.verify_missing(self.tv,path)
             self.tv.internal_state['pathsVerifiedAbsentBeforeOptions']=True
             options+='\n'+cap.paths.options
@@ -1427,7 +1433,9 @@ def stock_labels(screen,apk):
     return {'appVisible':bool(app),'appNodeCount':len(app),'labelCount':len(labels),
             'hasProgressIndicator':any(n.get('class','').endswith('ProgressBar') for n in app),
             'errorTextPresent':any(re.search(r'error|exception|failed|not found',v,re.I) for v in labels),
-            'stockLabels':sorted(labels & known)[:30]}
+            'stockLabels':sorted(labels & known)[:30],
+            'visibleCategories':sorted(set(re.findall(r'[a-z]+',' '.join(labels).lower())) &
+                set('profile account user select original home favorite favorites loading connect connection login code authorize server setup offline search settings library libraries next continue username password finish retry welcome privacy playback error about version update changelog release crash sign skip button device remember permission one synthetic household'.split()))}
 
 
 def seed_update_rehearsal(tv,work,stack,receipt):
@@ -1450,10 +1458,13 @@ def seed_update_rehearsal(tv,work,stack,receipt):
     stack.callback(lambda:tv.adb('reverse','--remove',f'tcp:{port}',timeout=8))
     ui=DeviceScreen(tv);ui.connect_lab(lab);receipt['authenticatedSyntheticSession']=True
     # Quick Connect can authorize the server session before local user selection.
+    drawer_moves=0
     def signed_home():
-        nodes=ui.tree();labels={n.get(k) for n in nodes if n.get('package')==APP for k in ('text','content-desc')}
-        if 'Home' in labels:return True
-        if 'Select User' in labels and 'one' in labels:ui.activate('one')
+        nonlocal drawer_moves
+        nodes=ui.tree();labels={(n.get(k) or '').casefold() for n in nodes if n.get('package')==APP for k in ('text','content-desc')}
+        if 'home' in labels:return True
+        if 'select user' in labels and 'one' in labels:ui.activate('one')
+        elif drawer_moves<4:ui.key('DPAD_LEFT');drawer_moves+=1
         return False
     try:eventually(signed_home,30,'signed-in 1.0.9 did not reach Home')
     except RuntimeError:
@@ -1461,6 +1472,7 @@ def seed_update_rehearsal(tv,work,stack,receipt):
         # The seed is not established until the same local profile survives an
         # app restart. Do not reauthenticate or clear app data to pass this check.
         tv.adb('shell','am','force-stop',APP);tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity',timeout=20)
+        drawer_moves=0
         try:eventually(signed_home,30,'signed-in 1.0.9 did not reach Home after restart')
         except RuntimeError:
             receipt['screenAfterRestart']=stock_labels(ui,old);raise

@@ -59,6 +59,15 @@ class InternalTests(unittest.TestCase):
             transport.run.assert_called_once_with('shell','wm','size',timeout=8)
             self.assertEqual(tv.found['uiSize'],'1280x720')
 
+    def test_selects_only_existing_app_owned_directory_and_never_ignores_denial(self):
+        from unittest.mock import Mock
+        cap=tap.InternalCapture(tap.Paths('b'*24));tv=Mock()
+        tv.transport.capture_kind.side_effect=['missing','directory'];cap.choose_pcm_directory(tv)
+        self.assertTrue(cap.paths.wav.startswith('/sdcard/Android/data/'+tap.APP+'/cache/'))
+        tv.transport.capture_kind.side_effect=RuntimeError('denied');tv.transport.bind_capture.reset_mock()
+        with self.assertRaises(RuntimeError):cap.choose_pcm_directory(tv)
+        tv.transport.bind_capture.assert_not_called()
+
     def test_private_paths_and_ugreen_identity(self):
         p=tap.Paths('a'*24);self.assertTrue(p.wav.startswith('/sdcard/Android/data/'+tap.APP+'/files/'))
         self.assertNotEqual(p.video,tap.Paths('b'*24).video);self.assertEqual(ADAPTERS['2b89:5389'],'UGREEN 15389')
@@ -117,6 +126,11 @@ class InternalTests(unittest.TestCase):
                     finally:stages.append('stop')
                 class TV:
                     work=Path(root)
+                    @property
+                    def transport(self):return self
+                    def capture_kind(self,path):
+                        if path in (str(PurePosixPath(k).parent) for k in (paths.wav,paths.video)):return 'directory'
+                        return 'regular file' if path in files else 'missing'
                     def adb(self,*args,timeout=None):
                         if args[:3]==('shell','rm','-f'):files.pop(args[3],None);return b''
                         if args[:3]==('shell','ls','-1a'):return '\n'.join(PurePosixPath(k).name for k in files if str(PurePosixPath(k).parent)==args[3]).encode()

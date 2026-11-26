@@ -20,6 +20,8 @@ from tv_device import APP, ASSETS, TOUCHED, CONTEXT
 from tv_update import OLD_SHA
 
 ACT = APP+'/.MainActivity'
+EXTERNAL = '/sdcard/Android/data/'+APP
+PCM_DIRS = (EXTERNAL+'/files', EXTERNAL+'/cache', EXTERNAL)
 KEYS = {'DPAD_UP','DPAD_DOWN','DPAD_LEFT','DPAD_RIGHT','DPAD_CENTER','BACK','ENTER','DEL'}
 PUBLIC = re.compile(r'/data/app/(?:[\w~+=.-]+/)*'+re.escape(APP)+r'-[\w~+=.-]+/base\.apk')
 READS = {('get-state',),('shell','getprop'),('shell','getprop','sys.boot_completed'),('shell','getprop','ro.build.fingerprint'),
@@ -97,7 +99,18 @@ class Playback:
     def ui_path(self):
         path='/data/local/tmp/cleanyfin-ui-'+secrets.token_hex(12)+'.xml';self.xml.add(path);return path
 
-    def bind_capture(self,paths):self.capture={paths.wav,paths.video}
+    def bind_capture(self,paths):
+        m=re.fullmatch(r'/data/local/tmp/(cleanyfin-[a-f0-9]{24})\.mp4',paths.video)
+        if not m or paths.wav not in {d+'/'+m[1]+'.wav' for d in PCM_DIRS}:refused()
+        self.capture={paths.wav,paths.video}
+
+    def capture_kind(self,path):
+        # Metadata only. Do not list any other app storage, filenames or contents.
+        if not self.active or not self.capture or path not in self.capture.union(PCM_DIRS,{'/data/local/tmp'}):refused()
+        try:return self._call(('shell','stat','-c','%F',path),timeout=5).decode().strip()
+        except sp.CalledProcessError as exc:
+            if getattr(exc,'exact_path_missing',False):return 'missing'
+            raise LabError('Capture path metadata denied or indeterminate; nothing inferred from the error.') from None
 
     def bind_original_options(self,visible):
         if not self.family or not self.active:refused()
@@ -116,10 +129,15 @@ class Playback:
     def _call(self,args,*,timeout=30,bind=None):
         if not self.lab.connected or self.lab.server.poll() is not None:refused()
         cmd=self.lab.client if bind is None else self.lab.bin[:-2]+['--ro-bind',str(bind),'/payload.apk','--','/adb','-H','127.0.0.1','-P',str(PRIVATE_PORT)]
+        metadata=args[:4]==('shell','stat','-c','%F')
         try:
-            return sp.run(cmd+self.lab.target+list(args),env={'PATH':'/usr/bin:/bin'},stdin=sp.DEVNULL,stdout=sp.PIPE,stderr=sp.DEVNULL,timeout=min(240,timeout),check=True).stdout
+            return sp.run(cmd+self.lab.target+list(args),env={'PATH':'/usr/bin:/bin'},stdin=sp.DEVNULL,stdout=sp.PIPE,stderr=sp.PIPE if metadata else sp.DEVNULL,timeout=min(240,timeout),check=True).stdout
         except sp.CalledProcessError as exc:
             # Only compile-time operation names, never a path, endpoint, text, or child output.
+            if metadata:
+                output=(exc.stderr or b'')+(exc.stdout or b'')
+                exc.exact_path_missing=(args[4].encode() in output and output.strip().endswith(b'No such file or directory'))
+                exc.stderr=exc.stdout=None
             if tuple(args) in READS:exc.playback_read=' '.join(args)
             raise
 
@@ -182,7 +200,6 @@ class Playback:
             if safe:
                 result=self._call(a,timeout=timeout);self.xml.discard(s[2]);return result
         if len(s)==3 and s[:2]==('test','-f'):safe=s[2] in self.capture
-        if len(s)==3 and s[:2]==('ls','-1a'):safe=s[2] in {str(Path(v).parent) for v in self.capture}
         if len(s)==4 and s[:3]==('stat','-c','%s'):safe=s[3] in self.capture
         if len(s)==4 and s[:3]==('dumpsys','SurfaceFlinger','--latency'):safe=s[3] in self.timing_layers
         if len(s)==4 and s[:3]==('cmd','media_session','dispatch'):safe=s[3] in ('pause','play')

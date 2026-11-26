@@ -25,6 +25,19 @@ class PlaybackScope(TestCase):
             with self.subTest(argv=argv),self.assertRaises(LabError):self.p.run(*argv)
         self.p._call.assert_not_called()
 
+    def test_metadata_distinguishes_nonexistent_from_unreadable(self):
+        import subprocess as sp
+        self.lab.server.poll.return_value=None;self.lab.client=['adb'];self.lab.target=['-s','synthetic']
+        p=Playback(self.lab,self.work,guest=False,family=True);p.qualify('armeabi-v7a');p.bind_capture(self.paths)
+        for suffix,missing in [(b'No such file or directory',True),(b'Permission denied',False),(b'',False)]:
+            stderr=b'stat: '+self.paths.wav.encode()+b': '+suffix
+            with patch('adb_lab_playback.sp.run',side_effect=sp.CalledProcessError(1,['private'],stderr=stderr)):
+                if missing:self.assertEqual(p.capture_kind(self.paths.wav),'missing')
+                else:
+                    with self.assertRaises(LabError):p.capture_kind(self.paths.wav)
+        with self.assertRaises(LabError):p.capture_kind('/sdcard/private')
+        with self.assertRaises(LabError):p.run('shell','ls','-1a',str(Path(self.paths.wav).parent))
+
     def test_failure_names_only_fixed_stock_reads(self):
         import subprocess as sp
         self.lab.server.poll.return_value=None;self.lab.client=['adb'];self.lab.target=['-s','synthetic']

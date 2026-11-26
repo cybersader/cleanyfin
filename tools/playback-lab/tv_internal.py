@@ -72,11 +72,21 @@ class InternalCapture:
         # No witness is installed by default, and no witness value enters the gate.
         self.paths,self.witness=paths,witness
 
+    def choose_pcm_directory(self,tv):
+        from adb_lab_playback import PCM_DIRS
+        for directory in PCM_DIRS:
+            kind=tv.transport.capture_kind(directory)
+            if kind=='missing':continue
+            if kind!='directory':raise RuntimeError('app-specific PCM parent is not a directory')
+            self.paths.wav=directory+'/'+PurePosixPath(self.paths.wav).name
+            tv.transport.bind_capture(self.paths)
+            return
+        raise RuntimeError('no existing app-specific external PCM directory; no directory created or storage grant requested')
+
     def verify_missing(self,tv,path):
-        # ls of the containing directory must succeed: permission denied is not absence.
-        p=PurePosixPath(path)
-        entries=tv.adb('shell','ls','-1a',str(p.parent),timeout=5).decode().splitlines()
-        if p.name in entries:raise RuntimeError('owned synthetic recording remains on the device')
+        if path not in (self.paths.wav,self.paths.video):raise ValueError('not an owned capture')
+        if tv.transport.capture_kind(str(PurePosixPath(path).parent))!='directory':raise RuntimeError('capture parent unavailable')
+        if tv.transport.capture_kind(path)!='missing':raise RuntimeError('synthetic recording already exists or was not removed')
 
     def remove(self,tv,path):
         tv.adb('shell','rm','-f',path,timeout=5);self.verify_missing(tv,path)

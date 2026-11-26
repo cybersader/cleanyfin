@@ -15,7 +15,7 @@ class FamilyUI:
 
     def restart(self):
         self.tv.adb('shell','am','force-stop',APP);self.tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity',timeout=20)
-        self.ui.wait_label('Home')  # Do not log in as the family or prompt for credentials.
+        if not self.ui.home_drawer():raise ValueError('authenticated Home not verified; refusing to log in as the family')
 
     def focus_profile(self):
         self.restart();s=self.ui
