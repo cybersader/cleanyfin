@@ -1286,10 +1286,22 @@ class DeviceTV:
     def adb(self,*args,**kw):
         return self.transport.run(*args,**kw)
 
+    def initial_read(self,*command):
+        # sys.boot_completed can precede the package/window services on a fresh clone.
+        # Only retry these four read-only startup queries, never install or app input.
+        if tuple(command) not in {('wm','size'),('getprop',),('pm','list','features'),('pm','list','packages')}:
+            raise ValueError('not a startup query')
+        end=time.monotonic()+(15 if self.emulator is not None else 0)
+        while True:
+            try:return self.adb('shell',*command,timeout=8)
+            except (sp.CalledProcessError,sp.TimeoutExpired):
+                if time.monotonic()>=end:raise
+                time.sleep(.5)
+
     def bind(self,transport):
         self.transport=transport
         if self.internal:transport.bind_capture(self.capture.paths)
-        size=re.findall(rb'(\d+)x(\d+)',self.adb('shell','wm','size',timeout=8))
+        size=re.findall(rb'(\d+)x(\d+)',self.initial_read('wm','size'))
         if size:
             w,h=map(int,size[-1]);self.ui_scale=(w/1280,h/720);self.found['uiSize']=f'{w}x{h}'
 
@@ -1395,7 +1407,17 @@ def free_port():
         sock.bind(('127.0.0.1',0));return sock.getsockname()[1]
 
 
-def seed_update_rehearsal(tv,work,stack):
+def stock_labels(screen,apk):
+    # Literal release strings on a private clone only. Never serialize unmatched
+    # text such as a Quick Connect code, user, server address or access token.
+    if screen.tv.emulator is None or not screen.tv.found.get('emulator'):return {}
+    pool=run(screen.tv.sdk/'build-tools/36.0.0/aapt2','dump','strings',apk).decode(errors='replace')
+    known={v for v in re.findall(r'(?m)^String #\d+ : ([^\n]+)$',pool) if re.fullmatch(r"[A-Za-z][A-Za-z ,!?'’-]{0,58}",v)}
+    app=[n for n in screen.tree() if n.get('package')==APP]
+    return {'appVisible':bool(app),'stockLabels':sorted({n.get(k) for n in app for k in ('text','content-desc') if n.get(k) in known})[:30]}
+
+
+def seed_update_rehearsal(tv,work,stack,receipt):
     # The extra signed-in account exists only in the fresh AVD + a separate network-none
     # Jellyfin. Never install the old version or seed a user on a physical device.
     if tv.emulator is None or not tv.found.get('emulator'):raise RuntimeError('synthetic baseline needs the verified private AVD')
@@ -1413,7 +1435,17 @@ def seed_update_rehearsal(tv,work,stack):
     tv.spawn(tv.transport.bridge(port,sock)+[sys.executable,'-I',HERE/'tv-wire.py',str(sock),lab.item,'unused',str(port)],'baseline-relay')
     tv.adb('reverse','--no-rebind',f'tcp:{port}',f'tcp:{port}',timeout=8)
     stack.callback(lambda:tv.adb('reverse','--remove',f'tcp:{port}',timeout=8))
-    ui=DeviceScreen(tv);ui.connect_lab(lab);ui.enter_advanced()
+    ui=DeviceScreen(tv);ui.connect_lab(lab);receipt['authenticatedSyntheticSession']=True
+    # Quick Connect can authorize the server session before local user selection.
+    def signed_home():
+        nodes=ui.tree();labels={n.get(k) for n in nodes if n.get('package')==APP for k in ('text','content-desc')}
+        if 'Home' in labels:return True
+        if 'Select User' in labels and 'one' in labels:ui.activate('one')
+        return False
+    try:eventually(signed_home,30,'signed-in 1.0.9 did not reach Home')
+    except RuntimeError:
+        receipt['screenAfterLogin']=stock_labels(ui,old);raise
+    ui.enter_advanced()
     ui.dpad('ExoPlayer');ui.wait_label('Prefer MPV');ui.dpad('MPV',cap=5);ui.wait_label('Edit mpv.conf')
     ui.save_mpv('hwdec=no')  # Nonempty synthetic baseline must survive upgrade and test.
 
@@ -1452,8 +1484,9 @@ def device_session(opts,work,sdk,stack,summary,history):
         tv.bind(Playback(client,work,guest=False,family=bool(opts.existing_wholphin)))
     tv.host_history=history
     text=lambda *a:tv.adb(*a,timeout=30).decode(errors='replace')
-    props=dev.parse_getprop(text('shell','getprop'))
-    ok,found,why=dev.identity(props,text('shell','pm','list','features'),dev.parse_packages(text('shell','pm','list','packages')),
+    initial=lambda *a:tv.initial_read(*a).decode(errors='replace')
+    props=dev.parse_getprop(initial('getprop'))
+    ok,found,why=dev.identity(props,initial('pm','list','features'),dev.parse_packages(initial('pm','list','packages')),
                               emulator=opts.dry_run_emulator,expect_model=opts.expect_model)
     tv.found.update(found);summary['device']={k:v for k,v in tv.found.items()}
     print('Connected device:',json.dumps(summary['device']),file=sys.stderr,flush=True)
@@ -1463,7 +1496,8 @@ def device_session(opts,work,sdk,stack,summary,history):
         from tv_update import check_update_target
         check_update_target(found,rehearsal=opts.dry_run_emulator)
     if opts.dry_run_emulator and opts.existing_wholphin:
-        seed_update_rehearsal(tv,work,stack);summary['familyUpdate']={'syntheticBaselineSeeded':True}
+        receipt=summary['familyUpdate']={}
+        seed_update_rehearsal(tv,work,stack,receipt);receipt['syntheticBaselineSeeded']=True
     before=dev.manifest(text)
     summary['manifestBefore']=manifest_digest(before)
     updating=opts.existing_wholphin=='update'
@@ -1982,7 +2016,14 @@ def main():
                 tv_r24.measure(sys.modules[__name__],tv,lab,ui,raw,module('format-matrix'))
             else: measure(tv,lab,ui,raw,opts.split_capture)
     except (Exception,KeyboardInterrupt) as exc:
-        # Never serialize child command lines, queries, login codes or stderr.
+        # Never serialize child command lines, queries, login codes, file paths or stderr.
+        import traceback
+        sites=[f'{Path(f.filename).name}:{f.name}:{f.lineno}' for f in traceback.extract_tb(exc.__traceback__)
+               if Path(f.filename).parent==HERE]
+        raw['blockerSites']=sites[-7:]
+        if isinstance(exc,sp.CalledProcessError):
+            raw['childExit']=exc.returncode
+            if hasattr(exc,'playback_read'):raw['failedStockRead']=exc.playback_read
         if isinstance(exc,sp.TimeoutExpired):error=timeout_label(raw.get('milestone','setup'),list(history))
         else:error=str(exc) if isinstance(exc,(RuntimeError,ValueError)) else type(exc).__name__
     finally:

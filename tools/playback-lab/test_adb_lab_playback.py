@@ -2,7 +2,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock,patch
 
 from adb_lab import LabError
 from adb_lab_playback import ACT,APP,Playback
@@ -24,6 +24,15 @@ class PlaybackScope(TestCase):
                      ('shell','rm','-f','/data/local/tmp/other'),('logcat','-c')]:
             with self.subTest(argv=argv),self.assertRaises(LabError):self.p.run(*argv)
         self.p._call.assert_not_called()
+
+    def test_failure_names_only_fixed_stock_reads(self):
+        import subprocess as sp
+        self.lab.server.poll.return_value=None;self.lab.client=['adb'];self.lab.target=['-s','synthetic']
+        p=Playback(self.lab,self.work,guest=False,family=True);p.qualify('armeabi-v7a')
+        for args,expected in [(('shell','wm','size'),'shell wm size'),(('shell','input','text','hwdec=no'),None)]:
+            with patch('adb_lab_playback.sp.run',side_effect=sp.CalledProcessError(1,['private'])),self.assertRaises(sp.CalledProcessError) as ctx:
+                p.run(*args)
+            self.assertEqual(getattr(ctx.exception,'playback_read',None),expected)
 
     def test_stock_ui_enters_only_lab_values_or_the_verified_original(self):
         from tv_update import Visible

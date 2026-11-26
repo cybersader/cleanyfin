@@ -1,6 +1,6 @@
 # Test the onn. 4K Pro without an HDMI capture card
 
-**Not ready for the family box. Do not pair or run a test yet.** Wholphin 1.0.9 is the family's signed-in app. The owner chose an in-place update that leaves 1.1.2 installed, not a fresh install. Two isolated emulator rehearsals are required: one to verify recording and cleanup, another to verify the same upgrade and restore on an already signed-in synthetic profile. Neither has passed. The first emulator attempt stopped before playback.
+**Not ready for the family box. Do not pair or run a test yet.** Wholphin 1.0.9 is the family's signed-in app. The owner chose an in-place update that leaves 1.1.2 installed, not a fresh install. Two isolated emulator rehearsals are required: one to verify recording and cleanup, another to verify the same upgrade and restore on an already signed-in synthetic profile. Neither has passed. Fresh runs stopped before recording; their receipts verify emulator, private ADB and scratch teardown, not WAV or video cleanup. A separate old-app run reached the synthetic Jellyfin session but did not verify Wholphin’s Home screen, so it stopped before the in-place update.
 
 The test plays only synthetic barcodes and tones. It records Android’s screen and the decoded PCM that mpv writes instead of sending to the speakers. It does **not** measure HDMI, passthrough, AudioTrack, speaker timing or A/V sync. A black recording, missing barcode or gap cannot certify that a marked flash was absent.
 

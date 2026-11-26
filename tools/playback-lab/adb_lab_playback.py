@@ -116,7 +116,12 @@ class Playback:
     def _call(self,args,*,timeout=30,bind=None):
         if not self.lab.connected or self.lab.server.poll() is not None:refused()
         cmd=self.lab.client if bind is None else self.lab.bin[:-2]+['--ro-bind',str(bind),'/payload.apk','--','/adb','-H','127.0.0.1','-P',str(PRIVATE_PORT)]
-        return sp.run(cmd+self.lab.target+list(args),env={'PATH':'/usr/bin:/bin'},stdin=sp.DEVNULL,stdout=sp.PIPE,stderr=sp.DEVNULL,timeout=min(240,timeout),check=True).stdout
+        try:
+            return sp.run(cmd+self.lab.target+list(args),env={'PATH':'/usr/bin:/bin'},stdin=sp.DEVNULL,stdout=sp.PIPE,stderr=sp.DEVNULL,timeout=min(240,timeout),check=True).stdout
+        except sp.CalledProcessError as exc:
+            # Only compile-time operation names, never a path, endpoint, text, or child output.
+            if tuple(args) in READS:exc.playback_read=' '.join(args)
+            raise
 
     def _install(self,args,timeout):
         src=Path(args[-1]);old=self.guest and self.family and src.name=='Wholphin-x86_64.apk' and src.parent.name=='v1.0.9'
