@@ -10,6 +10,8 @@ The working research corpus for cleanyfin, organized as a **temperature gradient
 
 ## Current deep-dives (`01-working/`)
 
+- [`testing-approaches.md`](./01-working/testing-approaches.md) — how to test playback on real devices: HDCP, wireless debugging, webcam witness, splitters, emulator, and what each proves.
+
 From the 2026-07-21 research fan-out (six parallel agents, web-sourced, cited):
 
 - [`legal-and-ip-landscape.md`](./01-working/legal-and-ip-landscape.md) — Family Movie Act, VidAngel vs ClearPlay, DMCA §1201, patent landscape, the metadata-only rule.
