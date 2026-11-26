@@ -86,3 +86,15 @@ class PlaybackScope(TestCase):
         with self.assertRaises(LabError):p.run('shell','am','start','-n',ACT)
         with self.assertRaises(LabError):p.qualify('armeabi-v7a')
         p.qualify('x86_64');p.run('shell','am','start','-n',ACT)
+
+    def test_fresh_emulator_install_requires_complete_package_inventory(self):
+        from hashlib import sha256
+        app=self.work/'synthetic.apk';app.write_bytes(b'fixture')
+        for rows,valid in ((b'',False),(b'error',False),(b'package:android\nunknown',False),
+                           (b'package:android\npackage:'+APP.encode(),False),(b'package:android\npackage:other.app',True)):
+            p=Playback(self.lab,self.work,guest=True,family=False);p.qualify('x86_64');p._call=Mock(side_effect=[rows,b'Success'])
+            with patch.dict('adb_lab_playback.ASSETS',{'x86_64':('synthetic.apk',sha256(b'fixture').hexdigest())}):
+                if valid:p._install(('install','--no-streaming',str(app)),30)
+                else:
+                    with self.assertRaises(LabError):p._install(('install','--no-streaming',str(app)),30)
+            self.assertEqual(p.owned_install,valid);self.assertEqual(p._call.call_count,2 if valid else 1)

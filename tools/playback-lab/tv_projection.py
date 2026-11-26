@@ -23,6 +23,18 @@ def active_track(tv,uid,pid):
     return None
 
 
+def compare_mix(native,pcm,ch,enc,matrix,cr):
+    from tv_channel_control import observation,predict
+    quantizer=cr.get('quantization')
+    cr['predictionEncoding']=(quantizer+' signed16, saturated'+(' in float32' if enc==4 else '') if quantizer else 'float32')
+    measured=observation(predict(native,matrix,enc,quantizer),pcm,ch,enc)
+    if cr['validated']:
+        verdict=dict(measured,scope='empirical reduced-channel mix only; never source per-channel identity')
+    else:
+        verdict={'outcome':'unmeasured','reason':'held-out channel-ID signal did not validate the complete mix and quantization model'}
+    return measured,verdict
+
+
 def measure(h,tv,lab,out,matrix):
     probe=out['projection']={'consent':'run-scoped emulator PROJECT_MEDIA app-op; ordinary MediaProjection API','scope':'Wholphin UID AND USAGE_MEDIA; no microphone or virtual display'}
     spec=ff.LAYOUTS[lab.r24_layout];_,_,facts=read(lab,matrix);probe.update(facts)
@@ -36,7 +48,7 @@ def measure(h,tv,lab,out,matrix):
         raw=call('status').decode(errors='replace').strip();tokens=raw.split()
         if tokens[:1] in (['failed'],['expired']):raise RuntimeError('Helper '+(raw if re.fullmatch('[A-Za-z0-9 ]{1,80}',raw) else 'failed'))
         return tokens if tokens[:1]==[expected] else None
-    from tv_channel_control import NAME,calibration,decode,observation,predict,samples
+    from tv_channel_control import NAME,calibration,decode,observation,samples
     def take(label,item,report):
         call('start');ready=h.eventually(lambda:stage('ready'),20,'No initialized playback AudioRecord after projection grant')
         uid,rate,ch,enc=map(int,ready[1:5]);info=report.setdefault('runtime',{});info['captureUid']=uid
@@ -85,10 +97,7 @@ def measure(h,tv,lab,out,matrix):
             cr['sixIndependentLanes']=bool(cr['validated'] and np.allclose(matrix,np.eye(6),atol=.015,rtol=0))
             probe['perChannelIdentityCertified']=bool(cr['sixIndependentLanes'] and probe['comparison']['outcome']=='bit-exact')
         if ch<6:
-            cr['predictionEncoding']='float32' if enc==4 else cr['quantization']+' signed16, saturated'
-            pred=predict(native,matrix,enc,cr.get('quantization','nearest-even'));probe['empiricalMixComparison']=observation(pred,pcm,ch,enc)
-            if cr['validated']:probe['comparison']=dict(probe['empiricalMixComparison'],scope='empirical reduced-channel mix only; never source per-channel identity')
-            else:probe['comparison']['reason']='held-out channel-ID signal did not validate a stable downmix'
+            probe['empiricalMixComparison'],probe['comparison']=compare_mix(native,pcm,ch,enc,matrix,cr)
     finally:
         cleanup=probe['cleanup']={}
         for key in ('stop','default','revoke-audio','remove'):

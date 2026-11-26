@@ -157,7 +157,14 @@ class Playback:
         try:
             with dest.open('xb') as f,src.open('rb') as inp:shutil.copyfileobj(inp,f)
             if not helper and hashlib.sha256(dest.read_bytes()).hexdigest()!=expected:refused()
-            if not updating and self._call(('shell','pm','list','packages',APP)).strip():refused()
+            if not updating:
+                if self.guest and not self.family:
+                    # A filtered pm list can exit nonzero with no matches. Require a
+                    # successful, recognizable stock inventory and the exact app absent.
+                    rows=self._call(('shell','pm','list','packages')).splitlines()
+                    if (b'package:android' not in rows or ('package:'+APP).encode() in rows or
+                        not all(re.fullmatch(rb'package:[A-Za-z0-9_.]+',r) for r in rows)):refused()
+                elif self._call(('shell','pm','list','packages',APP)).strip():refused()
             result=self._call((*args[:-1],'/payload.apk'),timeout=timeout,bind=dest)
             if not self.family and not helper and result.strip().splitlines()[-1:]==[b'Success']:self.owned_install=True
             if helper and result.strip().splitlines()[-1:]==[b'Success']:self.helper_installed=True

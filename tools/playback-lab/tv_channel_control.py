@@ -66,8 +66,13 @@ def calibration(ref,raw,ch,enc):
     result={'trainingCoefficients':matrix.round(8).tolist(),'heldOutCoefficients':held.round(8).tolist(),
             'trainingResidualRms':train,'heldOutResidualRms':residual,'heldOutCoefficientMaxDelta':worst,
             'trainingOffsetsFrames':offsets,'heldOutOffsetsFrames':offsets2,
-            'validated':worst<.015 and max(train+residual)<.002,'independentHeldOutPass':True}
-    if enc==2:
+            'validated':worst<.015 and max(train+residual)<.002 and len(set(offsets+offsets2))==1,'independentHeldOutPass':True}
+    # Float storage can carry already quantized PCM. Detect that from actual active
+    # samples rather than treating the requested/returned encoding as bit depth.
+    vals=y[::11];vals=vals[vals!=0]*32768
+    s16grid=bool(len(vals) and np.all(vals==np.rint(vals)))
+    result['observedS16Grid']=s16grid
+    if enc==2 or s16grid:
         # Identify integer conversion on active samples, not on the silent lanes. Coefficients
         # are already frozen. Select on pass one; require the same rule to predict pass two.
         counts=[]
@@ -89,9 +94,12 @@ def calibration(ref,raw,ch,enc):
 QUANTIZERS={'nearest-even':np.rint,'toward-zero':np.trunc,'floor':np.floor}
 
 
-def predict(raw,matrix,enc,quantizer='nearest-even'):
+def predict(raw,matrix,enc,quantizer=None):
     mixed=samples(raw,6,4).astype(float)@matrix
-    return (np.clip(QUANTIZERS[quantizer](mixed*32768),-32768,32767).astype('<i2') if enc==2 else mixed.astype('<f4')).tobytes()
+    if enc==2 or quantizer:
+        q=np.clip(QUANTIZERS[quantizer or 'nearest-even'](mixed*32768),-32768,32767).astype('<i2')
+        return q.tobytes() if enc==2 else (q.astype('<f4')/32768).tobytes()
+    return mixed.astype('<f4').tobytes()
 
 
 def observation(ref,raw,ch,enc):
@@ -103,9 +111,19 @@ def observation(ref,raw,ch,enc):
     if full:
         outside=int(np.count_nonzero(np.any(y[:at//width]!=0,axis=1))+np.count_nonzero(np.any(y[at//width+len(x):]!=0,axis=1)))
         out.update(outcome='deviation' if outside else 'bit-exact',outsideNonzeroFrames=outside,mismatchedValues=0);return out
-    if len(y)<24000 or not out['nonSilentFrames']:return out
+    if min(len(x),len(y))<24000 or not out['nonSilentFrames']:return out
     # Fit no parameters here. Locate three source windows without requiring a player EOF event.
     marks=[];signal=y[:,0].astype(float);e=np.r_[0.,np.cumsum(signal**2)];n=24000
+    if len(y)>=len(x):
+        w=x[:,0].astype(float);power=float(w@w)
+        if power>0:
+            scores=correlate(signal,w,mode='valid',method='fft')/np.sqrt(np.maximum(power*1e-6,e[len(w):]-e[:-len(w)])*power)
+            best=int(np.argmax(scores));peak=float(scores[best]);scores[max(0,best-95):best+96]=0
+            out['globalAlignment']={'offsetFrames':best,'correlation':peak,'competingPeak':float(scores.max())}
+            if peak>.95 and peak-out['globalAlignment']['competingPeak']>.005:
+                d=y[best:best+len(x)].astype(float)-x
+                out['globalAlignment'].update(mismatchedValues=int(np.count_nonzero(d)),rmsDifference=float(np.sqrt(np.mean(d*d))),
+                                              maxAbsoluteDifference=float(np.max(abs(d))),referenceValues=int(d.size))
     for at in (0,len(x)//2,len(x)-n):
         w=x[at:at+n,0].astype(float);power=float(w@w)
         if power==0:return out

@@ -33,6 +33,10 @@ So, to see what a real box shows, you need a way that either records **before** 
 
 That first run did **not** establish bit identity: Jellyfin stopped reporting the item, no mpv EOF was retained, and no sample comparison was made in that run. An equal rate is not an equal mix. The 20-second picture clock is not the audio reference length either: this MKV decodes 960,000 stereo frames starting 240 frames before video zero. Its complete video-zero reference contains 959,760 frames; do not pad the tail. The MP4 E-AC-3 decoder starts at zero after codec skip and produces 959,744 frames, with no pre-roll to remove.
 
+[Native-width rehearsal](../../delivery/evidence/runs/tv-20261126T051739Z-ece07d998e/summary.json): the helper tried 6, 5, 4 and 3 float input channels; all four index masks raised `IllegalArgumentException` on this API 36 image. Stereo float started (48 kHz). The movie take transferred all 13,557,760 declared bytes. On a separate channel-identification clip, the fitted stereo gains in FL, FR, FC, LFE, SL, SR order were approximately (1,0), (0,1), (.707107,.707107), (.5,.5), (.707108,0), (0,.707106). On six held-out tones the largest gain change was 0.00000245; all 12 tone windows had the same offset. That calibrates the mix, **not** the identity of six source channels. Neither take recorded mpv EOF. A host `TypeError` stopped the movie comparison after calibration; cleanup succeeded. No sample verdict can be inferred from this rehearsal.
+
+The [ordinary MP4 retry](../../delivery/evidence/runs/tv-20261126T052322Z-ee0c3c6fae/summary.json) never played: the package-absence read ahead of APK installation exited 1. It measured no MP4 output.
+
 ## Real-box facts (onn. 4K Pro, read-only probe, 2026-11-25)
 
 - Model `onn 4K Pro Streaming Device` (jarvis2), Android 14 (SDK 34), patch 2026-06-01, Amlogic S905X5M.

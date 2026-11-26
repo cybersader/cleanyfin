@@ -57,3 +57,17 @@ class CaptureControl(TestCase):
         self.assertTrue(result['validated']);self.assertEqual(result['quantization'],'nearest-even');np.testing.assert_allclose(recovered,m,atol=.0001)
         cut=7*48000*4;bad=y[:cut]+predict(raw,m*.72,2)[cut:]
         self.assertFalse(calibration(raw,bytes(4096)+bad,2,2)[1]['validated'])
+
+    def test_live_mix_comparison_with_float_carried_s16(self):
+        from tv_projection import compare_mix
+        rng=np.random.default_rng(94);x=np.zeros((14*48000,6),np.float32)
+        for k in range(2):
+            for c in range(6):
+                a=(1+c+k*6)*48000;x[a:a+38400,c]=rng.uniform(-.12,.12,38400)
+        matrix=np.array([[1,0],[0,1],[.7,.7],[.5,.5],[.7,0],[0,.7]])
+        convert=lambda a:(np.rint((a.astype(float)@matrix)*32768).astype('<f4')/32768).tobytes()
+        m,cr=calibration(x.tobytes(),bytes(1024)+convert(x),2,4)
+        self.assertTrue(cr['validated'] and cr['observedS16Grid'] and cr['quantizerVerified'])
+        movie=rng.uniform(-.08,.08,(72000,6)).astype('<f4');rep,verdict=compare_mix(movie.tobytes(),bytes(512)+convert(movie),2,4,m,cr)
+        self.assertIn(verdict['outcome'],('deviation','bit-exact'));self.assertEqual(rep['referenceFrames'],72000)
+        self.assertEqual(cr['predictionEncoding'],'nearest-even signed16, saturated in float32')
