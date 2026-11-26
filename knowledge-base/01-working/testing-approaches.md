@@ -42,6 +42,7 @@ So, to see what a real box shows, you need a way that either records **before** 
 
 ## Rules that apply to every approach
 
+- **Never announce the owner's identity to a device.** `adb pair` sends the debug key's label, by default `user@hostname`, and the box stores it under Paired devices. Use a dedicated key labelled `cleanyfin-lab` and an isolated adb server. Do the same for any client or device name. After testing, forget the PC under Paired devices. (Learned 2026-11-25: the default label was sent once and had to be forgotten on the box.)
 - Only record Cleanyfin's own synthetic test clips, never streaming services or the family's media.
 - Every change to a household device is recorded first and put back after, with a before/after proof. Turn debugging off when done.
 - A gap in a recording means **unmeasured**, never passed.
