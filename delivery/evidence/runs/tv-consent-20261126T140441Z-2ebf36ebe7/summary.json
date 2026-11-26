@@ -1,0 +1,101 @@
+{
+  "mode": "private-consent-observation",
+  "consentClicked": false,
+  "playback": false,
+  "screenrecordAbsentBefore": true,
+  "helperAbsentBefore": true,
+  "systemUi": [
+    {
+      "class": "android.widget.FrameLayout",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.FrameLayout",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.FrameLayout",
+      "resource-id": "android:id/content",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.ScrollView",
+      "resource-id": "com.android.systemui:id/screen_share_permission_dialog",
+      "focused": "true",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.LinearLayout",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.ImageView",
+      "resource-id": "com.android.systemui:id/screen_share_dialog_icon",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.TextView",
+      "resource-id": "com.android.systemui:id/screen_share_dialog_title",
+      "text": "Share your screen with Disposable TV fixture inp\u2026?",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.Spinner",
+      "resource-id": "com.android.systemui:id/screen_share_mode_options",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.TextView",
+      "text": "Share entire screen",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.TextView",
+      "resource-id": "com.android.systemui:id/text_warning",
+      "text": "When you\u2019re sharing your entire screen, anything on your screen is visible to Disposable TV fixture inp\u2026. So be careful with things like passwords, payment details, messages, photos, and audio and video.",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.LinearLayout",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.Button",
+      "resource-id": "android:id/button2",
+      "text": "CANCEL",
+      "focused": "false",
+      "enabled": "true"
+    },
+    {
+      "class": "android.widget.Button",
+      "resource-id": "android:id/button1",
+      "text": "SHARE SCREEN",
+      "focused": "false",
+      "enabled": "true"
+    }
+  ],
+  "systemDialogIdentity": {
+    "matchingRecords": [],
+    "recordCount": 0
+  },
+  "stop": true,
+  "revoke-audio": true,
+  "remove": true,
+  "helperAbsentAfter": true,
+  "screenrecordRemoved": true,
+  "combinedCleanupVerified": true,
+  "privateAdbExited": true,
+  "scratchRemoved": true,
+  "namespaceExited": true,
+  "emulatorExited": true
+}

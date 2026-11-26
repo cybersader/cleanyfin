@@ -12,8 +12,8 @@ import java.nio.charset.StandardCharsets;
 /** Bounded PCM only, in MODE_PRIVATE files. No microphone source or virtual display. */
 public final class ProjectionRecorder extends Service {
     private volatile boolean done;
-    private void status(String s) throws IOException {
-        try (FileOutputStream f=openFileOutput("status.new",MODE_PRIVATE)) { f.write(s.getBytes(StandardCharsets.US_ASCII)); }
+    private void status(String requestId,String s) throws IOException {
+        try (FileOutputStream f=openFileOutput("status.new",MODE_PRIVATE)) { f.write((requestId==null ? s : requestId+" "+s).getBytes(StandardCharsets.US_ASCII)); }
         if (!new File(getFilesDir(),"status.new").renameTo(new File(getFilesDir(),"status"))) throw new IOException();
     }
     @Override public IBinder onBind(Intent i) { return null; }
@@ -23,10 +23,10 @@ public final class ProjectionRecorder extends Service {
         nm.createNotificationChannel(new NotificationChannel("control","Synthetic audio control",NotificationManager.IMPORTANCE_LOW));
         startForeground(1,new Notification.Builder(this,"control").setSmallIcon(android.R.drawable.ic_media_play)
             .setContentTitle("Recording synthetic Wholphin playback").build(),ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
-        new Thread(()->capture(i.getParcelableExtra("grant",Intent.class), i.getBooleanExtra("stereo", false))).start();
+        new Thread(()->capture(i.getParcelableExtra("grant",Intent.class), i.getBooleanExtra("stereo", false),i.getStringExtra("requestId"))).start();
         return START_NOT_STICKY;
     }
-    private void capture(Intent grant, boolean stereo) {
+    private void capture(Intent grant, boolean stereo,String requestId) {
         MediaProjection projection=null; AudioRecord record=null; String result="failed";
         try {
             projection=getSystemService(MediaProjectionManager.class).getMediaProjection(Activity.RESULT_OK,grant);
@@ -60,7 +60,7 @@ public final class ProjectionRecorder extends Service {
             java.nio.ByteBuffer direct=java.nio.ByteBuffer.allocateDirect(24576);byte[] data=new byte[direct.capacity()];
             long end=SystemClock.elapsedRealtime()+90000;
             try (FileOutputStream f=openFileOutput("control.pcm",MODE_PRIVATE)) {
-                status("ready "+format);
+                status(requestId,"ready "+format);
                 while(!done && SystemClock.elapsedRealtime()<end && total<limit) {
                     direct.clear();int n=record.read(direct,direct.capacity(),AudioRecord.READ_NON_BLOCKING);
                     if(n<0)throw new IOException();if(n==0){SystemClock.sleep(5);continue;}
@@ -71,7 +71,7 @@ public final class ProjectionRecorder extends Service {
         } catch(Exception e) {result="failed "+e.getClass().getSimpleName();}
         finally {
             try { if(record!=null) record.release(); } finally { if(projection!=null) projection.stop(); }
-            try {status(result);} catch(IOException ignored) {} stopForeground(STOP_FOREGROUND_REMOVE); stopSelf();
+            try {status(requestId,result);} catch(IOException ignored) {} stopForeground(STOP_FOREGROUND_REMOVE); stopSelf();
         }
     }
     @Override public void onDestroy(){done=true;super.onDestroy();}

@@ -389,6 +389,7 @@ def install_input(tv,*,capture_only=False):
         raise RuntimeError('Wholphin did not expose Save for the verified mpv.conf text; device mode installs no helper package')
     root=tv.work/'input'; root.mkdir(exist_ok=True)
     apk=root/'input.apk'; android=tv.sdk/'platforms/android-36/android.jar'; tools=tv.sdk/'build-tools/36.0.0'
+    if capture_only and apk.exists():raise ValueError('capture helper must be freshly built for this run')
     if not apk.exists():
         manifest=root/'AndroidManifest.xml'
         sources=[HERE/'TvInput.java']
@@ -396,7 +397,11 @@ def install_input(tv,*,capture_only=False):
             shutil.copyfile(HERE/'ProjectionManifest.xml',manifest)
             if capture_only:
                 import xml.etree.ElementTree as ET
-                xml=ET.parse(manifest);xml.getroot().remove(xml.getroot().find('instrumentation'));xml.write(manifest);sources=[]
+                import secrets
+                tv.capture_helper_label='CF Lab '+secrets.token_hex(5)
+                xml=ET.parse(manifest);xml.getroot().remove(xml.getroot().find('instrumentation'))
+                xml.getroot().find('application').set('{http://schemas.android.com/apk/res/android}label',tv.capture_helper_label)
+                xml.write(manifest);sources=[]
             sources.extend([HERE/'ProjectionConsent.java',HERE/'ProjectionRecorder.java'])
         else:
             manifest.write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.cleanyfin.fixture"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="Disposable TV fixture input"/><instrumentation android:name=".TvInput" android:targetPackage="org.cleanyfin.fixture"/></manifest>')
@@ -407,6 +412,7 @@ def install_input(tv,*,capture_only=False):
         key=root/'test.jks'; run('keytool','-genkeypair','-keystore',key,'-alias','fixture','-keyalg','RSA','-keysize','2048','-validity','2','-storepass','disposable','-keypass','disposable','-dname','CN=Disposable Fixture')
         run(tools/'apksigner','sign','--ks',key,'--ks-pass','pass:disposable','--out',apk,plain)
     if capture_only:
+        if ("application: label='"+tv.capture_helper_label+"' icon=''").encode() not in run(tools/'aapt2','dump','badging',apk).splitlines():raise ValueError('fresh helper label not verified')
         tv.transport.install_capture_helper(apk,hashlib.sha256(apk.read_bytes()).hexdigest());return
     if hasattr(tv,'transport') and tv.transport.guest:tv.transport.local_inputs.add(apk)
     tv.adb('install','-r','--no-streaming',apk,timeout=60)

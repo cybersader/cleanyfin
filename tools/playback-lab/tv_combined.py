@@ -1,4 +1,5 @@
 """Compositor + Android's Wholphin-only media mix. No HDMI or common-clock claim."""
+import re
 import subprocess
 import sys
 from tv_internal import InternalCapture
@@ -39,9 +40,9 @@ class CombinedCapture(InternalCapture):
             text=call('status').decode('ascii').split()
             if text[:1] in (['failed'],['expired']):raise RuntimeError('playback capture failed or expired')
             return text if text[:1]==[want] else None
-        ready=h.eventually(lambda:status('ready'),30,'no initialized stereo playback capture after stock consent')
+        ready=h.eventually(lambda:status('ready'),120 if tv.emulator is None else 30,'no fresh projection callback with initialized stereo playback capture after stock consent')
         if len(ready)!=8 or list(map(int,ready[2:5]))!=[48000,2,2]:raise ValueError('playback mix did not negotiate stereo s16 48000 Hz')
-        info.update(captureUid=int(ready[1]),audioTap=self.label,expectedAudioDriver='audiotrack')
+        info.update(freshProjectionCallback=True,captureUid=int(ready[1]),audioTap=self.label,expectedAudioDriver='audiotrack')
         audio=tv.work/(label+'.pcm');audio.unlink(missing_ok=True)
         video=h.capture_display(tv,s,label,limit,info,device_path=self.paths.video,android_only=True)
         def finish():
@@ -57,20 +58,38 @@ class CombinedCapture(InternalCapture):
 
     def start_consent(self,h,tv,call):
         # No shell app-op grant, on either route. Actual owner consent on the box.
-        call('start')
+        label=tv.capture_helper_label
+        if not re.fullmatch('CF Lab [a-f0-9]{10}',label):raise ValueError('no unique verified helper label')
         if tv.emulator is None:
-            print('Approve the Android capture prompt for Disposable TV fixture input on the TV.',file=sys.stderr,flush=True);return
-        # Private synthetic guest only. Do not accept any unrelated prompt.
+            print(f'On the TV, use the remote only if the stock Share screen dialog names {label} exactly. Cancel if it differs or is unexpected. Waiting up to two minutes for this request; the harness will not press a key.',file=sys.stderr,flush=True)
+        call('start')
+        if tv.emulator is not None:self.approve_private(h,tv)
+
+    def approve_private(self,h,tv):
+        if tv.emulator is None or not tv.transport.guest or tv.found.get('emulator') is not True:raise ValueError('private consent requires a verified synthetic guest')
         ui=h.DeviceScreen(tv)
         def approve():
-            nodes=ui.tree();sysui=[n for n in nodes if n.get('package')=='com.android.systemui']
-            # Structural diagnostics on the synthetic guest only; no arbitrary UI text in receipts.
-            known={'start now','start','share','allow','cancel','share screen','entire screen','share entire screen'}
-            tv.internal_state['syntheticConsent']={'systemUiNodes':len(sysui),'helperLabelSeen':any('Disposable TV fixture input' in n.get('text','') for n in sysui),
-                'stockActions':sorted({n.get('text','').casefold() for n in sysui}&known),'button1':any(n.get('resource-id')=='android:id/button1' for n in sysui)}
-            if not any('Disposable TV fixture input' in n.get('text','') for n in sysui):return False
-            buttons=[n for n in sysui if n.get('resource-id')=='android:id/button1' and n.get('text','').casefold() in ('start now','start','share','allow') and n.get('enabled')=='true']
-            if len(buttons)!=1:return False
-            if buttons[0].get('focused')=='true':ui.key('DPAD_CENTER');return True
-            ui.key('DPAD_RIGHT');return False
-        h.eventually(approve,20,'stock emulator projection consent not verified')
+            key=private_consent_key(ui.tree(),tv.capture_helper_label)
+            if key is None:return False
+            ui.key(key);return key=='DPAD_CENTER'
+        h.eventually(approve,30,'stock emulator projection consent not verified')
+
+
+def private_consent_key(nodes,label):
+    if not re.fullmatch('CF Lab [a-f0-9]{10}',label):return None
+    sysui=[n for n in nodes if n.get('package')=='com.android.systemui'];prefix='com.android.systemui:id/'
+    def unique(resource):
+        found=[n for n in sysui if n.get('resource-id')==resource];return found[0] if len(found)==1 else None
+    root=unique(prefix+'screen_share_permission_dialog');title=unique(prefix+'screen_share_dialog_title');warning=unique(prefix+'text_warning')
+    share=unique('android:id/button1');cancel=unique('android:id/button2')
+    if any(n is None for n in (root,title,warning,share,cancel)):return None
+    if (title.get('text')!=f'Share your screen with {label}?' or
+        warning.get('text','').count('visible to '+label+'.')!=1 or not any(n.get('text')=='Share entire screen' for n in sysui) or
+        share.get('class')!='android.widget.Button' or share.get('text')!='SHARE SCREEN' or share.get('enabled')!='true' or
+        cancel.get('class')!='android.widget.Button' or cancel.get('text')!='CANCEL'):return None
+    focus=[n for n in nodes if n.get('focused')=='true']
+    if len(focus)!=1 or focus[0].get('package')!='com.android.systemui':return None
+    if focus[0] is share:return 'DPAD_CENTER'
+    if focus[0] is cancel:return 'DPAD_RIGHT'
+    if focus[0] is root or focus[0] is unique(prefix+'screen_share_mode_options'):return 'DPAD_DOWN'
+    return None

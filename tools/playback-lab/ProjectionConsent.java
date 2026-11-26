@@ -21,7 +21,12 @@ public final class ProjectionConsent extends Activity {
     @Override protected void onActivityResult(int request, int result, Intent grant) {
         super.onActivityResult(request, result, grant);
         if (request==1 && result==RESULT_OK && grant!=null) {
-            startForegroundService(new Intent(this, ProjectionRecorder.class).putExtra("grant",grant).putExtra("stereo", "stereo".equals(getIntent().getAction())));
+            boolean stereo="stereo".equals(getIntent().getAction());
+            String requestId=getIntent().getStringExtra("requestId");
+            if (!stereo || (requestId!=null && requestId.matches("[0-9a-f]{24}"))) {
+                startForegroundService(new Intent(this, ProjectionRecorder.class).putExtra("grant",grant)
+                    .putExtra("stereo",stereo).putExtra("requestId",stereo ? requestId : null));
+            }
         }
         finish();
     }

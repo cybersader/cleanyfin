@@ -1,0 +1,12 @@
+{
+  "mode": "private-consent-callback",
+  "consentClicked": false,
+  "playback": false,
+  "screenrecordAbsentBefore": true,
+  "helperAbsentBefore": true,
+  "privateAdbExited": true,
+  "blocker": "ValueError",
+  "scratchRemoved": true,
+  "namespaceExited": true,
+  "emulatorExited": true
+}

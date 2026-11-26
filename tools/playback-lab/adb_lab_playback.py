@@ -280,9 +280,17 @@ class Playback:
              'pcm':('exec-out','run-as',pkg,'cat','files/control.pcm'),
              'status':('exec-out','run-as',pkg,'cat','files/status'),
              'remove':('uninstall',pkg),'present':('shell','pm','list','packages',pkg)}
-        if family_capture:ops['start']=('shell','am','start','-n',activity,'-a','stereo')
+        if family_capture and op=='start':
+            self.projection_request_id=secrets.token_hex(12)
+            ops['start']=('shell','am','start','-n',activity,'--es','requestId',self.projection_request_id,'-a','stereo')
         if op not in ops:refused()
-        return self._call(ops[op],timeout=20)
+        data=self._call(ops[op],timeout=20)
+        if family_capture and op=='status':
+            # A prior take's ready file or an owner cancelling must never confirm a new grant.
+            tag,_,state=data.partition(b' ')
+            if not getattr(self,'projection_request_id',None) or tag!=self.projection_request_id.encode():return b'pending'
+            return state
+        return data
 
     def allowed_ports(self):return {'tcp:18096','tcp:18097'} if self.guest and self.family else {'tcp:18096'}
 
