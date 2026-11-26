@@ -254,6 +254,7 @@ class TV:
         return [*self.prefix, str(self.sdk/'platform-tools/adb'), '-P', '5037', '-s', 'emulator-5580', *map(str,args)]
 
     def adb(self, *args, **kw):
+        if hasattr(self,"transport"):return self.transport.run(*args,**kw)
         return run(*self.adb_args(*args), env=self.env, **kw)
 
     def boot(self):
@@ -265,8 +266,10 @@ class TV:
         self.call('pactl','load-module','module-null-sink','sink_name=fixture','rate=48000','channels=2')
         self.env.update(QEMU_AUDIO_DRV='pa', QEMU_PA_SERVER=self.env['PULSE_SERVER'], QEMU_PA_SINK='fixture',
                         QEMU_AUDIO_DAC_FIXED_SETTINGS='1',QEMU_AUDIO_DAC_FIXED_FREQ='48000',QEMU_AUDIO_DAC_FIXED_CHANNELS='2')
-        self.spawn(self.prefix+[self.sdk/'platform-tools/adb','-L','tcp:5037','server','nodaemon'], 'adb')
-        eventually(lambda: b':5037' in self.call('ss','-ltn'), 8, 'Private adb server unavailable')
+        if hasattr(self,'transport'):self.transport.boot_guest(self)
+        else:  # Only verify-adb-label.py's independent, neutral bootstrap-key witness.
+            self.spawn(self.prefix+[self.sdk/'platform-tools/adb','-L','tcp:5037','server','nodaemon'], 'adb')
+            eventually(lambda: b':5037' in self.call('ss','-ltn'), 8, 'Private adb server unavailable')
         # SDK 37.2.12's -headless binary has stub PulseAudio functions. The
         # full engine supports -no-window too, and actually links libpulse.
         em=self.sdk/'emulator'; libs=em/'lib64'
@@ -288,6 +291,7 @@ class TV:
         self.emu = self.spawn(self.prefix+[em/'qemu/linux-x86_64/qemu-system-x86_64','-avd','lab','-accel','on','-no-window',
                               '-no-snapshot','-no-boot-anim','-port','5580','-no-metrics','-gpu',self.gpu,'-feature','-Vulkan',
                               '-audio','pa','-crash-report-mode','disabled','-show-kernel','-memory',str(self.ram_mib),'-cores','4'], 'emulator')
+        if hasattr(self,'transport'):self.transport.attach_guest(self)
         def ready():
             if self.emu.poll() is not None:
                 raise RuntimeError('Emulator exited before Android boot completed')
@@ -349,8 +353,9 @@ def setup_lab(work,tv,stack,line=None,layout=None):
     sock=lab.work/'config/tv.sock'
     eventually(sock.is_socket,8,'Jellyfin Unix relay did not start')
     lab.wire_log=tv.work/'relay.log'
-    tv.spawn(tv.prefix+[sys.executable,'-I',HERE/'tv-wire.py',str(sock),lab.item,lab.pointer],'relay')
-    eventually(lambda: lab.server_version.encode() in tv.call('curl','--noproxy','*','-fsS','--max-time','2','http://127.0.0.1:18096'+kit.BASE+'/System/Info/Public'),10,'TV lab origin unavailable')
+    prefix=tv.transport.bridge(LAB_PORT,sock) if isinstance(tv,DeviceTV) else tv.prefix
+    tv.spawn(prefix+[sys.executable,'-I',HERE/'tv-wire.py',str(sock),lab.item,lab.pointer],'relay')
+    eventually(lambda: lab.server_version.encode() in run(*prefix,'curl','--noproxy','*','-fsS','--max-time','2','http://127.0.0.1:18096'+kit.BASE+'/System/Info/Public'),10,'TV lab origin unavailable')
     return lab
 
 
@@ -393,6 +398,7 @@ def install_input(tv):
         with zipfile.ZipFile(plain,'a') as z:z.write(root/'classes.dex','classes.dex')
         key=root/'test.jks'; run('keytool','-genkeypair','-keystore',key,'-alias','fixture','-keyalg','RSA','-keysize','2048','-validity','2','-storepass','disposable','-keypass','disposable','-dname','CN=Disposable Fixture')
         run(tools/'apksigner','sign','--ks',key,'--ks-pass','pass:disposable','--out',apk,plain)
+    if hasattr(tv,'transport') and tv.transport.guest:tv.transport.local_inputs.add(apk)
     tv.adb('install','-r','--no-streaming',apk,timeout=60)
 
 class Screen:
@@ -404,7 +410,7 @@ class Screen:
         import xml.etree.ElementTree as ET
         # A new remote filename for each snapshot; do not overwrite another session's UI
         # dump or leave profile/settings text behind when a parse fails. Never log the XML.
-        path='/data/local/tmp/cleanyfin-ui-'+os.urandom(12).hex()+'.xml'
+        path=self.tv.transport.ui_path() if hasattr(self.tv,'transport') else '/data/local/tmp/cleanyfin-ui-'+os.urandom(12).hex()+'.xml'
         try:
             self.tv.adb('shell','uiautomator','dump',path,timeout=12)
             nodes=list(ET.fromstring(self.tv.adb('exec-out','cat',path)).iter('node'))
@@ -648,20 +654,25 @@ def capture_display(tv,stack,label,limit,info,*,device_path=None,android_only=Fa
     log=tv.work/(label+'-display.log')
     args=['screenrecord','--verbose','--size',DISPLAY_CAPTURE_SIZE,'--bit-rate','4000000',
           '--time-limit',str(math.ceil(limit+8)),device_path]
+    port=getattr(tv,'transport',None)
+    if port and not android_only and port.guest:port.capture.add(device_path)
     shell='printf "%s\\n" "$$"; exec '+shlex.join(args)
     def console(*args):
         result=tv.adb('emu','screenrecord',*args,timeout=5)
         return b'OK' in result and b'KO:' not in result
     with ExitStack() as trial:
-        proc=trial.enter_context(owned(tv.adb_args('shell','sh','-c',shlex.quote(shell)),tv.env,log))
+        argv=port.recorder(device_path,math.ceil(limit+8)) if port else tv.adb_args('shell','sh','-c',shlex.quote(shell))
+        proc=trial.enter_context(owned(argv,tv.env,log))
         def identify():
             lines=log.read_bytes().splitlines()
             return lines[0].decode() if lines and lines[0].isdigit() else None
         def finish():
             pid=identify()
             if pid and proc.poll() is None:
-                try: tv.adb('shell','kill','-INT',pid,timeout=3)
-                except (sp.CalledProcessError,sp.TimeoutExpired):pass
+                try:
+                    if port:port.stop_recorder(device_path,pid)
+                    else:tv.adb('shell','kill','-INT',pid,timeout=3)
+                except (RuntimeError,sp.CalledProcessError,sp.TimeoutExpired):pass
             try:proc.wait(timeout=6)
             except sp.TimeoutExpired:info['displayStop']='Android recorder did not acknowledge SIGINT'
             try:tv.adb('pull',device_path,video,timeout=12)
@@ -685,6 +696,7 @@ def capture_display(tv,stack,label,limit,info,*,device_path=None,android_only=Fa
     if android_only:
         info['displayTap']='SurfaceFlinger timing only; Android screenrecord unavailable, no frame identities'
         return None
+    if port:raise RuntimeError('Android screenrecord failed on the qualified playback transport; no host substitute')
     video=tv.work/(label+'.webm')
     if not console('start','--size','640x360','--time-limit',str(math.ceil(limit+8)),'--fps','60',str(video)):
         raise RuntimeError('Neither Android compositor nor host display recorder started')
@@ -1271,27 +1283,9 @@ class DeviceTV:
     def call(self,*args,**kw):
         return run(*self.prefix,*args,env=self.env,**kw)
 
-    def adb_args(self,*args):
-        target=['-s',self.serial] if self.serial else []
-        return [*self.prefix,str(self.sdk/'platform-tools/adb'),'-P',str(self.port),*target,*map(str,args)]
-
-    def adb(self,*args,**kw):
-        return run(*self.adb_args(*args),env=self.env,**kw)
-
-    def start_server(self):
-        self.spawn(self.prefix+[self.sdk/'platform-tools/adb','-L',f'tcp:localhost:{self.port}','server','nodaemon'],'adb')
-        eventually(lambda:self.adb('version',timeout=3) and self.adb('devices',timeout=3) is not None,10,'Private adb server unavailable')
-
-    def pair(self,address,code):
-        # The code goes to adb on stdin: not in argv, logs or the summary.
-        out=run(*self.adb_args('pair',address),env=self.env,input=(code+'\n').encode(),timeout=30)
-        if b'Successfully paired' not in out:raise RuntimeError('Wireless debugging pairing was not accepted')
-
-    def connect(self,address):
-        out=self.adb('connect',address,timeout=20)
-        if b'connected to' not in out:raise RuntimeError('Could not connect to the box at the debugging address')
-        self.serial=address
-        eventually(lambda:self.adb('get-state',timeout=4).strip()==b'device',20,'Box did not become ready over wireless debugging')
+    def bind(self,transport):
+        self.transport=transport
+        if self.internal:transport.bind_capture(self.capture.paths)
         size=re.findall(rb'(\d+)x(\d+)',self.adb('shell','wm','size',timeout=8))
         if size:
             w,h=map(int,size[-1]);self.ui_scale=(w/1280,h/720);self.found['uiSize']=f'{w}x{h}'
@@ -1413,7 +1407,7 @@ def seed_update_rehearsal(tv,work,stack):
     cfg=lab.api('/System/Configuration',user=lab.admin);cfg['ServerName']='Synthetic Household';lab.api('/System/Configuration','POST',cfg,user=lab.admin)
     port=LAB_PORT+1;lab.public_origin=f'http://127.0.0.1:{port}'+kit.BASE
     run('docker','exec','-d',lab.cid,'perl','-e',RELAY);sock=lab.work/'config/tv.sock';eventually(sock.is_socket,8,'synthetic baseline relay unavailable')
-    tv.spawn(tv.prefix+[sys.executable,'-I',HERE/'tv-wire.py',str(sock),lab.item,'unused',str(port)],'baseline-relay')
+    tv.spawn(tv.transport.bridge(port,sock)+[sys.executable,'-I',HERE/'tv-wire.py',str(sock),lab.item,'unused',str(port)],'baseline-relay')
     tv.adb('reverse','--no-rebind',f'tcp:{port}',f'tcp:{port}',timeout=8)
     stack.callback(lambda:tv.adb('reverse','--remove',f'tcp:{port}',timeout=8))
     ui=DeviceScreen(tv);ui.connect_lab(lab);ui.enter_advanced()
@@ -1431,27 +1425,28 @@ def device_session(opts,work,sdk,stack,summary,history):
         capture=InternalCapture(Paths(os.urandom(12).hex()))
     elif opts.capture_file:capture=FileCapture(work,dev.capture_files(opts.capture_file))
     else:capture=adapter_capture(work,opts,summary)
+    from adb_lab import AdbLab
+    from adb_lab_playback import Playback
     if opts.dry_run_emulator:
+        emu=None
+        def observe_guest_exit():
+            if emu is not None:
+                summary['privateNamespaceExited']=emu.ns.poll() is not None
+                if hasattr(emu,'emu'):summary['emulatorExited']=emu.emu.poll() is not None
+        stack.callback(observe_guest_exit)
         emu=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads,opts.r24);emu.host_history=history
+        emu.transport=Playback.guest_session(stack,work,sdk,family=bool(opts.existing_wholphin),receipt=summary)
         emu.boot();summary['graphicsAdapter']=emu.graphicsAdapter
-        tv=DeviceTV(work,sdk,stack,prefix=emu.prefix,env=emu.env,port=5037,capture=capture,emulator=emu)
-        tv.connect('127.0.0.1:5581')  # the emulator's adb port, as a TCP device: same path as the box
+        tv=DeviceTV(work,sdk,stack,prefix=emu.prefix,env=emu.env,port=None,capture=capture,emulator=emu)
+        tv.bind(emu.transport)
     else:
         import warnings
         with warnings.catch_warnings():
             warnings.simplefilter('error',getpass.GetPassWarning)
-            pair,code,address=dev.connection({} if opts.r24 else os.environ,input,getpass.getpass)
-        for key in [k for k in os.environ if k.startswith('CLEANYFIN_TV_')]:os.environ.pop(key)  # this run only
-        home=work/'home';home.mkdir(mode=0o700)
-        env=dict(dev.env_without_secrets(os.environ),HOME=str(home),ANDROID_USER_HOME=str(home/'.android'),
-                 ADB_MDNS='0',ADB_MDNS_AUTO_CONNECT='0',ADB_MDNS_OPENSCREEN='0',ADB_LOCAL_TRANSPORT_MAX_PORT='0')  # no discovery
-        tv=DeviceTV(work,sdk,stack,prefix=(),env=env,port=free_port(),capture=capture)
-        tv.start_server();tv.pair(pair,code);del code
-        tv.connect(address)
-        def disconnect():
-            try:tv.adb('disconnect',address,timeout=8)
-            except (sp.CalledProcessError,sp.TimeoutExpired):pass
-        stack.callback(disconnect)
+            pair,code,address=dev.connection({},input,getpass.getpass)
+        client=stack.enter_context(AdbLab());client.pair(pair,code);del code;client.connect(address)
+        tv=DeviceTV(work,sdk,stack,prefix=(),env=dev.env_without_secrets(os.environ),port=None,capture=capture)
+        tv.bind(Playback(client,work,guest=False,family=bool(opts.existing_wholphin)))
     tv.host_history=history
     text=lambda *a:tv.adb(*a,timeout=30).decode(errors='replace')
     props=dev.parse_getprop(text('shell','getprop'))
@@ -1460,6 +1455,7 @@ def device_session(opts,work,sdk,stack,summary,history):
     tv.found.update(found);summary['device']={k:v for k,v in tv.found.items()}
     print('Connected device:',json.dumps(summary['device']),file=sys.stderr,flush=True)
     if not ok:raise RuntimeError('Refusing device: '+why)
+    tv.transport.qualify(found['abi'])
     if opts.existing_wholphin:
         from tv_update import check_update_target
         check_update_target(found,rehearsal=opts.dry_run_emulator)
@@ -1860,8 +1856,8 @@ def main():
         if not feed.is_dir():parser.error('R24 requires a pre-staged offline NuGet feed')
         os.environ['CLEANYFIN_NUGET_FEED']=str(feed.resolve())
     if opts.preflight:return preflight(opts)
-    if opts.device and opts.r24 and not opts.dry_run_emulator:
-        parser.error('R24 physical testing is closed pending the shared private ADB transport and emulator rehearsals; no device contacted')
+    if opts.device and not opts.dry_run_emulator:
+        parser.error('Physical playback remains closed pending verified emulator capture and update rehearsals; no device contacted')
     if (opts.capture_file or opts.dry_run_emulator) and not opts.device:parser.error('--capture-file and --dry-run-emulator need --device')
     if opts.dry_run_emulator and not (opts.capture_file or opts.no_capture):parser.error('--dry-run-emulator has no HDMI adapter; give --capture-file')
     try:import numpy  # Fail before starting services if PCM analysis cannot run.
@@ -1953,6 +1949,8 @@ def main():
                 raw['milestone']='private emulator and audio boot'
                 tv=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads,opts.r24)
                 summary.update(declaredGpu=opts.gpu,llvmpipeThreadsRequested=opts.llvmpipe_threads,guestRamMiB=opts.ram_mib);tv.host_history=history
+                from adb_lab_playback import Playback
+                tv.transport=Playback.guest_session(stack,work,sdk,receipt=summary)
                 tv.boot();summary['graphicsAdapter']=tv.graphicsAdapter
                 print('Emulator graphics:',tv.graphicsAdapter or opts.gpu+' requested; renderer not reported',file=sys.stderr,flush=True)
                 tv.adb('install','--no-streaming',apk,timeout=75)

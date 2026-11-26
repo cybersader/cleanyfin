@@ -47,10 +47,10 @@ class InternalTests(unittest.TestCase):
     def test_interlock_refuses_failed_cleanup_or_camera_substitute(self):
         keys='wholphinAbsentBefore pathsVerifiedAbsentBeforeOptions pcmRemoved screenrecordRemoved labAppAndMpvOptionsRemoved'.split()
         row=dict(mode='device-internal',dryRun=True,device={'emulator':True},captureHarnessSha256='x',restored=True,
-                 privateNamespaceExited=True,emulatorExited=True,scratchRemoved=True,ownedContainersRemaining=0,
+                 privateAdbExited=True,privateNamespaceExited=True,emulatorExited=True,scratchRemoved=True,ownedContainersRemaining=0,
                  observations={'controls':{k:{'tapVerified':True} for k in ('positive','held-out')}},internalRestore=dict.fromkeys(keys,True))
         self.assertTrue(tap.emulator_proof(row,'x'));self.assertFalse(tap.emulator_proof(row,'z'))
-        for key in ('restored','scratchRemoved','privateNamespaceExited'):
+        for key in ('restored','scratchRemoved','privateNamespaceExited','privateAdbExited'):
             self.assertFalse(tap.emulator_proof(dict(row,**{key:False}),'x'))
         for key in keys:
             miss=copy.deepcopy(row);miss['internalRestore'][key]=False;self.assertFalse(tap.emulator_proof(miss,'x'))
@@ -59,7 +59,7 @@ class InternalTests(unittest.TestCase):
     def test_fresh_and_family_rehearsals_are_not_interchangeable(self):
         restore=dict(wholphinAbsentBefore=False,pathsVerifiedAbsentBeforeOptions=True,pcmRemoved=True,screenrecordRemoved=True)
         row=dict(mode='device-internal',dryRun=True,device={'emulator':True},captureHarnessSha256='x',restored=True,
-                 privateNamespaceExited=True,emulatorExited=True,scratchRemoved=True,ownedContainersRemaining=0,
+                 privateAdbExited=True,privateNamespaceExited=True,emulatorExited=True,scratchRemoved=True,ownedContainersRemaining=0,
                  observations={'controls':{k:{'tapVerified':True} for k in ('positive','held-out')}},internalRestore=restore,
                  familyUpdate=dict(visibleStateRestored=True,inPlaceUpdateReported=True,syntheticBaselineSeeded=True,
                                    beforeUI={'profile':'one'},afterUpdate={'profile':'one'},afterRestore={'profile':'one'}))

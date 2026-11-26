@@ -88,6 +88,7 @@ class FamilyUI:
             # Stop the lab PCM writer and restore its settings before returning to family
             # media. No member's playback should be captured to the temporary WAV.
             backend,options=self.read_settings()
+            self.tv.transport.bind_original_options(original)
             if options!=original.options:
                 self.restart();self.ui.enter_advanced();self.ui.save_mpv(original.options)
             if backend!=original.backend:

@@ -112,7 +112,7 @@ class InternalCapture:
 
 def harness_digest(here):
     h=hashlib.sha256()
-    for name in ('tv-harness.py','tv_internal.py','tv_r24.py','tv_device.py','tv_score.py','tv_pcm.py','tv_family_ui.py','tv_update.py'):
+    for name in ('tv-harness.py','tv_internal.py','tv_r24.py','tv_device.py','tv_score.py','tv_pcm.py','tv_family_ui.py','tv_update.py','adb_lab.py','adb_lab_playback.py','tv-wire.py'):
         h.update((here/name).read_bytes());h.update(b'\0')
     return h.hexdigest()
 
@@ -128,7 +128,7 @@ def emulator_proof(row,digest,*,update=False):
     elif not (restore.get('wholphinAbsentBefore') is True and restore.get('labAppAndMpvOptionsRemoved') is True):return False
     return (row.get('mode')=='device-internal' and row.get('dryRun') is True and row.get('device',{}).get('emulator') is True
             and row.get('captureHarnessSha256')==digest and row.get('restored') is True and row.get('scratchRemoved') is True
-            and row.get('privateNamespaceExited') is True and row.get('emulatorExited') is True and row.get('ownedContainersRemaining')==0
+            and row.get('privateAdbExited') is True and row.get('privateNamespaceExited') is True and row.get('emulatorExited') is True and row.get('ownedContainersRemaining')==0
             and all(restore.get(k) is True for k in ('pathsVerifiedAbsentBeforeOptions','pcmRemoved','screenrecordRemoved'))
             and all(controls.get(k,{}).get('tapVerified') is True for k in ('positive','held-out')))
 
