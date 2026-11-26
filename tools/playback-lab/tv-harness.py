@@ -1283,6 +1283,9 @@ class DeviceTV:
     def call(self,*args,**kw):
         return run(*self.prefix,*args,env=self.env,**kw)
 
+    def adb(self,*args,**kw):
+        return self.transport.run(*args,**kw)
+
     def bind(self,transport):
         self.transport=transport
         if self.internal:transport.bind_capture(self.capture.paths)

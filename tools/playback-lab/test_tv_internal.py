@@ -39,6 +39,16 @@ class InternalTests(unittest.TestCase):
         r={};h.app_runtime('cplayer, AO: [pcm] 48000Hz stereo 2ch s16',r);self.assertNotIn('libmpvAO',r)
         h.app_runtime('cplayer, AO: [audiotrack] 48000Hz stereo 2ch float',r);self.assertIn('libmpvAO',r)
 
+    def test_device_binds_to_playback_before_querying_guest(self):
+        from unittest.mock import Mock
+        with tempfile.TemporaryDirectory() as root:
+            cap=tap.InternalCapture(tap.Paths('a'*24));transport=Mock();transport.run.return_value=b'Physical size: 1280x720'
+            tv=h.DeviceTV(Path(root),None,None,prefix=(),env={},port=None,capture=cap)
+            tv.bind(transport)
+            transport.bind_capture.assert_called_once_with(cap.paths)
+            transport.run.assert_called_once_with('shell','wm','size',timeout=8)
+            self.assertEqual(tv.found['uiSize'],'1280x720')
+
     def test_private_paths_and_ugreen_identity(self):
         p=tap.Paths('a'*24);self.assertTrue(p.wav.startswith('/sdcard/Android/data/'+tap.APP+'/files/'))
         self.assertNotEqual(p.video,tap.Paths('b'*24).video);self.assertEqual(ADAPTERS['2b89:5389'],'UGREEN 15389')
