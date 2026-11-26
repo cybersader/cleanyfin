@@ -474,7 +474,8 @@ class FormatLab(cp.PointerLab):
                             url,prj,descriptor=self.offer(name,item)
                             zero=ref['cut']['zeroMs']
                             self.subtitle_routes(descriptor,url,prj,spec,(av+s+zero,end+zero))
-                    result['r24Sweep'] = detector_sweep(runner, fresh, ref, positions, PLAYER_OPTIONS, arm_r24, progress)
+                    result['r24Sweep'] = detector_sweep(runner, fresh, ref, positions, PLAYER_OPTIONS, arm_r24, progress,
+                                                        fixtures=self.fixtures, file=f"{name}.{spec['container']}")
                     return result
                 finally:
                     shutil.rmtree(work, ignore_errors=True)
@@ -640,7 +641,7 @@ def main():
     print(f'Generating {len(layouts)} synthetic layouts (pinned Jellyfin ffmpeg)...', flush=True)
     facts = {}
     for name in layouts:
-        facts[name] = ff.generate(fixtures, name)
+        facts[name] = ff.generate(fixtures, name, 'timecode' if args.r24 else 'tone')
         if ff.CODEC_NAME.get(ff.LAYOUTS[name]['audio'][0][0], ff.LAYOUTS[name]['audio'][0][0]) == 'aac':
             # Does the default AAC track make the decoder draw random noise (PNS)? See aac_noise.py.
             facts[name]['decoderNoise'] = aac_noise.scan(fixtures, facts[name]['file'])
@@ -654,9 +655,15 @@ def main():
                    fixtures={n: {k: f[k] for k in ('sha256', 'size', 'video', 'audio', 'subtitles', 'decoderNoise') if k in f}
                              for n, f in facts.items()}, runs={})
     if args.r24:
-        receipt.update(admissionStandard='R24: zero marked pictures and zero marked sound detections in every take; calibrated positives required.',
-                       thresholds={'method': 'R24 decoded-vector detector, all selected channels, single-sample marked positives; per-position held-out seek-resume.'})
-        receipt['harnessSha256']['r24_detector.py'] = hashlib.sha256((LAB/'r24_detector.py').read_bytes()).hexdigest()
+        import r24_detector
+        import marked_oracle
+        receipt.update(admissionStandard='R24: zero marked pictures and zero marked sound sample frames in every planned take, '
+                       'every take scored, every injected positive detected; seam measures reported, not gating.',
+                       detector=r24_detector.VERSION, audioSignature='timecode',
+                       thresholds={'method': r24_detector.__doc__.strip().splitlines()[0], 'tauMaxLSB': marked_oracle.TAU_LSB,
+                                   'decisiveRatio': marked_oracle.DECISIVE_RATIO})
+        for f in ('r24_detector.py', 'marked_oracle.py'):
+            receipt['harnessSha256'][f] = hashlib.sha256((LAB/f).read_bytes()).hexdigest()
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     ok = True
     finished = set()
@@ -701,10 +708,14 @@ def main():
                             result = lab.measure(name, POSITIONS[:args.positions], args.stop_on_fail)
                         except (fm.Unmeasured, RuntimeError, AssertionError, subprocess.SubprocessError, OSError, KeyError, ValueError) as e:
                             result = dict(unmeasured=redact(f'{type(e).__name__}: {e}')[:300])
-                        summary = (dict(clear=len(result.get('r24Sweep', [])) == len(POSITIONS) and
-                                              all(s['passed'] for s in result['r24Sweep'])) if args.r24 else summarize(name, result))
                         if args.r24:
-                            summary['result'] = 'r24-clear' if summary['clear'] else 'not admitted'
+                            import r24_detector
+                            summary = (r24_detector.summarize(result['r24Sweep'], len(POSITIONS[:args.positions]))
+                                       if isinstance(result.get('r24Sweep'), dict) else dict(admitted=False))
+                            summary['result'] = ('r24-admitted' if summary['admitted'] and args.positions >= len(POSITIONS)
+                                                 else 'not admitted')
+                        else:
+                            summary = summarize(name, result)
                         run[name] = dict(result=result, summary=summary)
                         print(json.dumps(summary), flush=True)
                         persist()
