@@ -1,0 +1,69 @@
+{
+  "startedUtc": "20261126T051724Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "milestone": "private emulator and audio boot",
+    "blockerSites": [
+      "tv-harness.py:main:2038",
+      "tv-harness.py:adb:257",
+      "adb_lab_playback.py:run:172",
+      "adb_lab_playback.py:_install:157",
+      "adb_lab_playback.py:_call:134"
+    ],
+    "childExit": 255
+  },
+  "hostBeforeRun": {
+    "load1": 2.47,
+    "cpus": 24,
+    "availableGiB": 15.2,
+    "ioFull10sPct": 0.93,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "declaredGpu": "host",
+  "llvmpipeThreadsRequested": 2,
+  "guestRamMiB": 1536,
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "privateAdbExited": true,
+  "scratchPeakBytesObserved": 1006587904,
+  "hostWorstObservedIo": {
+    "load1": 2.47,
+    "cpus": 24,
+    "availableGiB": 14.88,
+    "ioFull10sPct": 0.93,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 1.71,
+    "scopeIOFull10sPct": 0.18
+  },
+  "hostAfterRun": {
+    "load1": 2.51,
+    "cpus": 24,
+    "availableGiB": 16.56,
+    "ioFull10sPct": 0.11,
+    "scopeMemoryFull10sPct": 0.62,
+    "scopeIOFull10sPct": 0.02,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 33.9,
+  "blocker": "CalledProcessError",
+  "claims": [
+    "not-measured R24 mp4-h264-eac351 \u2014 CalledProcessError"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T051724Z-e76948bcf4",
+  "candidateWritten": false
+}

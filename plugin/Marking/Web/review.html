@@ -23,6 +23,11 @@
 
   <div class="review" data-needs-login hidden>
     <aside class="side">
+      <details id="testPanel" hidden><summary>Test playback</summary>
+        <p>Only measured layouts can play. Test filtering may have sound or picture seams.</p>
+        <label id="testControl" hidden><input type="checkbox" id="testPlayback" /> Allow test playback</label>
+        <p id="testStatus" role="status"></p><ul id="testReports"></ul>
+      </details>
       <label>Title <select id="itemSelect"><option value="">Choose a title…</option></select></label>
       <h2>Captures <span id="captureCount" class="count"></span></h2>
       <ol id="captures" class="list"></ol>

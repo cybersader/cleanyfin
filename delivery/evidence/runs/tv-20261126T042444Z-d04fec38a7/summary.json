@@ -1,0 +1,91 @@
+{
+  "startedUtc": "20261126T042444Z",
+  "recording": "Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness",
+  "mode": "device-internal",
+  "dryRun": true,
+  "captureHarnessSha256": "8bf91ca8f966d038e2a412d9ccb9ce6101971035b78a182cff38744e117dbf69",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "box connection, identity and change manifest",
+    "blockerSites": [
+      "tv-harness.py:main:1945",
+      "tv-harness.py:device_session:1466",
+      "tv-harness.py:seed_update_rehearsal:1416",
+      "tv-harness.py:enter_advanced:522",
+      "tv-harness.py:enter_settings:513",
+      "tv-harness.py:wait_label:468",
+      "tv-harness.py:eventually:167"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 3.42,
+    "cpus": 24,
+    "availableGiB": 15.31,
+    "ioFull10sPct": 0.01,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "device": {
+    "uiSize": "1280x720",
+    "manufacturer": "Google",
+    "brand": "google",
+    "model": "sdk_google_atv64_amati_x86_64",
+    "device": "emu64xa",
+    "soc": "ranchu",
+    "securityPatch": "2026-04-01",
+    "abiList": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "android": "16",
+    "sdk": "36",
+    "build": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+    "abi": "x86_64",
+    "characteristics": "emulator",
+    "leanback": true,
+    "googleTvLauncher": true,
+    "emulator": true
+  },
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 1262366720,
+  "hostWorstObservedIo": {
+    "load1": 4.86,
+    "cpus": 24,
+    "availableGiB": 13.23,
+    "ioFull10sPct": 0.71,
+    "scopeMemoryFull10sPct": 0.2,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 1.52,
+    "scopeIOFull10sPct": 0.0
+  },
+  "hostAfterRun": {
+    "load1": 5.15,
+    "cpus": 24,
+    "availableGiB": 15.74,
+    "ioFull10sPct": 0.0,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 93.0,
+  "blocker": "Wholphin did not display Home",
+  "claims": [
+    "not-measured R24 mp4-h264-eac351 \u2014 Wholphin did not display Home"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T042444Z-d04fec38a7",
+  "candidateWritten": false
+}

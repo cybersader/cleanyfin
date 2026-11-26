@@ -117,8 +117,8 @@ def edl_body(source, cut, split=False):
     def part(interior, leading):
         segments = []
         for a, b in ((0, cut['startMs']), (cut['endMs'], cut['durationMs'])):
-            if b <= a:
-                continue
+            if b <= a or ((b + z) <= 0 and b != cut['durationMs']):
+                continue  # MpvEdlRenderer.FileSegments: nothing presentable before file time 0
             start = max(z, 0)*1000 + leading if a == 0 else max((a + z)*1000 + interior, 0)
             end = (b + z)*1000 + (0 if b == cut['durationMs'] else interior)
             segments.append(f'{source},{seconds(start)},{seconds(end - start)}\n')

@@ -66,6 +66,7 @@ public sealed class FixturePointerController : ControllerBase
 
 public sealed class PointerMetadata(IServiceProvider services, IMediaStreamRepository streams, ILogger<PointerMetadata> log) : ICustomMetadataProvider<Video>, IHasOrder
 {
+    internal const string TestNotice = "Test filtering — skips may have a brief sound or picture seam. See the Cleanyfin review page for measurements.";
     public string Name => "Cleanyfin shelf facts";
     public int Order => int.MaxValue;
     public Task<ItemUpdateType> FetchAsync(Video item, MetadataRefreshOptions options, CancellationToken ct)
@@ -81,6 +82,10 @@ public sealed class PointerMetadata(IServiceProvider services, IMediaStreamRepos
             var stored = streams.GetMediaStreams(new MediaStreamQuery { ItemId = item.Id });
             var changed = !JsonSerializer.SerializeToUtf8Bytes(stored).SequenceEqual(JsonSerializer.SerializeToUtf8Bytes(facts));
             if (changed) streams.SaveMediaStreams(item.Id, facts, ct);
+            // Metadata is shared by clients: conservatively label the shelf item before granting any test offer.
+            var testLabel = store.TestLabel(input, row.Viewer);
+            if (testLabel && item.Overview != TestNotice) { item.Overview = TestNotice; changed = true; }
+            else if (!testLabel && item.Overview == TestNotice) { item.Overview = null; changed = true; }
             changed |= item.RunTimeTicks != row.Ticks;
             item.RunTimeTicks = row.Ticks;
             log.LogInformation("Fixture pointer metadata checked");

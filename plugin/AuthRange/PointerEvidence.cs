@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Jellyfin.Plugin.Cleanyfin.Marking;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
@@ -16,7 +17,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Cleanyfin.AuthRange;
 
-internal sealed record EvidencePermit(EvidenceTuple Tuple, EvidenceStatus Status, string RegisterHash, int AudioIndex, int SoundRate);
+internal sealed record EvidencePermit(EvidenceTuple Tuple, EvidenceStatus Status, string RegisterHash, int AudioIndex, int SoundRate, Guid? TestPolicyRevision = null)
+{
+    internal bool Test => TestPolicyRevision.HasValue;
+}
 
 internal static class PointerEvidence
 {
@@ -106,9 +110,17 @@ internal static class PointerEvidence
     private static EvidencePermit Admit(HttpContext ctx, PluginConfiguration cfg, EvidenceTuple tuple, PlaybackPlan plan, int audioIndex,
         int soundRate)
     {
-        var (register, hash) = Load(ctx);
+        var revision = HouseholdMarking.TestPlaybackRevision;
+        var optIn = revision.HasValue;
         var lab = cfg.EnableAuthRangeLab && !cfg.EnableProductionEligibility;
-        var decision = register.Admit(tuple, plan.Requires, allowExperimental: lab);
+        var (register, hash) = Load(ctx);
+        // With the switch off the v1 path is unchanged. A diagnostic lab grant is never household evidence.
+        var decision = register.Admit(tuple, plan.Requires, allowExperimental: lab && !optIn);
+        if (optIn && !decision.Accepted)
+        {
+            (register, hash) = Load(ctx, test: true);
+            decision = register.AdmitTest(tuple, plan.Requires);
+        }
         if (decision.Reason == RefusalCode.EvidenceTupleUnknown)
             // Lab diagnostics: the layout and app facts are not secret (the client knows them); no ids, paths or tokens.
             ctx.RequestServices.GetRequiredService<ILogger<PointerPlaybackFilter>>().LogInformation(
@@ -121,7 +133,33 @@ internal static class PointerEvidence
         FixtureGate.Require(lab, RefusalCode.EvidenceModeUnverified);
         FixtureGate.Require(cfg.LabSourceSha256 == plan.Source.Sha256,
             RefusalCode.EvidenceTupleUnknown);
-        return new(tuple, row.Status, hash, audioIndex, soundRate);
+        return new(tuple, row.Status, hash, audioIndex, soundRate, row.TestSeams is null ? null : revision);
+    }
+
+    internal static bool CurrentBuild(EvidenceTuple tuple, string serverVersion) =>
+        tuple.PluginBuild == PluginBuild.Value && tuple.JellyfinVersion == serverVersion;
+
+    internal static bool NeedsTestLabel(ShelfInput input, string viewer, string serverVersion)
+    {
+        try { return MatchTestLabel(input, viewer, serverVersion); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or Refused) { return false; }
+    }
+
+    private static bool MatchTestLabel(ShelfInput input, string viewer, string serverVersion)
+    {
+        if (!HouseholdMarking.TestPlayback) return false;
+        var path = Path.Combine(Plugin.Instance!.ShelfRoot, "evidence-register-v2.json");
+        ShelfStore.NoLinks(path);
+        if (!File.Exists(path)) return false;
+        using var stream = File.OpenRead(path);
+        var reg = EvidenceRegister.ParseTest(ReadBounded(stream, EvidenceRegister.MaxDocumentBytes));
+        if (reg.Value is not { } register || register.Rows.IsEmpty) return false;
+        var source = Describe(input.Source, input.Resolution.Plan).Source;
+        var (app, mode) = Enrollment(Guid.ParseExact(viewer, "N"));
+        var revision = MpvEdlRenderer.Revision(Partitions(source), input.Source.MediaStreams.Any(s => s.Type == MediaStreamType.Subtitle));
+        return register.Rows.Any(r => CurrentBuild(r.Tuple, serverVersion) && r.Tuple.AdapterId == MpvEdlRenderer.AdapterId &&
+            r.Tuple.AdapterRevision == revision && input.Resolution.Plan.Requires.All(f => r.Actions.Contains(f)) &&
+            r.Tuple.Source == source && r.Tuple.AppBuild == app && r.Tuple.DeviceMode == mode);
     }
 
     private static (string AppBuild, string DeviceMode) Enrollment(Guid viewer)
@@ -139,16 +177,16 @@ internal static class PointerEvidence
         throw new Refused(RefusalCode.EvidenceIdentityUnavailable);
     }
 
-    private static (EvidenceRegister Register, string Hash) Load(HttpContext ctx)
+    internal static (EvidenceRegister Register, string Hash) Load(HttpContext ctx, bool test = false)
     {
         RefusalCode cause;
         try
         {
-            var path = Path.Combine(Plugin.Instance!.ShelfRoot, RegisterName);
+            var path = Path.Combine(Plugin.Instance!.ShelfRoot, test ? "evidence-register-v2.json" : RegisterName);
             ShelfStore.NoLinks(path);
             using var stream = File.OpenRead(path);
             var bytes = ReadBounded(stream, EvidenceRegister.MaxDocumentBytes);
-            var result = EvidenceRegister.Parse(bytes);
+            var result = test ? EvidenceRegister.ParseTest(bytes) : EvidenceRegister.Parse(bytes);
             if (result.Value is { } register) return (register, Convert.ToHexStringLower(SHA256.HashData(bytes)));
             cause = result.Reason!.Value;
         }

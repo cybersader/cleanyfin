@@ -942,6 +942,14 @@ class MarkingLab(PointerLab):
         check('no governance file: admin is admin+reviewer, others viewer (Jellyfin default)',
               me_admin['roles'] == ['admin', 'reviewer'] and me_one['roles'] == ['viewer']
               and me_admin['governanceSource'] == 'jellyfin-default' and me_one['serverRef'] == self.server_ref)
+        check('test playback defaults off; only a household admin can enable or disable it',
+              self.ok('test-playback', user=self.one)['enabled'] is False and
+              self.refused('test-playback/on', 'POST', {}, self.one, 403, 'NotPermitted') and
+              self.ok('test-playback', user=self.admin)['enabled'] is False and
+              self.m('test-playback/on', 'POST', {}, self.admin)[0] == 204 and
+              self.ok('test-playback', user=self.one)['enabled'] is True and
+              self.refused('test-playback/off', 'POST', {}, self.one, 403, 'NotPermitted') and
+              self.m('test-playback/off', 'POST', {}, self.admin)[0] == 204)
         flag = self.capture(self.ref['one'], 'cap:lab:flag', 3000)
         check('viewer may flag a moment (capture) but not draft a mark',
               self.m('captures', 'POST', flag, self.one)[0] == 201

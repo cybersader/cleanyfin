@@ -212,6 +212,11 @@ public static class MpvEdlRenderer
     {
         foreach (var kept in plan.Timeline.KeptRanges)
         {
+            // A kept range that ends at or before file time 0 (Matroska sound priming before the first picture, left
+            // over when a mark starts on the first picture) has nothing mpv can present. Rendering it gave a negative
+            // picture segment and mpv refused the whole cut list; drop it from every partition alike.
+            if (kept.SourceEndMs * 1000 + zero <= 0 && kept.SourceEndMs != plan.Source.DurationMs)
+                continue;
             var start = kept.SourceStartMs == 0
                 ? Math.Max(zero, 0) + leadingShift
                 : Math.Max(kept.SourceStartMs * 1000 + zero + interiorShift, 0);

@@ -108,6 +108,46 @@ def tone(level, channel=0):
             f"if(lt(n,{END_SAMPLE}),880*(n-{START_SAMPLE}),660*(n-{END_SAMPLE})))/{HZ})" + pilot)
 
 
+# Source-time code (marked-detector fixture, 2026-11-25). The R22/R23 tone fixture puts every channel on one smooth
+# waveform family, so decoded marked and kept sample vectors lie on nearly the same curve and cannot be told apart one
+# sample at a time. This signature keeps channel 0's 440 Hz clock tone (reference_lead) and the LFE tone, and puts an
+# independent deterministic full-band pseudo-random code on each other full-band channel. Every sample frame of the
+# decoded uncut file is then a unique 96-bit key to its own source position; marked_oracle.py verifies uniqueness
+# on the decode it actually uses, never assumes it. Marks move per sweep position, so one code identifies every
+# position instead of a marked-only code baked into the file.
+SIGNATURES = ('tone', 'timecode')
+TIMECODE_LEVEL = 0.2   # peak of each code channel; channel 0 tone stays at TONE_LEVEL
+TIMECODE_SEED = 0x43_4C_45_41_4E_59_46_49   # 'CLEANYFI'
+
+
+def splitmix64(seed, count):
+    """Deterministic 64-bit stream (Steele et al.); independent of NumPy's generator versions."""
+    import numpy as np
+    with np.errstate(over='ignore'):
+        z = (np.uint64(seed) + np.arange(1, count + 1, dtype=np.uint64) * np.uint64(0x9E3779B97F4A7C15))
+        z = (z ^ (z >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
+        z = (z ^ (z >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
+        return z ^ (z >> np.uint64(31))
+
+
+def timecode_pcm(channels=6):
+    """float32 interleaved source for the timecode signature: [SOURCE_SAMPLES, channels]."""
+    import numpy as np
+    levels = CHANNELS[channels][1]
+    n = np.arange(SOURCE_SAMPLES, dtype=np.float64)
+    phase = np.where(n < START_SAMPLE, 440*n, np.where(n < END_SAMPLE, 880*(n-START_SAMPLE), 660*(n-END_SAMPLE)))
+    tone_wave = np.sin(2*np.pi*phase/HZ)
+    out = np.empty((SOURCE_SAMPLES, channels), np.float32)
+    lfe = 3 if channels == 6 else None
+    for c in range(channels):
+        if c == 0 or c == lfe:
+            out[:, c] = levels[c]*tone_wave
+        else:
+            bits = splitmix64(TIMECODE_SEED + c*0x1000003, SOURCE_SAMPLES) >> np.uint64(11)
+            out[:, c] = TIMECODE_LEVEL*(bits.astype(np.float64)/2.0**52 - 1.0)
+    return out
+
+
 def srt(cues):
     def t(ms):
         return f'{ms//3600000:02}:{ms//60000%60:02}:{ms//1000%60:02},{ms%1000:03}'
@@ -118,10 +158,17 @@ def probe(out, name, *args):
     return json.loads(media(out, 'ffprobe', *args, '-of', 'json', f'/lab/{name}', readonly=True))
 
 
-def generate(out, name):
-    """Write NAME.mkv or NAME.mp4 into the existing directory OUT and return its facts (incl. SHA-256)."""
+def generate(out, name, signature='tone'):
+    """Write NAME.mkv or NAME.mp4 into the existing directory OUT and return its facts (incl. SHA-256).
+
+    signature='timecode' replaces the default audio track's pilot channels by the source-time code (6-channel
+    Dolby layouts only); the layout, its packets and its picture are otherwise identical."""
+    if signature not in SIGNATURES:
+        raise ValueError(f'unknown audio signature {signature}')
     spec = LAYOUTS[name]
     file = f"{name}.{spec['container']}"
+    if signature == 'timecode' and (name == HARD_AAC or spec['audio'][0] not in (('ac3', 6), ('eac3', 6))):
+        raise ValueError(f'{name}: the timecode signature is defined for 5.1 AC-3/E-AC-3 default tracks only')
     if name == HARD_AAC:
         # Re-test the original periodic stereo AAC source behind the legacy eligibility rows, not its pilot copy.
         legacy = out/'hard-aac-source'
@@ -137,10 +184,16 @@ def generate(out, name):
     inputs = ['-f', 'lavfi', '-i', _hard.barcode_filter()]
     maps = ['-map', '0:v:0']
     codecs = list(VIDEO[spec['video']])
+    code = None
     for i, (codec, channels) in enumerate(spec['audio']):
         layout_name, levels = CHANNELS[channels]
-        exprs = '|'.join(tone(level, c) for c, level in enumerate(levels))
-        inputs += ['-f', 'lavfi', '-i', f"aevalsrc='{exprs}':s={HZ}:c={layout_name}:d={FRAMES//FPS}"]
+        if signature == 'timecode' and i == 0:
+            code = out/f'{name}-timecode.f32'
+            code.write_bytes(timecode_pcm(channels).astype('<f4').tobytes())
+            inputs += ['-f', 'f32le', '-ar', str(HZ), '-ch_layout', layout_name, '-i', f'/lab/{code.name}']
+        else:
+            exprs = '|'.join(tone(level, c) for c, level in enumerate(levels))
+            inputs += ['-f', 'lavfi', '-i', f"aevalsrc='{exprs}':s={HZ}:c={layout_name}:d={FRAMES//FPS}"]
         maps += ['-map', f'{i+1}:a:0']
         encoder, options = AUDIO[codec]
         codecs += [f'-c:a:{i}', encoder] + [o if not o.startswith('-') else o.removesuffix(':a') + f':a:{i}' for o in options]
@@ -162,7 +215,9 @@ def generate(out, name):
     finally:
         for i in range(len(spec['subtitles'])):
             (out/f'{name}-{i}.srt').unlink(missing_ok=True)
-    return check(out, file, spec)
+        if code is not None:
+            code.unlink(missing_ok=True)
+    return check(out, file, spec) | dict(audioSignature=signature)
 
 
 def check(out, file, spec):

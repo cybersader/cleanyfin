@@ -130,3 +130,15 @@ Locked 2026-11-25 (owner answer in the [onset decision dialog](t3-thread://v2/c9
 **R23 — The first sound sample at a start or resume on a skip may differ.** Asked “This first-sample difference is the only thing keeping Dolby movies off: a tiny tick at worst, only when you press play or resume exactly on a skip. Should it count as passing?” The owner selected “Yes, allow it (Recommended) — A one-sample difference at the very first instant of starting or resuming playback counts as passing, and the docs say so. Everything else in the viewer rule stays as it is.”
 
 The exception is only for a fresh start or in-session resume **targeting the skip itself**. Omit exactly one 48 kHz sample frame (all channels, about 21 µs) from the onset transient window before filtering, with the same omission on the ideal and matched uncut controls and the same repeat-noise calibration. That sample must still be proven kept; R21's cap of one extra kept sample before the landing relative to the uncut start still applies. Every other R22 check, the unmodified splice comparison, and the onset checks at other targets remain in force. No blanket Dolby admission: each exact desktop-mpv tuple still needs its own complete passing evidence. FLAC and AAC stay refused.
+
+---
+
+Locked 2026-11-25 (owner decision after the R22/R23 sweep found no Dolby layout passing on stock mpv):
+
+**R24 — A separate, opt-in test tier for filtered playback.** Asked "Marked scenes never got through in Dolby movies, but the desktop player can't pass the strict seamless-skip test. Where should the work go next?", the owner chose "Test-only on TV, then measure (Recommended) — Let Dolby movies play filtered in test mode on the TV, still requiring that nothing marked ever gets through. Small seam issues get reported, not treated as blockers. Then measure the real TV with the HDMI adapter. Meanwhile, keep building marking."
+
+- **Gate for the test tier (absolute):** nothing marked is ever presented at any sweep position: no marked frame, and no marked sound detected by a calibrated positive detector. Unproven per-sample identity of lossy sound does not block the test tier only when that detector clears the take; it still blocks the full tier.
+- **Reported, not gating:** the R22 seam measures (silence, pop, kept picture, sync, kept-sound loss). They are recorded per layout and shown to the household.
+- **Opt-in and labelled:** off by default. Only a household admin can turn it on. Filtered items offered under it are clearly marked as test playback. It never weakens the full tier (R22/R23), which remains the bar for normal filtered playback.
+- **Scope:** Dolby (AC-3/E-AC-3) layouts first. AAC stays refused (marked sound was presented). FLAC stays refused pending the owner. Each player tuple (desktop mpv, Wholphin on the emulator, Wholphin on the onn. box over HDMI) needs its own test-tier measurement; desktop evidence does not carry over to the TV.
+

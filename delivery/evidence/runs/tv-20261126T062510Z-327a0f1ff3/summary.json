@@ -1,0 +1,272 @@
+{
+  "startedUtc": "20261126T062510Z",
+  "recording": "Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness",
+  "mode": "device-internal",
+  "dryRun": true,
+  "captureHarnessSha256": "fcdcf8cf18213cb7011dac9254b2c06a9c520acb3a63336f9f4ed3bfcdf97927",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "box connection, identity and change manifest",
+    "blockerSites": [
+      "tv-harness.py:main:2029",
+      "tv-harness.py:device_session:1571",
+      "tv_update.py:begin:110",
+      "tv_update.py:check:114",
+      "tv_family_ui.py:snapshot:193"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 3.26,
+    "cpus": 24,
+    "availableGiB": 16.26,
+    "ioFull10sPct": 0.24,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "device": {
+    "uiSize": "1280x720",
+    "manufacturer": "Google",
+    "brand": "google",
+    "model": "sdk_google_atv64_amati_x86_64",
+    "device": "emu64xa",
+    "soc": "ranchu",
+    "securityPatch": "2026-04-01",
+    "abiList": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "android": "16",
+    "sdk": "36",
+    "build": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+    "abi": "x86_64",
+    "characteristics": "emulator",
+    "leanback": true,
+    "googleTvLauncher": true,
+    "emulator": true
+  },
+  "familyUpdate": {
+    "authenticatedSyntheticSession": true,
+    "syntheticBaselineSeeded": true,
+    "syntheticDrawerShapes": [
+      {
+        "focusRect": [
+          0,
+          170,
+          298,
+          245
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": [
+          "Home"
+        ]
+      },
+      {
+        "focusRect": [
+          0,
+          90,
+          298,
+          165
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": [
+          "Search"
+        ]
+      },
+      {
+        "focusRect": [
+          0,
+          0,
+          298,
+          85
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 3,
+        "seedLabels": [
+          "Synthetic Household",
+          "one"
+        ]
+      }
+    ],
+    "syntheticPickerCaptions": [
+      {
+        "rect": "[503,89][778,145]",
+        "label": "Select Server"
+      },
+      {
+        "rect": "[457,447][619,504]",
+        "label": "Synthetic Household"
+      },
+      {
+        "rect": "[510,276][567,383]",
+        "label": "S"
+      },
+      {
+        "rect": "[661,447][823,472]",
+        "label": "Add Server"
+      }
+    ],
+    "syntheticPickerShapes": [
+      {
+        "rect": "[452,243][624,415]",
+        "click": "true",
+        "longClick": "true",
+        "scroll": "false",
+        "labelCount": 1,
+        "seedLabels": [
+          "S"
+        ]
+      },
+      {
+        "rect": "[656,243][828,415]",
+        "click": "true",
+        "longClick": "true",
+        "scroll": "false",
+        "labelCount": 0,
+        "seedLabels": []
+      }
+    ],
+    "beforeBuild": {
+      "package": "com.github.damontecres.wholphin",
+      "version": "1.0.9-0-g2d87d526",
+      "code": 60,
+      "certificate": "e54fda99b452214b3522deb5de14e2dddc06da8de5db1fa7591dce2d80af96a8"
+    },
+    "beforeUI": {
+      "servers": "b149775f84d50b91119cdf5d640ab87a19e2b6e0e0a1c858970875ccafceacd6",
+      "active": "8963c75f81f2e3f26d2c6c0623f54be2bf254b443c8288634447e8a288929765",
+      "user": "f08b0a69c1db312136ff350dfc4b80919f4db6f2de4efbc232e30e9526a4271f",
+      "backend": "c7b287648c01ebb7630d9359438735c4a34c7e9dc5e540250fc5bfaab7c6a2c3",
+      "options": "e15baa6ada2a9f705dfb4cb2b0ac7b0d15ea989e15c1e25752ab12198d346b22"
+    },
+    "inPlaceUpdateReported": true,
+    "rehearsalScreenAtStop": {
+      "appVisible": true,
+      "appNodeCount": 23,
+      "labelCount": 6,
+      "hasProgressIndicator": false,
+      "errorTextPresent": false,
+      "stockLabels": [
+        "Add Server",
+        "Select Server"
+      ],
+      "visibleCategories": [
+        "household",
+        "select",
+        "server",
+        "synthetic",
+        "version"
+      ]
+    },
+    "restoreAttempted": true,
+    "visibleStateRestored": false
+  },
+  "manifestBefore": {
+    "packageCount": 109,
+    "packageListSha256": "701575339c72ab3ec5e3fd6de71ea2e83f93e7c5a0d1b427c55b96a7c284ef55",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.0.9-0-g2d87d526"
+  },
+  "internalRestore": {
+    "wholphinAbsentBefore": false,
+    "pathsVerifiedAbsentBeforeOptions": false
+  },
+  "manifestAfter": {
+    "packageCount": 109,
+    "packageListSha256": "4ab1e917b77584f4e5f2f8fd11e4a080260fa4611cca893e6a85d3956483eeeb",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.1.2-0-gc530f5c5"
+  },
+  "manifestDiff": [
+    "~ package com.github.damontecres.wholphin 60 -> 63",
+    "~ Wholphin: 1.0.9-0-g2d87d526 -> 1.1.2-0-gc530f5c5"
+  ],
+  "unexpectedResidue": [],
+  "restored": false,
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 1411952640,
+  "hostWorstObservedIo": {
+    "load1": 4.02,
+    "cpus": 24,
+    "availableGiB": 14.66,
+    "ioFull10sPct": 2.11,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 0.89,
+    "scopeIOFull10sPct": 0.54
+  },
+  "hostAfterRun": {
+    "load1": 3.23,
+    "cpus": 24,
+    "availableGiB": 16.83,
+    "ioFull10sPct": 0.96,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.54,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 499.3,
+  "blocker": "Stock UI did not verify active profile (authenticated Home not verified)",
+  "claims": [
+    "not-measured R24 mp4-h264-eac351 \u2014 Stock UI did not verify active profile (authenticated Home not verified)"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T062510Z-327a0f1ff3",
+  "candidateWritten": false
+}

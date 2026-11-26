@@ -1,0 +1,144 @@
+{
+  "startedUtc": "20261126T045441Z",
+  "recording": "Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness",
+  "mode": "device-internal",
+  "dryRun": true,
+  "captureHarnessSha256": "821ac38e4fbd2c04071b1289832279abd018d613563d5fda357e6f578b354b89",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "box connection, identity and change manifest",
+    "blockerSites": [
+      "tv-harness.py:main:2012",
+      "tv-harness.py:device_session:1563",
+      "tv_update.py:begin:101",
+      "tv_update.py:installed_build:63",
+      "tv-harness.py:adb:1302",
+      "adb_lab_playback.py:run:178"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 4.91,
+    "cpus": 24,
+    "availableGiB": 13.87,
+    "ioFull10sPct": 0.01,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "device": {
+    "uiSize": "1280x720",
+    "manufacturer": "Google",
+    "brand": "google",
+    "model": "sdk_google_atv64_amati_x86_64",
+    "device": "emu64xa",
+    "soc": "ranchu",
+    "securityPatch": "2026-04-01",
+    "abiList": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "android": "16",
+    "sdk": "36",
+    "build": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+    "abi": "x86_64",
+    "characteristics": "emulator",
+    "leanback": true,
+    "googleTvLauncher": true,
+    "emulator": true
+  },
+  "familyUpdate": {
+    "authenticatedSyntheticSession": true,
+    "syntheticBaselineSeeded": true,
+    "restoreAttempted": true
+  },
+  "manifestBefore": {
+    "packageCount": 109,
+    "packageListSha256": "701575339c72ab3ec5e3fd6de71ea2e83f93e7c5a0d1b427c55b96a7c284ef55",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.0.9-0-g2d87d526"
+  },
+  "internalRestore": {
+    "wholphinAbsentBefore": false,
+    "pathsVerifiedAbsentBeforeOptions": false
+  },
+  "manifestAfter": {
+    "packageCount": 109,
+    "packageListSha256": "701575339c72ab3ec5e3fd6de71ea2e83f93e7c5a0d1b427c55b96a7c284ef55",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.0.9-0-g2d87d526"
+  },
+  "manifestDiff": [],
+  "unexpectedResidue": [
+    "~ Wholphin: None -> 1.0.9-0-g2d87d526"
+  ],
+  "restored": false,
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 1260830720,
+  "hostWorstObservedIo": {
+    "load1": 2.87,
+    "cpus": 24,
+    "availableGiB": 14.56,
+    "ioFull10sPct": 1.59,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 1.43,
+    "scopeIOFull10sPct": 0.32
+  },
+  "hostAfterRun": {
+    "load1": 2.6,
+    "cpus": 24,
+    "availableGiB": 16.23,
+    "ioFull10sPct": 0.39,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.18,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 228.8,
+  "blocker": "Incomplete owned file transfer.",
+  "claims": [
+    "not-measured R24 mp4-h264-eac351 \u2014 Incomplete owned file transfer."
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T045441Z-3bed23630e",
+  "candidateWritten": false
+}

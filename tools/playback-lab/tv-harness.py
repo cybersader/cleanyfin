@@ -108,17 +108,22 @@ def run(*args, timeout=30, **kwargs):
                   stderr=sp.PIPE, **kwargs).stdout
 
 
-def release(work, abi='x86_64'):
+def release(work, abi='x86_64', offline=False):
     from tv_device import ASSETS
     name, digest, size, lib = ASSETS[abi]
     folder = work/('release-'+abi)
     folder.mkdir()
-    row, = [a for a in json.loads(run('gh', 'release', 'view', TAG, '-R', REPO,
-                                   '--json', 'assets'))['assets'] if a['name'] == name]
-    if row['digest'] != 'sha256:'+digest or row['size'] != size:
-        raise RuntimeError(f'Official release metadata differs from pinned {abi} build')
-    run('gh', 'release', 'download', TAG, '-R', REPO, '-p', name, '-D', folder, timeout=120)
     file = folder/name
+    if offline:
+        staged=Path(os.environ.get('CLEANYFIN_APK_FEED') or Path.home()/'.cache/cleanyfin-scratch/apks')/name
+        if not staged.is_file() or staged.stat().st_size!=size:raise RuntimeError(f'Stage the pinned {name} in the offline Wholphin APK feed first')
+        shutil.copyfile(staged,file)
+    else:
+        row, = [a for a in json.loads(run('gh', 'release', 'view', TAG, '-R', REPO,
+                                       '--json', 'assets'))['assets'] if a['name'] == name]
+        if row['digest'] != 'sha256:'+digest or row['size'] != size:
+            raise RuntimeError(f'Official release metadata differs from pinned {abi} build')
+        run('gh', 'release', 'download', TAG, '-R', REPO, '-p', name, '-D', folder, timeout=120)
     if hashlib.sha256(file.read_bytes()).hexdigest() != digest:
         raise RuntimeError('APK differs from published SHA-256')
     with zipfile.ZipFile(file) as z:
@@ -163,7 +168,7 @@ def eventually(fn, limit, reason):
 
 
 class TV:
-    def __init__(self, work, sdk, stack, gpu='swangle', ram_mib=2048, llvmpipe_threads=None):
+    def __init__(self, work, sdk, stack, gpu='swangle', ram_mib=2048, llvmpipe_threads=None, r24=False):
         self.work, self.sdk, self.stack, self.gpu = work, sdk, stack, gpu
         self.ram_mib,self.llvmpipe_threads=ram_mib,llvmpipe_threads
         self.home = work/'home'; self.runtime = work/'runtime'
@@ -191,7 +196,7 @@ class TV:
             ini = ini.rstrip()+'\n'+k+'='+v+'\n'
         (avd/'config.ini').write_text(ini)
         (avd.parent/'lab.ini').write_text(f'avd.ini.encoding=UTF-8\npath={avd}\ntarget=android-36\n')
-        self.ns = self.spawn(['unshare','-Urn','sh','-ec','ip link set lo up; exec sleep 1800'], 'namespace')
+        self.ns = self.spawn(['unshare','-Urn','sh','-ec','ip link set lo up; exec sleep '+('14700' if r24 else '1800')], 'namespace')
         eventually(lambda: os.readlink(f'/proc/{self.ns.pid}/ns/net') != os.readlink('/proc/self/ns/net'),
                    5, 'Private network namespace unavailable')
         self.prefix = ['nsenter','--preserve-credentials','-t',str(self.ns.pid),'-U','-n','--']
@@ -249,6 +254,7 @@ class TV:
         return [*self.prefix, str(self.sdk/'platform-tools/adb'), '-P', '5037', '-s', 'emulator-5580', *map(str,args)]
 
     def adb(self, *args, **kw):
+        if hasattr(self,"transport"):return self.transport.run(*args,**kw)
         return run(*self.adb_args(*args), env=self.env, **kw)
 
     def boot(self):
@@ -260,8 +266,10 @@ class TV:
         self.call('pactl','load-module','module-null-sink','sink_name=fixture','rate=48000','channels=2')
         self.env.update(QEMU_AUDIO_DRV='pa', QEMU_PA_SERVER=self.env['PULSE_SERVER'], QEMU_PA_SINK='fixture',
                         QEMU_AUDIO_DAC_FIXED_SETTINGS='1',QEMU_AUDIO_DAC_FIXED_FREQ='48000',QEMU_AUDIO_DAC_FIXED_CHANNELS='2')
-        self.spawn(self.prefix+[self.sdk/'platform-tools/adb','-L','tcp:5037','server','nodaemon'], 'adb')
-        eventually(lambda: b':5037' in self.call('ss','-ltn'), 8, 'Private adb server unavailable')
+        if hasattr(self,'transport'):self.transport.boot_guest(self)
+        else:  # Only verify-adb-label.py's independent, neutral bootstrap-key witness.
+            self.spawn(self.prefix+[self.sdk/'platform-tools/adb','-L','tcp:5037','server','nodaemon'], 'adb')
+            eventually(lambda: b':5037' in self.call('ss','-ltn'), 8, 'Private adb server unavailable')
         # SDK 37.2.12's -headless binary has stub PulseAudio functions. The
         # full engine supports -no-window too, and actually links libpulse.
         em=self.sdk/'emulator'; libs=em/'lib64'
@@ -283,6 +291,7 @@ class TV:
         self.emu = self.spawn(self.prefix+[em/'qemu/linux-x86_64/qemu-system-x86_64','-avd','lab','-accel','on','-no-window',
                               '-no-snapshot','-no-boot-anim','-port','5580','-no-metrics','-gpu',self.gpu,'-feature','-Vulkan',
                               '-audio','pa','-crash-report-mode','disabled','-show-kernel','-memory',str(self.ram_mib),'-cores','4'], 'emulator')
+        if hasattr(self,'transport'):self.transport.attach_guest(self)
         def ready():
             if self.emu.poll() is not None:
                 raise RuntimeError('Emulator exited before Android boot completed')
@@ -315,9 +324,14 @@ def module(name):
     return mod
 
 
-def setup_lab(work,tv,stack):
+def setup_lab(work,tv,stack,line=None,layout=None):
     kit=module('check-plugin')
-    lab=kit.PointerLab(work/'server'); lab.work.mkdir()
+    if layout:
+        import tv_r24
+        matrix=module('format-matrix')
+        lab=tv_r24.make_lab(matrix,work,line,layout,tv,tv.public_origin_host+kit.BASE)
+    else:
+        lab=kit.PointerLab(work/'server',line or kit.DEFAULT_JELLYFIN); lab.work.mkdir()
     def cleanup():
         if lab.cid:
             run('docker','rm','-f',lab.cid,timeout=30)
@@ -326,7 +340,8 @@ def setup_lab(work,tv,stack):
     lab.wholphin['tuple'].update(appBuild=tv.app_digest,deviceMode=tv.device_mode())
     lab.wholphin['status']='experimental'
     lab.public_origin=tv.public_origin_host+kit.BASE
-    lab.setup_pointer()
+    if layout: tv_r24.prepare(lab,matrix,tv,eventually)
+    else: lab.setup_pointer()
     cfg=lab.api('/System/Configuration',user=lab.admin)
     resume_settings=dict(MinResumeDurationSeconds=1,MinResumePct=1,MaxResumePct=95)
     cfg.update(resume_settings)
@@ -338,8 +353,9 @@ def setup_lab(work,tv,stack):
     sock=lab.work/'config/tv.sock'
     eventually(sock.is_socket,8,'Jellyfin Unix relay did not start')
     lab.wire_log=tv.work/'relay.log'
-    tv.spawn(tv.prefix+[sys.executable,'-I',HERE/'tv-wire.py',str(sock),lab.item,lab.pointer],'relay')
-    eventually(lambda: b'10.11.11' in tv.call('curl','--noproxy','*','-fsS','--max-time','2','http://127.0.0.1:18096'+kit.BASE+'/System/Info/Public'),10,'TV lab origin unavailable')
+    prefix=tv.transport.bridge(LAB_PORT,sock) if isinstance(tv,DeviceTV) else tv.prefix
+    tv.spawn(prefix+[sys.executable,'-I',HERE/'tv-wire.py',str(sock),lab.item,lab.pointer],'relay')
+    eventually(lambda: lab.server_version.encode() in run(*prefix,'curl','--noproxy','*','-fsS','--max-time','2','http://127.0.0.1:18096'+kit.BASE+'/System/Info/Public'),10,'TV lab origin unavailable')
     return lab
 
 
@@ -368,20 +384,37 @@ def lossless_control(lab):
 APP='com.github.damontecres.wholphin'
 INPUT='org.cleanyfin.fixture'
 
-def install_input(tv):
-    if tv.no_test_packages:
+def install_input(tv,*,capture_only=False):
+    if tv.no_test_packages and not capture_only:
         raise RuntimeError('Wholphin did not expose Save for the verified mpv.conf text; device mode installs no helper package')
     root=tv.work/'input'; root.mkdir(exist_ok=True)
     apk=root/'input.apk'; android=tv.sdk/'platforms/android-36/android.jar'; tools=tv.sdk/'build-tools/36.0.0'
+    if capture_only and apk.exists():raise ValueError('capture helper must be freshly built for this run')
     if not apk.exists():
         manifest=root/'AndroidManifest.xml'
-        manifest.write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.cleanyfin.fixture"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="Disposable TV fixture input"/><instrumentation android:name=".TvInput" android:targetPackage="org.cleanyfin.fixture"/></manifest>')
-        run('java','-m','jdk.compiler/com.sun.tools.javac.Main','-source','11','-target','11','-classpath',android,'-d',root,HERE/'TvInput.java')
-        run(tools/'d8','--lib',android,'--min-api','26','--output',root,root/'org/cleanyfin/fixture/TvInput.class')
+        sources=[HERE/'TvInput.java']
+        if capture_only or getattr(tv,'projection_control',False):
+            shutil.copyfile(HERE/'ProjectionManifest.xml',manifest)
+            if capture_only:
+                import xml.etree.ElementTree as ET
+                import secrets
+                tv.capture_helper_label='CF Lab '+secrets.token_hex(5)
+                xml=ET.parse(manifest);xml.getroot().remove(xml.getroot().find('instrumentation'))
+                xml.getroot().find('application').set('{http://schemas.android.com/apk/res/android}label',tv.capture_helper_label)
+                xml.write(manifest);sources=[]
+            sources.extend([HERE/'ProjectionConsent.java',HERE/'ProjectionRecorder.java'])
+        else:
+            manifest.write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.cleanyfin.fixture"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="Disposable TV fixture input"/><instrumentation android:name=".TvInput" android:targetPackage="org.cleanyfin.fixture"/></manifest>')
+        run('java','-m','jdk.compiler/com.sun.tools.javac.Main','-source','11','-target','11','-classpath',android,'-d',root,*sources)
+        run(tools/'d8','--lib',android,'--min-api','34' if capture_only or getattr(tv,'projection_control',False) else '26','--output',root,*sorted((root/'org/cleanyfin/fixture').glob('*.class')))
         plain=root/'plain.apk'; run(tools/'aapt2','link','--manifest',manifest,'-I',android,'-o',plain)
         with zipfile.ZipFile(plain,'a') as z:z.write(root/'classes.dex','classes.dex')
         key=root/'test.jks'; run('keytool','-genkeypair','-keystore',key,'-alias','fixture','-keyalg','RSA','-keysize','2048','-validity','2','-storepass','disposable','-keypass','disposable','-dname','CN=Disposable Fixture')
         run(tools/'apksigner','sign','--ks',key,'--ks-pass','pass:disposable','--out',apk,plain)
+    if capture_only:
+        if ("application: label='"+tv.capture_helper_label+"' icon=''").encode() not in run(tools/'aapt2','dump','badging',apk).splitlines():raise ValueError('fresh helper label not verified')
+        tv.transport.install_capture_helper(apk,hashlib.sha256(apk.read_bytes()).hexdigest());return
+    if hasattr(tv,'transport') and tv.transport.guest:tv.transport.local_inputs.add(apk)
     tv.adb('install','-r','--no-streaming',apk,timeout=60)
 
 class Screen:
@@ -391,9 +424,13 @@ class Screen:
 
     def tree(self):
         import xml.etree.ElementTree as ET
-        # Dump to the owned guest, then read the finished XML (do not parse logcat).
-        self.tv.adb('shell','uiautomator','dump','/data/local/tmp/lab-ui.xml',timeout=12)
-        nodes=list(ET.fromstring(self.tv.adb('exec-out','cat','/data/local/tmp/lab-ui.xml')).iter('node'))
+        # A new remote filename for each snapshot; do not overwrite another session's UI
+        # dump or leave profile/settings text behind when a parse fails. Never log the XML.
+        path=self.tv.transport.ui_path() if hasattr(self.tv,'transport') else '/data/local/tmp/cleanyfin-ui-'+os.urandom(12).hex()+'.xml'
+        try:
+            self.tv.adb('shell','uiautomator','dump',path,timeout=12)
+            nodes=list(ET.fromstring(self.tv.adb('exec-out','cat',path)).iter('node'))
+        finally:self.tv.adb('shell','rm','-f',path,timeout=4)
         self.nodes=nodes
         return nodes
 
@@ -443,6 +480,22 @@ class Screen:
             if i==cap:raise RuntimeError(f'No focused {label} row after {i} {step} moves')
             self.key(step)
 
+    def focus_backend(self,cap=42):
+        # Compose does not materialize off-screen rows. Walk the menu without
+        # selecting anything, and read the exact value in the focused subtree.
+        for i in range(cap+1):
+            nodes=self.tree();focus=next((n for n in nodes if n.get('package')==APP and n.get('focused')=='true'),None)
+            values=({c.get(k) for c in focus.iter() for k in ('text','content-desc')} & {'ExoPlayer','MPV'}) if focus is not None else set()
+            if len(values)==1:return values.pop()
+            if values or i==cap:raise RuntimeError('focused playback backend value is ambiguous or unavailable')
+            self.key('DPAD_DOWN')
+
+    def home_drawer(self,cap=4):
+        for i in range(cap+1):
+            if self.get('Home') is not None:return True
+            if i<cap:self.key('DPAD_LEFT')  # Focus only; never activate a profile or media card.
+        return False
+
     def wait_label(self,label):
         eventually(lambda:self.get(label) is not None,18,'Wholphin did not display '+label)
 
@@ -451,30 +504,54 @@ class Screen:
         if not re.fullmatch(r'[a-zA-Z0-9:/._=-]+',text): raise ValueError('Unexpected lab text')
         self.tv.adb('shell','input','text',text)
 
-    def setup(self,lab):
-        self.tv.adb('shell','am','start','-n',APP+'/.MainActivity')
+    def add_lab_server(self,lab):
+        if not getattr(self.tv,'family',None):self.tv.adb('shell','am','start','-n',APP+'/.MainActivity')
         self.activate('Add Server');self.activate('Enter server address')
         eventually(lambda:self.get(edit=0) is not None,20,'Server URL field unavailable')
-        self.text(lab.public_origin);self.key('ENTER');self.activate('Add User')
+        self.text(lab.public_origin);self.key('ENTER')
+        if getattr(self.tv,'family',None):
+            from tv_family_ui import labels
+            expected=self.tv.family.ui.lab_name
+            def lab_user_picker():
+                words=labels(self.tree())
+                return words.count('Select User')==1 and words[words.index('Select User')+1:][:1]==[expected]
+            eventually(lab_user_picker,20,'new user picker is not the unique lab server')
+
+    def connect_lab(self,lab):
+        self.add_lab_server(lab)
+        self.activate('Add User')
         def code():
             return next((n.get('text') for n in self.tree() if n.get('package')==APP and re.fullmatch(r'\d{6}',n.get('text',''))),None)
         qc=eventually(code,30,'No Wholphin Quick Connect code')
         lab.api('/QuickConnect/Authorize?code='+qc,'POST',user=lab.one)
         def session():
             return next((s for s in lab.api('/Sessions',user=lab.admin) if s.get('UserId','').replace('-','')==lab.viewer and s['Client']==lab.client and s['ApplicationVersion']==lab.version and s['DeviceId']!=lab.one[0] and s['DeviceId']!='unenrolled'),None)
-        actual=eventually(session,30,'No signed-in Wholphin session of the required version')
+        return eventually(session,30,'No signed-in Wholphin session of the required version')
+
+    def setup(self,lab):
+        actual=self.connect_lab(lab)
         lab.tv_device=actual['DeviceId']; lab.policy(lab.viewer,lab.tv_device,['violence','gore']); lab.api('/Cleanyfin/lab/reconcile','POST',user=lab.admin)
         lab.tv_identity={'client':actual['Client'],'version':actual['ApplicationVersion'],
                          'deviceIdSha256':hashlib.sha256(lab.tv_device.encode()).hexdigest(),
                          'exactDeviceEnrollment':(lab.data/'profiles'/lab.viewer/'device.txt').read_text()==lab.tv_device,
                          'labTuple':lab.stub_register()['rows'][0]['tuple']}
+        if getattr(self.tv,'family',None):
+            self.tv.family.ui.verify_lab_home(actual.get('UserName'));self.tv.family.start_settings()
         self.enter_settings()
-        try:self.seek_settings={'verifiedSkipForwardMs':self.skip_forward_five_seconds()}
-        except RuntimeError as exc:self.seek_settings={'seekLimit':str(exc)}
+        if not hasattr(lab,'r24_layout'):
+            try:self.seek_settings={'verifiedSkipForwardMs':self.skip_forward_five_seconds()}
+            except RuntimeError as exc:self.seek_settings={'seekLimit':str(exc)}
         self.dpad('Advanced Settings');self.wait_label('Show Clock')
-        self.dpad('ExoPlayer');self.wait_label('Prefer MPV');self.dpad('MPV',cap=5)
+        if self.focus_backend()=='ExoPlayer':
+            self.key('DPAD_CENTER');self.wait_label('Prefer MPV');self.dpad('MPV',cap=5)
         self.wait_label('Edit mpv.conf');self.key('BACK');self.dpad('Advanced Settings')
-        self.save_mpv(MPV_OPTIONS)
+        options=MPV_OPTIONS + ("\nad-lavc-o=cons_noisegen=1" if hasattr(lab, "r24_layout") else "")
+        if getattr(self.tv,'internal',False) and not getattr(self.tv,'combined',False):
+            cap=self.tv.capture;cap.choose_pcm_directory(self.tv)
+            for path in (cap.paths.wav,cap.paths.video):cap.verify_missing(self.tv,path)
+            self.tv.internal_state['pathsVerifiedAbsentBeforeOptions']=True
+            options+='\n'+cap.paths.options
+        self.save_mpv(options)
 
     def enter_settings(self):
         self.wait_label('Home')
@@ -574,14 +651,15 @@ class Screen:
         self.dpad('Edit mpv.conf');self.wait_label('Save')
         if not any(n.get('class')=='android.widget.EditText' and n.get('text')==opts for n in self.nodes):raise RuntimeError('Reopened mpv.conf does not match')
         self.tv.adb('shell','am','force-stop',APP);self.verified={'backend':'MPV','mpvOptions':opts.splitlines(),'verification':'MPV-only preferences visible and saved mpv.conf reopened'}
-        print('Verified MPV:',', '.join(opts.splitlines()),file=sys.stderr)
+        print('Verified MPV: saved options read back',file=sys.stderr)
 
 
-def play(tv,lab,item):
+def play(tv,lab,item,*,position_ms=None):
     from uuid import UUID
+    if position_ms is not None and (type(position_ms) is not int or not 0<=position_ms<=20000 or item!=lab.pointer):raise ValueError('invalid fixture start position')
     tv.adb('shell','am','start','-n',APP+'/.MainActivity','-a',APP+'.PLAYBACK',
            '--es','itemId',str(UUID(item)),'--es','userId',str(UUID(lab.viewer)),
-           '--es','serverId',str(UUID(lab.api('/System/Info/Public')['Id'])))
+           '--es','serverId',str(UUID(lab.api('/System/Info/Public')['Id'])),*(() if position_ms is None else ('--el','position',str(position_ms))))
 
 
 def now(lab,item):
@@ -612,35 +690,44 @@ def take_deadline(seconds):
             signal.setitimer(signal.ITIMER_REAL,max(.001,expiry-time.monotonic()))
 
 
-def capture_display(tv,stack,label,limit,info):
+def capture_display(tv,stack,label,limit,info,*,device_path=None,android_only=False):
     # Android's virtual display records the presented composition, not decoded
     # frames. MP4 preserves the observed per-sample timestamps. The legacy host
     # VP9 tap remains diagnostic fallback only when Android recording won't start.
-    device_path=f'/data/local/tmp/cleanyfin-{label}.mp4'
-    video=tv.work/(label+'.mp4'); log=tv.work/(label+'-display.log')
+    device_path=device_path or f'/data/local/tmp/cleanyfin-{label}.mp4'
+    video=tv.work/(label+'.mp4');video.unlink(missing_ok=True)
+    log=tv.work/(label+'-display.log')
     args=['screenrecord','--verbose','--size',DISPLAY_CAPTURE_SIZE,'--bit-rate','4000000',
           '--time-limit',str(math.ceil(limit+8)),device_path]
+    port=getattr(tv,'transport',None)
+    if port and not android_only and port.guest:port.capture.add(device_path)
     shell='printf "%s\\n" "$$"; exec '+shlex.join(args)
     def console(*args):
         result=tv.adb('emu','screenrecord',*args,timeout=5)
         return b'OK' in result and b'KO:' not in result
     with ExitStack() as trial:
-        proc=trial.enter_context(owned(tv.adb_args('shell','sh','-c',shlex.quote(shell)),tv.env,log))
+        argv=port.recorder(device_path,math.ceil(limit+8)) if port else tv.adb_args('shell','sh','-c',shlex.quote(shell))
+        proc=trial.enter_context(owned(argv,tv.env,log))
         def identify():
             lines=log.read_bytes().splitlines()
             return lines[0].decode() if lines and lines[0].isdigit() else None
         def finish():
             pid=identify()
             if pid and proc.poll() is None:
-                try: tv.adb('shell','kill','-INT',pid,timeout=3)
-                except (sp.CalledProcessError,sp.TimeoutExpired):pass
+                try:
+                    if port:port.stop_recorder(device_path,pid)
+                    else:tv.adb('shell','kill','-INT',pid,timeout=3)
+                except (RuntimeError,sp.CalledProcessError,sp.TimeoutExpired):pass
             try:proc.wait(timeout=6)
             except sp.TimeoutExpired:info['displayStop']='Android recorder did not acknowledge SIGINT'
             try:tv.adb('pull',device_path,video,timeout=12)
             except (sp.CalledProcessError,sp.TimeoutExpired):pass
             finally:
-                try:tv.adb('shell','rm','-f',device_path,timeout=3)
-                except (sp.CalledProcessError,sp.TimeoutExpired):pass
+                if android_only:
+                    tv.capture.remove(tv,device_path);info['videoRemoved']=True
+                else:
+                    try:tv.adb('shell','rm','-f',device_path,timeout=3)
+                    except (sp.CalledProcessError,sp.TimeoutExpired):pass
         trial.callback(finish)
         def ready():
             if proc.poll() is not None:raise RuntimeError('Android compositor recorder exited before playback')
@@ -651,6 +738,10 @@ def capture_display(tv,stack,label,limit,info):
             stack.enter_context(trial.pop_all())
             info['displayTap']=f'Android compositor screenrecord {DISPLAY_CAPTURE_SIZE} MP4'
             return video
+    if android_only:
+        info['displayTap']='SurfaceFlinger timing only; Android screenrecord unavailable, no frame identities'
+        return None
+    if port:raise RuntimeError('Android screenrecord failed on the qualified playback transport; no host substitute')
     video=tv.work/(label+'.webm')
     if not console('start','--size','640x360','--time-limit',str(math.ceil(limit+8)),'--fps','60',str(video)):
         raise RuntimeError('Neither Android compositor nor host display recorder started')
@@ -663,12 +754,18 @@ def capture_display(tv,stack,label,limit,info):
 
 
 def app_runtime(logs,info):
-    a=re.findall(r'\bcplayer,\s+AO:\s+\[(audiotrack)\]\s+(\d+Hz stereo 2ch [\w-]+)',logs)
+    a=re.findall(r'\bcplayer,\s+AO:\s+\[([a-z0-9_-]+)\]\s+([^\r\n]+)',logs)
     v=re.findall(r'\bcplayer,\s+VO:\s+\[(gpu)\]\s+(\d+x\d+ [\w-]+)',logs)
-    if a:info['libmpvAO']=' '.join(a[-1])
+    if a:
+        driver,fmt=a[-1]
+        info['observedAudioDriver']=driver
+        expected=info.get('expectedAudioDriver','audiotrack')
+        if driver==expected and re.match(r'48000Hz stereo 2ch s16(?:le)?\b' if expected=='pcm' else r'48000Hz 5\.1 6ch [\w-]+' if info.get('captureUid') else r'\d+Hz stereo 2ch [\w-]+',fmt):
+            info['libmpvAO']=driver+' '+fmt.strip()
+        else:info.pop('libmpvAO',None)
     if v:info['libmpvVO']=' '.join(v[-1])
     decoders=re.findall(r'\bad,\s+(?:Selected codec:|Opening decoder)\s+([a-z0-9_-]+)',logs,re.I)
-    tracks=re.findall(r'\bcplayer,\s+(?:\(\+\)|●) Audio[^\r\n]*?\((aac|flac)\b',logs,re.I)
+    tracks=re.findall(r'\bcplayer,\s+(?:\(\+\)|●) Audio[^\r\n]*?\((aac|flac|ac3|eac3)\b',logs,re.I)
     if decoders or tracks: info['libmpvAudioCodecs']=sorted(set(decoders+tracks))
     info['audioUnderruns']=logs.count('cplayer, Audio device underrun detected')
     info['libmpvEof']=bool(re.search(r'\bcplayer,\s+EOF code:\s*1\b|\bMPV_EVENT_END_FILE:\s+0\s+0\b',logs))
@@ -708,7 +805,7 @@ def observe_presentations(tv, stop, receipt):
 
 
 def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
-    duration=14.96 if item==lab.pointer else 20
+    duration=getattr(lab,'r24_duration',14.96) if item==lab.pointer else 20
     limit=duration/speed+MEDIA_MARGIN_SECONDS
     info.update(speed=speed,fixtureDurationS=duration,wallCeilingS=limit,endSignal='fixture duration plus startup margin (no end signal)')
     with ExitStack() as s:
@@ -742,6 +839,9 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
                         if pid.isdecimal():
                             logs=tv.adb('logcat','-d','--pid='+pid,'-v','tag',timeout=2).decode(errors='replace')
                             app_runtime(logs,info)
+                        if (getattr(tv,'projection_control',False) or getattr(tv,'combined',False)) and pid.isdecimal() and not info.get('activeTrack'):
+                            from tv_projection import active_track
+                            info['activeTrack']=active_track(tv,info['captureUid'],int(pid))
                         if info.get('libmpvEof'):
                             info['endSignal']='libmpv EOF';break
                         sess=now(lab,item)
@@ -751,11 +851,11 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
                             if method:info['playMethod']=method
                             if not info.get('activeQemuAudioRoute'):
                                 info['activeQemuAudioRoute']=tv.audio_route()
-                        elif saw_session:
+                        elif saw_session and not getattr(tv,'projection_control',False):
                             info['endSignal']='Jellyfin session no longer reports the item';break
                         if info.get('libmpvVO'):
                             active=player_surface(tv)
-                            if saw_surface and not active:
+                            if saw_surface and not active and not getattr(tv,'projection_control',False):
                                 info['endSignal']='Wholphin video surface left foreground';break
                             saw_surface|=active
                     except (sp.CalledProcessError,sp.TimeoutExpired):
@@ -770,7 +870,8 @@ def record(tv,lab,item,label,speed,info,begin=None,*,display=True,sound=True):
         if pid.isdecimal():
             try:
                 logs=tv.adb('logcat','-d','--pid='+pid,'-v','threadtime',timeout=3)
-                (tv.work/(label+'-logcat.log')).write_bytes(logs)
+                if not getattr(tv,'family',None):
+                    (tv.work/(label+'-logcat.log')).write_bytes(logs)
                 app_runtime(logs.decode(errors='replace'),info)
             except (sp.CalledProcessError,sp.TimeoutExpired):pass
     if video is not None:info['videoBytes']=video.stat().st_size if video.is_file() else 0
@@ -1220,6 +1321,9 @@ class DeviceTV:
     def __init__(self,work,sdk,stack,*,prefix,env,port,capture,emulator=None):
         self.work,self.sdk,self.stack,self.prefix,self.env,self.port=work,sdk,stack,list(prefix),env,port
         self.capture,self.emulator,self.serial,self.found=capture,emulator,None,{}
+        from tv_internal import InternalCapture
+        from tv_combined import CombinedCapture
+        self.internal=isinstance(capture,InternalCapture);self.combined=isinstance(capture,CombinedCapture)
         self.ui_scale=(1,1); self.misses=0
 
     def spawn(self,cmd,label):
@@ -1228,28 +1332,26 @@ class DeviceTV:
     def call(self,*args,**kw):
         return run(*self.prefix,*args,env=self.env,**kw)
 
-    def adb_args(self,*args):
-        target=['-s',self.serial] if self.serial else []
-        return [*self.prefix,str(self.sdk/'platform-tools/adb'),'-P',str(self.port),*target,*map(str,args)]
-
     def adb(self,*args,**kw):
-        return run(*self.adb_args(*args),env=self.env,**kw)
+        return self.transport.run(*args,**kw)
 
-    def start_server(self):
-        self.spawn(self.prefix+[self.sdk/'platform-tools/adb','-L',f'tcp:localhost:{self.port}','server','nodaemon'],'adb')
-        eventually(lambda:self.adb('version',timeout=3) and self.adb('devices',timeout=3) is not None,10,'Private adb server unavailable')
+    def initial_read(self,*command):
+        # sys.boot_completed can precede the package/window services on a fresh clone.
+        # Only retry these four read-only startup queries, never install or app input.
+        if tuple(command) not in {('wm','size'),('getprop',),('pm','list','features'),('pm','list','packages')}:
+            raise ValueError('not a startup query')
+        end=time.monotonic()+(15 if self.emulator is not None else 0)
+        while True:
+            try:return self.adb('shell',*command,timeout=8)
+            except (sp.CalledProcessError,sp.TimeoutExpired):
+                if time.monotonic()>=end:raise
+                time.sleep(.5)
 
-    def pair(self,address,code):
-        # The code goes to adb on stdin: not in argv, logs or the summary.
-        out=run(*self.adb_args('pair',address),env=self.env,input=(code+'\n').encode(),timeout=30)
-        if b'Successfully paired' not in out:raise RuntimeError('Wireless debugging pairing was not accepted')
-
-    def connect(self,address):
-        out=self.adb('connect',address,timeout=20)
-        if b'connected to' not in out:raise RuntimeError('Could not connect to the box at the debugging address')
-        self.serial=address
-        eventually(lambda:self.adb('get-state',timeout=4).strip()==b'device',20,'Box did not become ready over wireless debugging')
-        size=re.findall(rb'(\d+)x(\d+)',self.adb('shell','wm','size',timeout=8))
+    def bind(self,transport):
+        self.transport=transport
+        if self.combined:transport.bind_video(self.capture.paths.video)
+        elif self.internal:transport.bind_capture(self.capture.paths)
+        size=re.findall(rb'(\d+)x(\d+)',self.initial_read('wm','size'))
         if size:
             w,h=map(int,size[-1]);self.ui_scale=(w/1280,h/720);self.found['uiSize']=f'{w}x{h}'
 
@@ -1266,6 +1368,11 @@ class DeviceTV:
     def device_mode(self):
         from tv_device import register_label
         f=self.found
+        if self.internal:
+            who=('dry-run emulator' if self.emulator is not None else 'physical box')
+            # Put the tap first. Do not silently truncate device identity to fit the register.
+            fingerprint=hashlib.sha256(f['build'].encode()).hexdigest()
+            return register_label(f'{self.capture.label}, {who} {f["model"]}, build sha256 {fingerprint}, vo-gpu GLES')
         if self.emulator is not None:
             return register_label(f"DRY RUN Google TV API 36 x86_64 emulator over adb TCP, capture {self.capture.label}")
         return register_label(f"{f.get('manufacturer')} {f.get('model')}, Android {f.get('android')} build {f.get('build')}, "
@@ -1275,9 +1382,13 @@ class DeviceTV:
         return [{'capture':self.capture.label}]
 
     def audio_route_ok(self,info):
-        return bool(info.get('arrivingAudio',{}).get('ok'))
+        if self.combined:return bool(info.get('arrivingAudio',{}).get('ok') and info.get('transferComplete') and (info.get('activeTrack') or {}).get('usage')=='USAGE_MEDIA' and info.get('observedAudioDriver')=='audiotrack')
+        return bool(info.get('arrivingAudio',{}).get('ok') and (not self.internal or
+                    (info.get('observedAudioDriver')=='pcm' and info.get('pcmRemoved') and info.get('videoRemoved'))))
 
     def configure_audio(self):
+        if self.combined:return {'level':'unchanged Android playback mix; not HDMI output gain'}
+        if self.internal:return {'level':'mpv decoded PCM file; Android volume unchanged, not output gain'}
         from tv_device import parse_volume,MUSIC_STREAM
         cmd=['shell','cmd','media_session','volume','--stream',str(MUSIC_STREAM)]
         before=parse_volume(self.adb(*cmd,'--get').decode(errors='replace'))
@@ -1294,6 +1405,7 @@ class DeviceTV:
         return result
 
     def begin_capture(self,s,label,limit,info,*,sound,display):
+        if self.internal:return self.capture.begin(sys.modules[__name__],self,s,label,limit,info,sound=sound,display=display)
         return self.capture.begin(s,label,limit,info,sound=sound,display=display)
 
 
@@ -1347,57 +1459,171 @@ def free_port():
         sock.bind(('127.0.0.1',0));return sock.getsockname()[1]
 
 
+def stock_labels(screen,apk):
+    # Literal release strings on a private clone only. Never serialize unmatched
+    # text such as a Quick Connect code, user, server address or access token.
+    if screen.tv.emulator is None or not screen.tv.found.get('emulator'):return {}
+    pool=run(screen.tv.sdk/'build-tools/36.0.0/aapt2','dump','strings',apk).decode(errors='replace')
+    known={v for v in re.findall(r'(?m)^String #\d+ : ([^\n]+)$',pool) if re.fullmatch(r"[A-Za-z][A-Za-z ,!?'’-]{0,58}",v)}
+    app=[n for n in screen.tree() if n.get('package')==APP]
+    labels={n.get(k) for n in app for k in ('text','content-desc') if n.get(k)}
+    return {'appVisible':bool(app),'appNodeCount':len(app),'labelCount':len(labels),
+            'hasProgressIndicator':any(n.get('class','').endswith('ProgressBar') for n in app),
+            'errorTextPresent':any(re.search(r'error|exception|failed|not found',v,re.I) for v in labels),
+            'stockLabels':sorted(labels & known)[:30],
+            'visibleCategories':sorted(set(re.findall(r'[a-z]+',' '.join(labels).lower())) &
+                set('profile account user select original home favorite favorites loading connect connection login code authorize server setup offline search settings library libraries next continue username password finish retry welcome privacy playback error about version update changelog release crash sign skip button device remember permission one synthetic household'.split()))}
+
+
+def seed_update_rehearsal(tv,work,stack,receipt):
+    # The extra signed-in account exists only in the fresh AVD + a separate network-none
+    # Jellyfin. Never install the old version or seed a user on a physical device.
+    if tv.emulator is None or not tv.found.get('emulator'):raise RuntimeError('synthetic baseline needs the verified private AVD')
+    from tv_update import OLD_SHA
+    feed=Path(os.environ.get('CLEANYFIN_APK_FEED') or Path.home()/'.cache/cleanyfin-scratch/apks')
+    old=feed/'v1.0.9/Wholphin-x86_64.apk'
+    if not old.is_file() or hashlib.sha256(old.read_bytes()).hexdigest()!=OLD_SHA:raise RuntimeError('stage verified official 1.0.9 x86_64 APK before update rehearsal')
+    if b'Success' not in tv.adb('install','--no-streaming',old,timeout=120):raise RuntimeError('baseline APK install not verified')
+    kit=module('check-plugin');lab=kit.Lab(work/'synthetic-profile','10.11');lab.work.mkdir()
+    stack.callback(lambda:run('docker','rm','-f',lab.cid,timeout=30) if lab.cid else None)
+    lab.setup();lab.users_library();lab.client='Wholphin';lab.version='1.0.9-0-g2d87d526'
+    cfg=lab.api('/System/Configuration',user=lab.admin);cfg['ServerName']='Synthetic Household';lab.api('/System/Configuration','POST',cfg,user=lab.admin)
+    port=LAB_PORT+1;lab.public_origin=f'http://127.0.0.1:{port}'+kit.BASE
+    run('docker','exec','-d',lab.cid,'perl','-e',RELAY);sock=lab.work/'config/tv.sock';eventually(sock.is_socket,8,'synthetic baseline relay unavailable')
+    tv.spawn(tv.transport.bridge(port,sock)+[sys.executable,'-I',HERE/'tv-wire.py',str(sock),lab.item,'unused',str(port)],'baseline-relay')
+    tv.adb('reverse','--no-rebind',f'tcp:{port}',f'tcp:{port}',timeout=8)
+    stack.callback(lambda:tv.adb('reverse','--remove',f'tcp:{port}',timeout=8))
+    ui=DeviceScreen(tv);ui.connect_lab(lab);receipt['authenticatedSyntheticSession']=True
+    # Quick Connect can authorize the server session before local user selection.
+    drawer_moves=0
+    def signed_home():
+        nonlocal drawer_moves
+        nodes=ui.tree();labels={(n.get(k) or '').casefold() for n in nodes if n.get('package')==APP for k in ('text','content-desc')}
+        if 'home' in labels:return True
+        if 'select user' in labels and 'one' in labels:ui.activate('one')
+        elif drawer_moves<4:ui.key('DPAD_LEFT');drawer_moves+=1
+        return False
+    try:eventually(signed_home,30,'signed-in 1.0.9 did not reach Home')
+    except RuntimeError:
+        receipt['screenAfterLogin']=stock_labels(ui,old)
+        # The seed is not established until the same local profile survives an
+        # app restart. Do not reauthenticate or clear app data to pass this check.
+        tv.adb('shell','am','force-stop',APP);tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity',timeout=20)
+        drawer_moves=0
+        try:eventually(signed_home,30,'signed-in 1.0.9 did not reach Home after restart')
+        except RuntimeError:
+            receipt['screenAfterRestart']=stock_labels(ui,old);raise
+    ui.enter_advanced()
+    if ui.focus_backend()=='ExoPlayer':
+        ui.key('DPAD_CENTER');ui.wait_label('Prefer MPV');ui.dpad('MPV',cap=5)
+    ui.wait_label('Edit mpv.conf')
+    ui.save_mpv('hwdec=no')  # Nonempty synthetic baseline must survive upgrade and test.
+
+
 def device_session(opts,work,sdk,stack,summary,history):
     """Connect, verify identity, record the manifest, register the restore, then make the
     budgeted changes. Returns the DeviceTV ready for setup_lab."""
     import getpass
     import tv_device as dev
-    if opts.capture_file:capture=FileCapture(work,dev.capture_files(opts.capture_file))
+    if opts.no_capture:
+        from tv_internal import InternalCapture,Paths
+        from tv_combined import CombinedCapture
+        capture=(CombinedCapture if opts.existing_wholphin else InternalCapture)(Paths(os.urandom(12).hex()))
+    elif opts.capture_file:capture=FileCapture(work,dev.capture_files(opts.capture_file))
     else:capture=adapter_capture(work,opts,summary)
+    from adb_lab import AdbLab
+    from adb_lab_playback import Playback
     if opts.dry_run_emulator:
-        emu=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads);emu.host_history=history
+        emu=None
+        def observe_guest_exit():
+            if emu is not None:
+                summary['privateNamespaceExited']=emu.ns.poll() is not None
+                if hasattr(emu,'emu'):summary['emulatorExited']=emu.emu.poll() is not None
+        stack.callback(observe_guest_exit)
+        emu=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads,opts.r24);emu.host_history=history
+        emu.transport=Playback.guest_session(stack,work,sdk,family=bool(opts.existing_wholphin),receipt=summary)
         emu.boot();summary['graphicsAdapter']=emu.graphicsAdapter
-        tv=DeviceTV(work,sdk,stack,prefix=emu.prefix,env=emu.env,port=5037,capture=capture,emulator=emu)
-        tv.connect('127.0.0.1:5581')  # the emulator's adb port, as a TCP device: same path as the box
+        tv=DeviceTV(work,sdk,stack,prefix=emu.prefix,env=emu.env,port=None,capture=capture,emulator=emu)
+        tv.bind(emu.transport)
     else:
-        pair,code,address=dev.connection(os.environ,input,getpass.getpass)
-        for key in [k for k in os.environ if k.startswith('CLEANYFIN_TV_')]:os.environ.pop(key)  # this run only
-        home=work/'home';home.mkdir(mode=0o700)
-        env=dict(dev.env_without_secrets(os.environ),HOME=str(home),ANDROID_USER_HOME=str(home/'.android'),
-                 ADB_MDNS='0',ADB_MDNS_AUTO_CONNECT='0',ADB_MDNS_OPENSCREEN='0',ADB_LOCAL_TRANSPORT_MAX_PORT='0')  # no discovery
-        tv=DeviceTV(work,sdk,stack,prefix=(),env=env,port=free_port(),capture=capture)
-        tv.start_server();tv.pair(pair,code);del code
-        tv.connect(address)
-        def disconnect():
-            try:tv.adb('disconnect',address,timeout=8)
-            except (sp.CalledProcessError,sp.TimeoutExpired):pass
-        stack.callback(disconnect)
+        import warnings
+        from tv_internal import harness_digest
+        digest=harness_digest(HERE)
+        if digest!=summary.get('captureHarnessSha256') or not summary.get('emulatorProof',{}).get('familySafety'):raise ValueError('safety proof no longer current; no device contacted')
+        client=stack.enter_context(AdbLab());client._witnessed();client._witnessed(harness=digest)
+        with warnings.catch_warnings():
+            warnings.simplefilter('error',getpass.GetPassWarning)
+            pair,code,address=dev.connection({},input,getpass.getpass)
+        client.pair(pair,code);del code;client.connect(address)
+        tv=DeviceTV(work,sdk,stack,prefix=(),env=dev.env_without_secrets(os.environ),port=None,capture=capture)
+        tv.bind(Playback(client,work,guest=False,family=bool(opts.existing_wholphin)))
     tv.host_history=history
     text=lambda *a:tv.adb(*a,timeout=30).decode(errors='replace')
-    props=dev.parse_getprop(text('shell','getprop'))
-    ok,found,why=dev.identity(props,text('shell','pm','list','features'),dev.parse_packages(text('shell','pm','list','packages')),
+    initial=lambda *a:tv.initial_read(*a).decode(errors='replace')
+    props=dev.parse_getprop(initial('getprop'))
+    ok,found,why=dev.identity(props,initial('pm','list','features'),dev.parse_packages(initial('pm','list','packages')),
                               emulator=opts.dry_run_emulator,expect_model=opts.expect_model)
     tv.found.update(found);summary['device']={k:v for k,v in tv.found.items()}
     print('Connected device:',json.dumps(summary['device']),file=sys.stderr,flush=True)
     if not ok:raise RuntimeError('Refusing device: '+why)
-    before=dev.manifest(text);(work/'manifest-before.json').write_text(json.dumps(before,indent=1))
+    tv.transport.qualify(found['abi'])
+    if opts.existing_wholphin:
+        from tv_update import check_update_target
+        check_update_target(found,rehearsal=opts.dry_run_emulator)
+        if not tv.transport.helper_absent():raise ValueError('test capture package is already installed; refusing before update')
+    if opts.dry_run_emulator and opts.existing_wholphin:
+        receipt=summary['familyUpdate']={}
+        seed_update_rehearsal(tv,work,stack,receipt);receipt['syntheticBaselineSeeded']=True
+    before=dev.manifest(text)
     summary['manifestBefore']=manifest_digest(before)
-    if before['wholphinVersion'] is not None:
+    updating=opts.existing_wholphin=='update'
+    if updating and dev.APP not in before['packages']:raise RuntimeError('update requires the verified existing family app; no fresh install')
+    if dev.APP in before['packages'] and not updating:
         # Its server list and settings live in app-private storage that cannot be
         # backed up or restored without root; never edit the family's copy.
         raise RuntimeError(f"Wholphin {before['wholphinVersion']} is already on the box; refusing to change the family's copy")
     state={'installed':False}
+    if tv.internal:
+        tv.internal_state=summary['internalRestore']={'wholphinAbsentBefore':not updating,'pathsVerifiedAbsentBeforeOptions':False}
+        if not opts.dry_run_emulator:
+            # Restore first. Turning off wireless debugging closes the live connection.
+            def closed():
+                from tv_internal import closed_endpoint
+                import select
+                print('Forget this PC under Paired devices (cleanyfin@lab), turn Wireless debugging OFF, then press Enter (2 minute limit).',file=sys.stderr,flush=True)
+                status='unverified'
+                if sys.stdin.isatty() and select.select([sys.stdin],[],[],120)[0] and sys.stdin.readline():status=closed_endpoint(address)
+                summary['debugEndpointAfterOff']=status
+                if status!='refused':summary['restored']=False
+            stack.callback(closed)
+    if updating:
+        # Entirely separate cleanup. An existing app never enters the disposable clear/uninstall path.
+        from tv_family_ui import FamilyUI
+        from tv_update import Update
+        apk=release(work,found['abi'],offline=True);tv.app_digest=dev.ASSETS[found['abi']][1]
+        tv.family=Update(tv,FamilyUI(DeviceScreen(tv)),work,sdk/'build-tools/36.0.0',run,summary.setdefault('familyUpdate',{}))
+        stack.callback(lambda:finish_family(tv,before,state,summary,text))
+        try:tv.family.begin(apk,before,authorized=True)
+        except (ValueError,RuntimeError):
+            if opts.dry_run_emulator:
+                try:tv.family.receipt['rehearsalScreenAtStop']=stock_labels(tv.family.ui.ui,apk)
+                except Exception:pass
+            raise
+        tv.adb('reverse','--no-rebind',f'tcp:{LAB_PORT}',f'tcp:{LAB_PORT}',timeout=10);state['reverse']=True
+        summary['androidFingerprint']=found['build']
+        return tv
     stack.callback(lambda:finish_device(tv,before,state,opts,summary,text))
-    print('Change budget: install Wholphin 1.1.2 (absent now), HDMI audio = PCM, music volume = max'
+    print('Change budget: install Wholphin 1.1.2 (absent now)'
+          +(', temporary app PCM and screen recording; no system sound change' if tv.internal else ', HDMI audio = PCM, music volume = max')
           +('' if opts.frame_rate_match=='leave' else ', match content frame rate = '+opts.frame_rate_match)
           +', a lab server inside Wholphin only. Everything is put back at the end.',file=sys.stderr,flush=True)
-    tv.adb('shell','settings','put','global','encoded_surround_output','1')  # Never: decoded PCM only
+    if not tv.internal:tv.adb('shell','settings','put','global','encoded_surround_output','1')  # Never: decoded PCM only
     if opts.frame_rate_match!='leave':
         tv.adb('shell','settings','put','secure','match_content_frame_rate',{'never':'0','seamless':'1','always':'2'}[opts.frame_rate_match])
-    apk=release(work,found['abi']);tv.app_digest=dev.ASSETS[found['abi']][1]
+    apk=release(work,found['abi'],offline=opts.r24);tv.app_digest=dev.ASSETS[found['abi']][1]
+    if b'Success' not in tv.adb('install','--no-streaming',apk,timeout=240):raise RuntimeError('Installation of disposable Wholphin not verified')
     state['installed']=True
-    tv.adb('install','--no-streaming',apk,timeout=240)
-    tv.adb('reverse',f'tcp:{LAB_PORT}',f'tcp:{LAB_PORT}',timeout=10);state['reverse']=True
+    tv.adb('reverse','--no-rebind',f'tcp:{LAB_PORT}',f'tcp:{LAB_PORT}',timeout=10);state['reverse']=True
     summary['androidFingerprint']=found['build']
     return tv
 
@@ -1406,11 +1632,56 @@ def manifest_digest(m):
     # The family's app list stays in private scratch; the summary keeps only a digest.
     names='\n'.join(f'{k} {v}' for k,v in sorted(m['packages'].items())).encode()
     return dict(packageCount=len(m['packages']),packageListSha256=hashlib.sha256(names).hexdigest(),
-                settings=m['settings'],musicVolume=m['musicVolume'],wholphinVersion=m['wholphinVersion'])
+                legacyAdb5555=m.get('legacyAdb5555','unknown'),settings=m['settings'],musicVolume=m['musicVolume'],wholphinVersion=m['wholphinVersion'])
+
+
+def restore_family_ui(tv):
+    # Called while the disposable test server and port forward are still alive.
+    tx=tv.family
+    tx.receipt['restoreAttempted']=True
+    paths_owned=tv.internal_state.get('pathsVerifiedAbsentBeforeOptions') is True
+    # Removing one capture must never suppress restoration of the family profile
+    # or removal of the other capture. Recheck both after the app is restored.
+    if paths_owned:
+        try:tv.adb('shell','am','force-stop',APP)
+        except (OSError,sp.SubprocessError):pass
+    try:tx.finish()
+    except Exception as exc:
+        import traceback
+        tx.receipt['restoreStopSites']=[f'{Path(f.filename).name}:{f.name}:{f.lineno}' for f in traceback.extract_tb(exc.__traceback__) if Path(f.filename).parent==HERE][-6:]
+        tx.receipt['visibleStateRestored']=False
+        print('Family app restore not verified. Do not clear, uninstall or downgrade Wholphin.',file=sys.stderr)
+    finally:
+        if paths_owned:
+            for key,path in [('pcmRemoved',tv.capture.paths.wav),('screenrecordRemoved',tv.capture.paths.video)]:
+                try:tv.capture.remove(tv,path);tv.internal_state[key]=True
+                except Exception:tv.internal_state[key]=False
+
+
+
+def finish_family(tv,before,state,summary,text):
+    from tv_device import APP as package,manifest,diff
+    tx=tv.family
+    if not tx.receipt.get('restoreAttempted'):restore_family_ui(tv)
+    if state.get('reverse'):
+        try:tv.adb('reverse','--remove',f'tcp:{LAB_PORT}',timeout=8)
+        except sp.SubprocessError:summary['restored']=False;return
+    after=manifest(text);summary['manifestAfter']=manifest_digest(after);summary['manifestDiff']=diff(before,after)
+    # Exactly the approved versionCode/versionName may differ. Compare all original settings,
+    # volume, package names, versions, and scratch membership independently of the UI proof.
+    expected=dict(before,packages=dict(before['packages']))
+    if tx.receipt.get('inPlaceUpdateReported'):
+        expected['wholphinVersion']=tx.target.version;expected['packages'][package]=str(tx.target.code)
+    summary['unexpectedResidue']=diff(expected,after)
+    summary['restored']=bool(tx.receipt.get('visibleStateRestored') and not summary['unexpectedResidue'] and
+                             ((tv.emulator is not None and summary['observations'].get('exactLabAdditionVerified') is True and tx.receipt.get('exactLabDeleteActivated') is True and tv.transport.helper_absent()) if summary.get('mode')=='lab-removal-only' else tv.internal_state.get('combinedCleanupVerified') if tv.combined else
+                              tv.internal_state.get('pcmRemoved') and tv.internal_state.get('screenrecordRemoved')))
+    print('Original server list, lab settings and device restore verified (authentication not tested):',summary['restored'],file=sys.stderr)
 
 
 def finish_device(tv,before,state,opts,summary,text):
     import tv_device as dev
+    if dev.APP in before['packages']:raise RuntimeError('disposable cleanup forbidden for a preexisting app')
     log=summary['restoreSteps']=[]
     def step(label,*args,timeout=30):
         try:tv.adb(*args,timeout=timeout);log.append(label)
@@ -1418,13 +1689,22 @@ def finish_device(tv,before,state,opts,summary,text):
     if state.get('reverse'):step('removed adb reverse port','reverse','--remove',f'tcp:{LAB_PORT}')
     if state['installed']:
         step('stopped Wholphin','shell','am','force-stop',dev.APP)
+        if tv.internal and tv.internal_state['pathsVerifiedAbsentBeforeOptions']:
+            for key,path in [('pcmRemoved',tv.capture.paths.wav),('screenrecordRemoved',tv.capture.paths.video)]:
+                try:tv.capture.remove(tv,path);tv.internal_state[key]=True
+                except (RuntimeError,sp.CalledProcessError,sp.TimeoutExpired):log.append('FAILED: remove and verify '+key)
         # The harness installed it: its data holds only the lab server entry,
         # the lab viewer sign-in, the MPV backend and the test mpv.conf.
-        step('cleared Wholphin data (lab server entry, backend, mpv.conf)','shell','pm','clear',dev.APP)
+        try:
+            if tv.adb('shell','pm','clear',dev.APP,timeout=30).strip()!=b'Success':raise ValueError
+            log.append('cleared Wholphin data (lab server entry, backend, mpv.conf)')
+        except (ValueError,sp.CalledProcessError,sp.TimeoutExpired):log.append('FAILED: clear lab app data')
     try:now=dev.manifest(text)
     except (sp.CalledProcessError,sp.TimeoutExpired):
         summary['restored']=False;print(LOST_BOX,file=sys.stderr,flush=True);return
-    for cmd in dev.restore_plan(before,now):step('restored: '+' '.join(cmd[1:]),*cmd)
+    for cmd in dev.restore_plan(before,now):
+        if tv.internal and cmd[:2]==['shell','rm']:continue  # only capture.remove owns recording files
+        step('restored: '+' '.join(cmd[1:]),*cmd)
     keep=True
     if state['installed'] and dev.APP in now['packages']:
         choice=opts.after
@@ -1435,6 +1715,9 @@ def finish_device(tv,before,state,opts,summary,text):
         if choice=='uninstall':step('uninstalled Wholphin','uninstall',dev.APP,timeout=60);keep=False
         else:log.append('kept Wholphin (data cleared) at the family\'s choice')
     after=dev.manifest(text)
+    if tv.internal:
+        tv.internal_state['labAppAndMpvOptionsRemoved']=dev.APP not in after['packages']
+        if not tv.internal_state['labAppAndMpvOptionsRemoved']:log.append('FAILED: remove lab app and its mpv options')
     summary['manifestAfter']=manifest_digest(after)
     summary['manifestDiff']=dev.diff(before,after)
     summary['unexpectedResidue']=dev.accepted_residue(before,after,kept_wholphin=state['installed'] and keep)
@@ -1464,12 +1747,7 @@ def preflight(opts):
         except (sp.CalledProcessError,sp.TimeoutExpired,OSError) as exc:print('  formats unavailable:',type(exc).__name__)
     if not found['adapters']:print('Capture adapter: none found')
     for r in found['refused']:print('Not a capture adapter:',r['device'],'-',r['reason'])
-    with socket.socket() as sock:
-        sock.settimeout(.5)
-        running=sock.connect_ex(('127.0.0.1',5037))==0
-    sdk=Path(os.environ.get('ANDROID_HOME') or Path.home()/'Android/Sdk')
-    if running:print('adb devices (existing server, not started by this check):\n'+run(sdk/'platform-tools/adb','devices','-l').decode().strip())
-    else:print('adb: no server running, so no connected devices (this check does not start one)')
+    print('No adb server queried or started; capture discovery only.')
     print('Preflight changed nothing.')
     return 0
 
@@ -1670,31 +1948,85 @@ def main():
     parser.add_argument('--llvmpipe-threads',type=int,choices=(2,4),help='bound software raster workers in the owned emulator only')
     parser.add_argument('--ram-mib',type=int,choices=(1536,1792,2048),default=2048,help='guest RAM; part of the measured device mode')
     parser.add_argument('--split-capture',action='store_true',help='diagnostic: use separate 1x audio and display takes, without changing player outputs')
+    parser.add_argument('--projection-control',action='store_true',help='emulator-only uncut Dolby audio measurement, never admission')
+    parser.add_argument('--r24',action='store_true',help='measure the Dolby test-tier gate; never installs evidence')
+    parser.add_argument('--layout',choices=('mp4-h264-eac351','mkv-h264-ac351','mkv-h264-eac351'))
+    parser.add_argument('--jellyfin',choices=('12.4','10.11'),help='R24 default: 12.4; legacy AAC default: 10.11')
     box=parser.add_argument_group('real TV box (HDMI capture adapter on this PC)')
     box.add_argument('--device',action='store_true',help='measure the Google TV box over wireless debugging; pairing details are prompted or read from CLEANYFIN_TV_PAIR, CLEANYFIN_TV_CODE, CLEANYFIN_TV_CONNECT for this run only')
-    box.add_argument('--preflight',action='store_true',help='list capture adapters and connected adb devices; change nothing')
+    box.add_argument('--existing-wholphin',choices=('update',),help='explicit signed 1.0.9 to 1.1.2 in-place update; requires separate preservation rehearsal')
+    box.add_argument('--no-capture',action='store_true',help='synthetic Android screenrecord + decoded mpv PCM file, not HDMI output')
+    box.add_argument('--preflight',action='store_true',help='list local capture adapters; no adb or device connection')
     box.add_argument('--capture-usb',action='append',metavar='VID:PID',help='accept this USB id as the HDMI capture adapter')
     box.add_argument('--capture-file',action='append',metavar='[TAKE=]PATH',help='dry run: score recorded files instead of the adapter (no candidate row)')
+    box.add_argument('--private-transport-only',action='store_true',help='private one-mark stock transport diagnostic; no capture takes')
+    box.add_argument('--family-safety-only',action='store_true',help='private signed-update, idle recording interruption and full restoration; no movie')
+    box.add_argument('--lab-removal-only',action='store_true',help='private signed-update rehearsal: add and delete the unique lab server, no playback')
     box.add_argument('--dry-run-emulator',action='store_true',help='dry run: drive the harness emulator through the device path over adb TCP')
     box.add_argument('--expect-model',help='refuse unless ro.product.model equals this')
     box.add_argument('--frame-rate-match',choices=('leave','never','seamless','always'),default='never',help='box "match content frame rate" for the run (default never: a constant 60 Hz signal for the adapter; restored afterwards)')
     box.add_argument('--after',choices=('keep','uninstall'),help='Wholphin at the end, if the harness installed it (default: ask; keep)')
     opts=parser.parse_args()
+    if opts.private_transport_only and (opts.family_safety_only or opts.lab_removal_only or not (opts.device and opts.dry_run_emulator and opts.existing_wholphin and opts.no_capture and opts.r24)):parser.error('transport probe requires the private update emulator')
+    if opts.family_safety_only and (opts.lab_removal_only or not (opts.device and opts.dry_run_emulator and opts.existing_wholphin and opts.no_capture and opts.r24)):parser.error('family safety rehearsal requires a private update emulator')
+    if opts.lab_removal_only and not (opts.device and opts.dry_run_emulator and opts.existing_wholphin and opts.no_capture and opts.r24):parser.error('standalone removal requires the private signed-update rehearsal')
+    if opts.projection_control and (not opts.r24 or opts.device or opts.preflight or opts.keep or opts.capture_usb or opts.split_capture):parser.error('projection control needs only the fresh private R24 emulator')
+    if opts.layout and not opts.r24:parser.error('--layout needs --r24')
+    if opts.existing_wholphin and (not opts.no_capture or opts.after or opts.frame_rate_match!='leave'):
+        parser.error('update requires --no-capture --frame-rate-match leave; never use --after on a family app')
+    if opts.no_capture:
+        if not (opts.device and opts.r24) or opts.capture_file or opts.capture_usb or opts.preflight or opts.after=='keep':
+            parser.error('--no-capture needs --device --r24 and lab-app removal; no adapter or file substitute')
+        if not opts.existing_wholphin:opts.after='uninstall'
+    if opts.r24 and (opts.keep or opts.split_capture or opts.capture_file or (opts.dry_run_emulator and not opts.no_capture)):
+        parser.error('R24 requires simultaneous live taps, disposable synthetic data only')
+    if opts.r24:
+        opts.layout=opts.layout or 'mp4-h264-eac351';opts.jellyfin=opts.jellyfin or '12.4'
+        feed=Path(os.environ.get('CLEANYFIN_NUGET_FEED') or Path.home()/'.cache/cleanyfin-scratch/nuget-feed')
+        if not feed.is_dir():parser.error('R24 requires a pre-staged offline NuGet feed')
+        os.environ['CLEANYFIN_NUGET_FEED']=str(feed.resolve())
     if opts.preflight:return preflight(opts)
+    if opts.device and not opts.dry_run_emulator and not (opts.no_capture and opts.existing_wholphin=='update'):
+        parser.error('Physical playback remains closed outside the exact rehearsed family-update path; no device contacted')
     if (opts.capture_file or opts.dry_run_emulator) and not opts.device:parser.error('--capture-file and --dry-run-emulator need --device')
-    if opts.dry_run_emulator and not opts.capture_file:parser.error('--dry-run-emulator has no HDMI adapter; give --capture-file')
+    if opts.dry_run_emulator and not (opts.capture_file or opts.no_capture):parser.error('--dry-run-emulator has no HDMI adapter; give --capture-file')
     try:import numpy  # Fail before starting services if PCM analysis cannot run.
     except ImportError:parser.error('NumPy is required for rendered PCM clock and gain analysis')
     if not __debug__:parser.error('Python assertions are required')
     if opts.llvmpipe_threads is not None and opts.gpu!='host':parser.error('--llvmpipe-threads requires --gpu host')
+    proof=None
+    if opts.no_capture:
+        from tv_internal import harness_digest
+        from tv_safety import prior_safety
+        digest=harness_digest(HERE)
+        if not opts.dry_run_emulator:
+            runs=HERE.parents[1]/'delivery/evidence/runs'
+            try:proof={'familySafety':prior_safety(runs,digest)}
+            except ValueError as exc:parser.error(str(exc))
+    if opts.r24:
+        from tv_device import ASSETS
+        try:import tv_r24
+        except ImportError as exc:parser.error(f'R24 requires NumPy and SciPy before any device contact ({exc.name} missing)')
+        for abi in (('armeabi-v7a','arm64-v8a') if opts.device and not opts.dry_run_emulator else ('x86_64',)):
+            name,sha,size,_=ASSETS[abi]
+            apkpath=Path(os.environ.get('CLEANYFIN_APK_FEED') or Path.home()/'.cache/cleanyfin-scratch/apks')/name
+            if not apkpath.is_file() or apkpath.stat().st_size!=size or hashlib.sha256(apkpath.read_bytes()).hexdigest()!=sha:
+                parser.error('Offline Wholphin release missing or mismatched: '+name+'; no device contacted')
     start=time.monotonic(); stamp=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'); uid=secrets.token_hex(5)
     work=Path(tempfile.mkdtemp(prefix='cleanyfin-tv-'));sdk=Path(os.environ.get('ANDROID_HOME') or Path.home()/'Android/Sdk').resolve()
     output=HERE.parents[1]/'delivery/evidence/runs'/('tv-'+stamp+'-'+uid)
     summary={'startedUtc':stamp,'recording':'Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz'}
+    if opts.projection_control:summary.update(mode='projection-control',recording='AudioPlaybackCapture; uncut Wholphin UID/USAGE_MEDIA only; no picture, microphone or HDMI')
     if opts.device:
-        summary.update(mode='device',dryRun=bool(opts.capture_file or opts.dry_run_emulator),
-                       recording=('DRY RUN: recorded files through the device capture path' if opts.capture_file else
+        summary.update(mode='device-internal' if opts.no_capture else 'device',dryRun=bool(opts.capture_file or opts.dry_run_emulator),
+                       recording=('Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness' if opts.no_capture else 'DRY RUN: recorded files through the device capture path' if opts.capture_file else
                                   'Synthetic fixture only; box HDMI output via USB capture adapter: UVC video stored 320x180 gray FFV1, UAC s16le stereo 48000 Hz'))
+    if opts.no_capture:summary.update(captureHarnessSha256=digest,emulatorProof=proof)
+    if opts.existing_wholphin:summary.update(mode='device-combined',recording='Android screenrecord + Wholphin UID/USAGE_MEDIA playback mix; no shared clock or HDMI')
+    if opts.private_transport_only:summary.update(mode='private-transport-only',recording='no capture takes; synthetic fixture barcode observations only')
+    if opts.family_safety_only:summary.update(mode='family-safety-only',recording='short idle capture on synthetic lab profile; no movie or R24 measurement')
+    if opts.lab_removal_only:summary.update(mode='lab-removal-only',recording='none; private stock server cleanup only')
+    from tv_safety import PlannedSafetyStop
     from collections import deque
     raw=summary['observations']={};row=None;error=None;peak=0;over=threading.Event();done=threading.Event()
     history=deque(maxlen=5);worst_io=host_health()
@@ -1715,10 +2047,18 @@ def main():
                            timeout_label(raw.get('milestone','setup'),list(history)) if sig==signal.SIGALRM else 'Run interrupted')
     for sig in (signal.SIGTERM,signal.SIGALRM,signal.SIGINT):signal.signal(sig,interrupted)
     resource.setrlimit(resource.RLIMIT_CORE,(0,0));watcher=threading.Thread(target=budget,daemon=True);watcher.start()
+    class RunStack(ExitStack):
+        def __exit__(self,*exc):
+            if not opts.existing_wholphin:return super().__exit__(*exc)
+            # Do not interrupt family restoration with a second Ctrl-C or the measurement alarm.
+            signal.alarm(0);saved={s:signal.signal(s,signal.SIG_IGN) for s in (signal.SIGINT,signal.SIGTERM)}
+            try:return super().__exit__(*exc)
+            finally:
+                for sig,handler in saved.items():signal.signal(sig,handler)
     try:
         summary['hostBeforeRun']=wait_for_host()
-        if not opts.device:signal.alarm(1200)
-        with ExitStack() as stack, redirect_stdout(sys.stderr):
+        if not opts.device:signal.alarm(13500 if opts.r24 else 1200)
+        with RunStack() as stack, redirect_stdout(sys.stderr):
             # Every Docker child, including fixture-generator subprocesses, gets
             # an ownership label so an interrupted image build is collected too.
             docker=shutil.which('docker')
@@ -1745,33 +2085,86 @@ def main():
                 raw['milestone']='box connection, identity and change manifest'
                 tv=device_session(opts,work,sdk,stack,summary,history)
                 stack.callback(signal.alarm,0)  # never interrupt the restore
-                signal.alarm(1200)
+                signal.alarm(13500 if opts.r24 else 1200)
                 summary['apkSha256']=tv.app_digest
             else:
                 raw['milestone']='official Wholphin release verification'
-                apk=release(work);summary['apkSha256']=DIGEST
+                apk=release(work,offline=opts.r24);summary['apkSha256']=DIGEST
                 raw['milestone']='private emulator and audio boot'
-                tv=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads)
+                tv=TV(work,sdk,stack,opts.gpu,opts.ram_mib,opts.llvmpipe_threads,opts.r24)
                 summary.update(declaredGpu=opts.gpu,llvmpipeThreadsRequested=opts.llvmpipe_threads,guestRamMiB=opts.ram_mib);tv.host_history=history
+                from adb_lab_playback import Playback
+                tv.transport=Playback.guest_session(stack,work,sdk,receipt=summary)
+                tv.projection_control=opts.projection_control
                 tv.boot();summary['graphicsAdapter']=tv.graphicsAdapter
                 print('Emulator graphics:',tv.graphicsAdapter or opts.gpu+' requested; renderer not reported',file=sys.stderr,flush=True)
+                # Verify package-service readiness using an already exercised stock read.
+                # A missing shell verb is not evidence that the Android user is locked.
+                eventually(lambda:b'package:android' in tv.adb('shell','pm','list','packages').splitlines(),45,'Stock Android package service not ready for installation')
                 tv.adb('install','--no-streaming',apk,timeout=75)
                 summary['androidFingerprint']=tv.adb('shell','getprop','ro.build.fingerprint').decode().strip();summary['audioInputFormat']=tv.call('pactl','list','short','sink-inputs').decode().strip().split('\t')[-1]
                 mem=re.search(rb'^MemTotal:\s+(\d+) kB',tv.adb('shell','cat','/proc/meminfo'),re.M)
                 if mem:summary['guestKernelMemTotalKiB']=int(mem[1])
             raw['milestone']='disposable Jellyfin build and setup'
-            lab=setup_lab(work,tv,stack);summary['pluginBuild']=lab.plugin_build;summary['fixtureSha256']=hashlib.sha256(lab.original).hexdigest()
+            lab=setup_lab(work,tv,stack,opts.jellyfin,opts.layout);summary['pluginBuild']=lab.plugin_build;summary['fixtureSha256']=lab.r24_fixture['sha256'] if opts.r24 else hashlib.sha256(lab.original).hexdigest()
             row=lab.stub_register()['rows'][0];row['controls']=[];row['status']='experimental'
             raw['milestone']='Wholphin login, enrollment and MPV settings'
-            ui=(DeviceScreen if opts.device else Screen)(tv);ui.setup(lab);raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
-            print('Disposable TV enrollment:',json.dumps(lab.tv_identity),file=sys.stderr,flush=True)
-            if not opts.device:
-                raw['milestone']='separate stock transport test input install'
-                install_input(tv)
-            summary['splitCapture']=opts.split_capture
-            measure(tv,lab,ui,raw,opts.split_capture)
+            if getattr(tv,'family',None):
+                name='Cleanyfin Lab '+uid
+                cfg=lab.api('/System/Configuration',user=lab.admin);cfg['ServerName']=name;lab.api('/System/Configuration','POST',cfg,user=lab.admin)
+                if lab.api('/System/Info/Public').get('ServerName')!=name:raise RuntimeError('unique lab server identity not verified')
+                tv.family.ui.prepare_lab(name,tv.family.original)
+                if tv.emulator is None:print('For recovery, the only server this run adds is '+name,file=sys.stderr,flush=True)
+                tv.family.lab_added=True;stack.callback(restore_family_ui,tv)
+            ui=(DeviceScreen if opts.device else Screen)(tv)
+            if opts.lab_removal_only:
+                raw['milestone']='private standalone exact lab removal'
+                ui.add_lab_server(lab)
+                if tv.family.ui.inventory()!=tuple(sorted((*tv.family.original.servers,name))):raise ValueError('lab inventory delta not verified')
+                raw['exactLabAdditionVerified']=True
+            else:
+                try:ui.setup(lab)
+                except Exception:
+                    if opts.dry_run_emulator and opts.existing_wholphin:
+                        try:raw['syntheticSetupStop']=stock_labels(ui,work/('release-'+tv.found['abi'])/ASSETS[tv.found['abi']][0])
+                        except Exception:pass
+                    raise
+                raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
+                print('Disposable TV enrollment:',json.dumps(lab.tv_identity),file=sys.stderr,flush=True)
+                if not opts.device:
+                    raw['milestone']='separate stock transport test input install'
+                    install_input(tv)
+                if getattr(tv,'combined',False):tv.capture.prepare(sys.modules[__name__],tv,stack)
+                summary['splitCapture']=opts.split_capture
+                if opts.family_safety_only:
+                    from tv_safety import rehearse
+                    raw['milestone']='interrupt short idle lab capture, then restore'
+                    rehearse(sys.modules[__name__],tv,raw)
+                elif opts.private_transport_only:
+                    from tv_stock_transport import probe
+                    raw['milestone']='one-mark stock transport probe';probe(sys.modules[__name__],tv,lab,ui,raw)
+                elif opts.projection_control:
+                    import tv_projection
+                    row=None;raw['milestone']='AudioPlaybackCapture uncut control'
+                    tv_projection.measure(sys.modules[__name__],tv,lab,raw,module('format-matrix'))
+                elif opts.r24:
+                    import tv_r24
+                    row=None
+                    tv_r24.measure(sys.modules[__name__],tv,lab,ui,raw,module('format-matrix'))
+                else: measure(tv,lab,ui,raw,opts.split_capture)
+    except PlannedSafetyStop:
+        if not opts.family_safety_only:raise
+        raw['familyTransactionUnwound']=True
     except (Exception,KeyboardInterrupt) as exc:
-        # Never serialize child command lines, queries, login codes or stderr.
+        # Never serialize child command lines, queries, login codes, file paths or stderr.
+        import traceback
+        sites=[f'{Path(f.filename).name}:{f.name}:{f.lineno}' for f in traceback.extract_tb(exc.__traceback__)
+               if Path(f.filename).parent==HERE]
+        raw['blockerSites']=sites[-7:]
+        if isinstance(exc,sp.CalledProcessError):
+            raw['childExit']=exc.returncode
+            if hasattr(exc,'playback_read'):raw['failedStockRead']=exc.playback_read
+            if hasattr(exc,'install_category'):raw['installerCategory']=exc.install_category
         if isinstance(exc,sp.TimeoutExpired):error=timeout_label(raw.get('milestone','setup'),list(history))
         else:error=str(exc) if isinstance(exc,(RuntimeError,ValueError)) else type(exc).__name__
     finally:
@@ -1787,8 +2180,26 @@ def main():
         if opts.keep:summary['privateScratch']=str(work)
         else:shutil.rmtree(work)
         summary['scratchRemoved']=not work.exists()
-    summary.update(elapsedSeconds=round(time.monotonic()-start,1),blocker=error);claims=verdicts(raw,error)
-    if opts.device:summary['calibration']=calibration(raw)
+    if opts.no_capture and harness_digest(HERE)!=digest:error=error or 'harness changed during rehearsal; cannot arm a physical run'
+    summary.update(elapsedSeconds=round(time.monotonic()-start,1),blocker=error)
+    if opts.family_safety_only:
+        from tv_safety import safety_proof
+        row=None;passed=safety_proof(summary,digest);claims={'family safety rehearsal':('PASS' if passed else 'not-measured',error or ('update, fresh consent callback and restoration verified' if passed else 'incomplete safety evidence'))}
+    elif opts.lab_removal_only:
+        from tv_internal import removal_proof
+        row=None;passed=removal_proof(summary,digest);claims={'standalone lab removal':('PASS' if passed else 'not-measured',error or ('exact addition, deletion and original inventory verified' if passed else 'cleanup not verified'))}
+    elif opts.projection_control:
+        row=None
+        result=raw.get('projection',{}).get('comparison',{}).get('outcome','unmeasured')
+        claims={'projection uncut control':('PASS' if result=='bit-exact' and not error else 'not-measured' if result=='unmeasured' or error else 'deviation',error or result)}
+    elif opts.r24:
+        # No v1 candidate, even on interruption partway through TV setup. Receipts are reviewed separately.
+        from tv_r24 import verdict
+        if opts.no_capture and summary.get('restored') is not True:error=summary['blocker']=error or 'internal recording restore unverified'
+        row=None;claims={'R24 '+opts.layout:verdict(raw,error)}
+    else:
+        claims=verdicts(raw,error)
+        if opts.device:summary['calibration']=calibration(raw)
     summary['claims']=[status+' '+name+' — '+limit for name,(status,limit) in claims.items()]
     # Never turn the supplemental quarter-speed or FLAC observation into a
     # verdict about the candidate's 1x AAC tuple.

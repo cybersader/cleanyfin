@@ -79,6 +79,7 @@ internal sealed class ShelfStore(ILibraryManager library, IUserManager users, IS
         var row = Rows().SingleOrDefault(r => Pointer(r) == v.Path);
         Require(row != null && v.IsShortcut && v.ShortcutPath == row.Locator && Owned(row)); return row!;
     }
+    internal bool TestLabel(ShelfInput input, string viewer) => PointerEvidence.NeedsTestLabel(input, viewer, host.ApplicationVersionString);
     internal ShelfInput Resolve(string uid, string item)
     {
         var config = FixtureGate.Config;
@@ -190,7 +191,8 @@ internal sealed class ShelfStore(ILibraryManager library, IUserManager users, IS
                         {
                             grants.Table.Revoke(b => b.Shelf?.Key == row.Key); var index = rows.IndexOf(row); rows[index] = row = row with { Generation = input.Generation }; Save(rows);
                         }
-                        if (library.FindByPath(Pointer(row), false) is not Video indexed || indexed.RunTimeTicks != row.Ticks) touched.Add(uid!);
+                        if (library.FindByPath(Pointer(row), false) is not Video indexed || indexed.RunTimeTicks != row.Ticks ||
+                            (indexed.Overview == PointerMetadata.TestNotice) != TestLabel(input, uid!)) touched.Add(uid!);
                         current.Add(row.Key);
                     }
                 }

@@ -1,0 +1,279 @@
+{
+  "startedUtc": "20261126T131625Z",
+  "recording": "none; private stock server cleanup only",
+  "mode": "lab-removal-only",
+  "dryRun": true,
+  "captureHarnessSha256": "c4530577f4063d9f1dcd2cab1d98c587ead74bfa463f8581cc61ef1d32744a03",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "private standalone exact lab removal",
+    "exactLabAdditionVerified": true
+  },
+  "hostBeforeRun": {
+    "load1": 2.32,
+    "cpus": 24,
+    "availableGiB": 15.9,
+    "ioFull10sPct": 0.12,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "device": {
+    "uiSize": "1280x720",
+    "manufacturer": "Google",
+    "brand": "google",
+    "model": "sdk_google_atv64_amati_x86_64",
+    "device": "emu64xa",
+    "soc": "ranchu",
+    "securityPatch": "2026-04-01",
+    "abiList": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "android": "16",
+    "sdk": "36",
+    "build": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+    "abi": "x86_64",
+    "characteristics": "emulator",
+    "leanback": true,
+    "googleTvLauncher": true,
+    "emulator": true
+  },
+  "familyUpdate": {
+    "authenticatedSyntheticSession": true,
+    "syntheticBaselineSeeded": true,
+    "syntheticDrawerShapes": [
+      {
+        "focusRect": [
+          0,
+          170,
+          298,
+          245
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": [
+          "Home"
+        ]
+      },
+      {
+        "focusRect": [
+          0,
+          90,
+          298,
+          165
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": [
+          "Search"
+        ]
+      },
+      {
+        "focusRect": [
+          0,
+          0,
+          298,
+          85
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 3,
+        "seedLabels": [
+          "Synthetic Household",
+          "one"
+        ]
+      }
+    ],
+    "syntheticPickerCaptions": [
+      {
+        "rect": "[503,89][778,145]",
+        "label": "Select Server"
+      },
+      {
+        "rect": "[457,447][619,504]",
+        "label": "Synthetic Household"
+      },
+      {
+        "rect": "[527,343][549,384]",
+        "label": "S"
+      },
+      {
+        "rect": "[661,447][823,472]",
+        "label": "Add Server"
+      }
+    ],
+    "syntheticPickerShapes": [
+      {
+        "rect": "[452,243][624,415]",
+        "click": "true",
+        "longClick": "true",
+        "scroll": "false",
+        "labelCount": 1,
+        "seedLabels": [
+          "S"
+        ]
+      },
+      {
+        "rect": "[656,243][828,415]",
+        "click": "true",
+        "longClick": "true",
+        "scroll": "false",
+        "labelCount": 0,
+        "seedLabels": []
+      }
+    ],
+    "beforeBuild": {
+      "package": "com.github.damontecres.wholphin",
+      "version": "1.0.9-0-g2d87d526",
+      "code": 60,
+      "certificate": "e54fda99b452214b3522deb5de14e2dddc06da8de5db1fa7591dce2d80af96a8"
+    },
+    "beforeUI": {
+      "servers": "42e217178478456b0fec8a4c0450ff0c5e0111d264e5c70875bf205c0d6bdcc9",
+      "active": "89539762f3166554f41585c1521db62b1c69050c68f477e1271fe5ffb8bc7ab7",
+      "user": "b0cf2f8eb43115be3709dae170e72eaf6191c14dbadf8c4e4ba5bfa036c11142"
+    },
+    "inPlaceUpdateReported": true,
+    "expectedDifference": "family may need to re-select server/profile or sign in",
+    "afterUpdateBuild": {
+      "package": "com.github.damontecres.wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "code": 63,
+      "certificate": "e54fda99b452214b3522deb5de14e2dddc06da8de5db1fa7591dce2d80af96a8"
+    },
+    "afterUpdate": {
+      "servers": "42e217178478456b0fec8a4c0450ff0c5e0111d264e5c70875bf205c0d6bdcc9",
+      "profileAuthentication": "not tested"
+    },
+    "restoreAttempted": true,
+    "exactLabDeleteActivated": true,
+    "labAbsentAfter": true,
+    "afterRestoreBuild": {
+      "package": "com.github.damontecres.wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "code": 63,
+      "certificate": "e54fda99b452214b3522deb5de14e2dddc06da8de5db1fa7591dce2d80af96a8"
+    },
+    "afterRestore": {
+      "servers": "42e217178478456b0fec8a4c0450ff0c5e0111d264e5c70875bf205c0d6bdcc9",
+      "profileAuthentication": "not tested"
+    },
+    "visibleStateRestored": true
+  },
+  "manifestBefore": {
+    "packageCount": 109,
+    "packageListSha256": "701575339c72ab3ec5e3fd6de71ea2e83f93e7c5a0d1b427c55b96a7c284ef55",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.0.9-0-g2d87d526"
+  },
+  "internalRestore": {
+    "wholphinAbsentBefore": false,
+    "pathsVerifiedAbsentBeforeOptions": false
+  },
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+  "fixtureSha256": "24b5f69bfb25c8fb1afc0795af65ed923e874c6569f96782211ebaa3d1e16f70",
+  "manifestAfter": {
+    "packageCount": 109,
+    "packageListSha256": "4ab1e917b77584f4e5f2f8fd11e4a080260fa4611cca893e6a85d3956483eeeb",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.1.2-0-gc530f5c5"
+  },
+  "manifestDiff": [
+    "~ package com.github.damontecres.wholphin 60 -> 63",
+    "~ Wholphin: 1.0.9-0-g2d87d526 -> 1.1.2-0-gc530f5c5"
+  ],
+  "unexpectedResidue": [],
+  "restored": true,
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 1486626816,
+  "hostWorstObservedIo": {
+    "load1": 2.92,
+    "cpus": 24,
+    "availableGiB": 12.19,
+    "ioFull10sPct": 3.09,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 0.89,
+    "scopeIOFull10sPct": 0.18
+  },
+  "hostAfterRun": {
+    "load1": 3.3,
+    "cpus": 24,
+    "availableGiB": 13.88,
+    "ioFull10sPct": 1.22,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": false,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": false,
+  "hostAudioFollowUp": {
+    "source": "coordinator post-run host inspection",
+    "assessment": "host hardware hot-plug; defaults unchanged; no harness residue",
+    "observations": "All current sinks and sources corresponded to hardware: built-in audio, Jabra, Shure MV7, GPU HDMI, UGREEN capture adapter and Insta360 Link 2. No virtual or emulator audio device remained. Both defaults were the Shure MV7.",
+    "limit": "Consistent with USB hot-plug and re-enumeration; a specific plug or unplug event was not traced."
+  },
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 360.0,
+  "blocker": null,
+  "claims": [
+    "PASS standalone lab removal \u2014 exact addition, deletion and original inventory verified"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T131625Z-ba3f42af99",
+  "candidateWritten": false
+}

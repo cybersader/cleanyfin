@@ -1,0 +1,61 @@
+{
+  "startedUtc": "20261126T042323Z",
+  "recording": "Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness",
+  "mode": "device-internal",
+  "dryRun": true,
+  "captureHarnessSha256": "e1a5a9fd065a6c8548f45cec1528c8acc262cda3a039cc5e18faff4faab8ad55",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "box connection, identity and change manifest"
+  },
+  "hostBeforeRun": {
+    "load1": 4.4,
+    "cpus": 24,
+    "availableGiB": 15.18,
+    "ioFull10sPct": 0.37,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 952619008,
+  "hostWorstObservedIo": {
+    "load1": 4.58,
+    "cpus": 24,
+    "availableGiB": 15.35,
+    "ioFull10sPct": 0.83,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 0.9,
+    "scopeIOFull10sPct": 0.0
+  },
+  "hostAfterRun": {
+    "load1": 4.47,
+    "cpus": 24,
+    "availableGiB": 15.98,
+    "ioFull10sPct": 0.18,
+    "scopeMemoryFull10sPct": 0.4,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 34.8,
+  "blocker": "CalledProcessError",
+  "claims": [
+    "not-measured R24 mp4-h264-eac351 \u2014 CalledProcessError"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T042323Z-c63feaeb42",
+  "candidateWritten": false
+}

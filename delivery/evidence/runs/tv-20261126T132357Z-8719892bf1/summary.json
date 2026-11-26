@@ -1,0 +1,311 @@
+{
+  "startedUtc": "20261126T132357Z",
+  "recording": "Android screenrecord + Wholphin UID/USAGE_MEDIA playback mix; no shared clock or HDMI",
+  "mode": "device-combined",
+  "dryRun": true,
+  "captureHarnessSha256": "c4530577f4063d9f1dcd2cab1d98c587ead74bfa463f8581cc61ef1d32744a03",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "Wholphin login, enrollment and MPV settings",
+    "syntheticSetupStop": {
+      "appVisible": true,
+      "appNodeCount": 54,
+      "labelCount": 16,
+      "hasProgressIndicator": false,
+      "errorTextPresent": false,
+      "stockLabels": [
+        "Favorites",
+        "Home",
+        "Movies",
+        "Search",
+        "Settings"
+      ],
+      "visibleCategories": [
+        "favorites",
+        "home",
+        "one",
+        "playback",
+        "search",
+        "settings"
+      ]
+    },
+    "blockerSites": [
+      "tv-harness.py:main:2098",
+      "tv-harness.py:setup:533",
+      "tv_family_ui.py:verify_lab_home:205",
+      "tv_family_ui.py:focus_profile:139"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 4.78,
+    "cpus": 24,
+    "availableGiB": 13.57,
+    "ioFull10sPct": 0.26,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "device": {
+    "uiSize": "1280x720",
+    "manufacturer": "Google",
+    "brand": "google",
+    "model": "sdk_google_atv64_amati_x86_64",
+    "device": "emu64xa",
+    "soc": "ranchu",
+    "securityPatch": "2026-04-01",
+    "abiList": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "android": "16",
+    "sdk": "36",
+    "build": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+    "abi": "x86_64",
+    "characteristics": "emulator",
+    "leanback": true,
+    "googleTvLauncher": true,
+    "emulator": true
+  },
+  "familyUpdate": {
+    "authenticatedSyntheticSession": true,
+    "syntheticBaselineSeeded": true,
+    "syntheticDrawerShapes": [
+      {
+        "focusRect": [
+          0,
+          170,
+          298,
+          245
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": [
+          "Home"
+        ]
+      },
+      {
+        "focusRect": [
+          0,
+          90,
+          298,
+          165
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": [
+          "Search"
+        ]
+      },
+      {
+        "focusRect": [
+          0,
+          0,
+          298,
+          85
+        ],
+        "homeTextRect": [
+          75,
+          195,
+          133,
+          220
+        ],
+        "subtreeLabels": 3,
+        "seedLabels": [
+          "Synthetic Household",
+          "one"
+        ]
+      },
+      {
+        "focusRect": [
+          117,
+          403,
+          420,
+          573
+        ],
+        "homeTextRect": [
+          64,
+          195,
+          85,
+          220
+        ],
+        "subtreeLabels": 1,
+        "seedLabels": []
+      }
+    ],
+    "syntheticPickerCaptions": [
+      {
+        "rect": "[503,89][778,145]",
+        "label": "Select Server"
+      },
+      {
+        "rect": "[457,447][619,504]",
+        "label": "Synthetic Household"
+      },
+      {
+        "rect": "[527,343][549,384]",
+        "label": "S"
+      },
+      {
+        "rect": "[661,447][823,472]",
+        "label": "Add Server"
+      }
+    ],
+    "syntheticPickerShapes": [
+      {
+        "rect": "[452,243][624,415]",
+        "click": "true",
+        "longClick": "true",
+        "scroll": "false",
+        "labelCount": 1,
+        "seedLabels": [
+          "S"
+        ]
+      },
+      {
+        "rect": "[656,243][828,415]",
+        "click": "true",
+        "longClick": "true",
+        "scroll": "false",
+        "labelCount": 0,
+        "seedLabels": []
+      }
+    ],
+    "beforeBuild": {
+      "package": "com.github.damontecres.wholphin",
+      "version": "1.0.9-0-g2d87d526",
+      "code": 60,
+      "certificate": "e54fda99b452214b3522deb5de14e2dddc06da8de5db1fa7591dce2d80af96a8"
+    },
+    "beforeUI": {
+      "servers": "039767d8281f1de73920f4aed8c7edf9b41e69df08c704231dd157e7155d150f",
+      "active": "68055e6c8c4354a568cc1ed957c37276fc9a5e5019b4fbdc199b389d7231e527",
+      "user": "8b1eff7c863acdc28dd27f9672c2937185b82bc1bd43d3793c17fb2cb1a334a0"
+    },
+    "inPlaceUpdateReported": true,
+    "expectedDifference": "family may need to re-select server/profile or sign in",
+    "afterUpdateBuild": {
+      "package": "com.github.damontecres.wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "code": 63,
+      "certificate": "e54fda99b452214b3522deb5de14e2dddc06da8de5db1fa7591dce2d80af96a8"
+    },
+    "afterUpdate": {
+      "servers": "039767d8281f1de73920f4aed8c7edf9b41e69df08c704231dd157e7155d150f",
+      "profileAuthentication": "not tested"
+    },
+    "restoreAttempted": true,
+    "restoreStopSites": [
+      "tv-harness.py:restore_family_ui:1637",
+      "tv_update.py:finish:150",
+      "tv_family_ui.py:restore:276",
+      "tv_family_ui.py:inventory:248",
+      "tv_family_ui.py:focus_profile:139"
+    ],
+    "visibleStateRestored": false
+  },
+  "manifestBefore": {
+    "packageCount": 109,
+    "packageListSha256": "701575339c72ab3ec5e3fd6de71ea2e83f93e7c5a0d1b427c55b96a7c284ef55",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.0.9-0-g2d87d526"
+  },
+  "internalRestore": {
+    "wholphinAbsentBefore": false,
+    "pathsVerifiedAbsentBeforeOptions": false
+  },
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+  "fixtureSha256": "792b116ea5a80702afa1cf6b19c5a3063373bf1b2eadba9755bc6cea255168d2",
+  "manifestAfter": {
+    "packageCount": 109,
+    "packageListSha256": "4ab1e917b77584f4e5f2f8fd11e4a080260fa4611cca893e6a85d3956483eeeb",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": "1.1.2-0-gc530f5c5"
+  },
+  "manifestDiff": [
+    "~ package com.github.damontecres.wholphin 60 -> 63",
+    "~ Wholphin: 1.0.9-0-g2d87d526 -> 1.1.2-0-gc530f5c5"
+  ],
+  "unexpectedResidue": [],
+  "restored": false,
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 1494032384,
+  "hostWorstObservedIo": {
+    "load1": 4.89,
+    "cpus": 24,
+    "availableGiB": 11.09,
+    "ioFull10sPct": 1.68,
+    "scopeMemoryFull10sPct": 0.24,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 1.08,
+    "scopeIOFull10sPct": 0.0
+  },
+  "hostAfterRun": {
+    "load1": 2.12,
+    "cpus": 24,
+    "availableGiB": 13.38,
+    "ioFull10sPct": 0.15,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 432.9,
+  "blocker": "cannot read back an authenticated active profile",
+  "claims": [
+    "not-measured R24 mkv-h264-ac351 \u2014 cannot read back an authenticated active profile"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T132357Z-8719892bf1",
+  "candidateWritten": false
+}

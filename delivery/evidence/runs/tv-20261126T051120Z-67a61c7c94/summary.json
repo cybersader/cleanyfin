@@ -1,0 +1,398 @@
+{
+  "startedUtc": "20261126T051120Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "milestone": "separate stock transport test input install",
+    "verifiedSettings": {
+      "backend": "MPV",
+      "mpvOptions": [
+        "hwdec=no",
+        "vo=gpu",
+        "gpu-context=android",
+        "opengl-es=yes",
+        "msg-level=all=v",
+        "ad-lavc-o=cons_noisegen=1"
+      ],
+      "verification": "MPV-only preferences visible and saved mpv.conf reopened"
+    },
+    "sessionIdentity": {
+      "client": "Wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "deviceIdSha256": "9b51cf1be182d2046dccc493b6042b4a499d00e77268ad131455185b649592f8",
+      "exactDeviceEnrollment": true,
+      "labTuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "Wholphin",
+        "appVersion": "1.1.2-0-gc530f5c5",
+        "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+        "backend": "mpv",
+        "deviceMode": "Dolby cons_noisegen 1, Google TV API 36 x86_64 emulator 1280x720, 1536 MiB, llvmpipe with 2 requested llvmpipe workers, software video vo-gpu Android GLES, stereo PCM",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "ac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio ac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      }
+    },
+    "controlClock": {
+      "referenceFrames": 959760,
+      "expectedReferenceFrames": 959760,
+      "pictureClockFrames": 960000,
+      "firstDecodedSample": -240,
+      "referenceOrigin": 0,
+      "decodedFrames": 960000,
+      "discardedBeforeOrigin": 240,
+      "prefixAndReferenceVerified": true,
+      "prefixSha256": "0008b40ab69bea37ac1a8aa1c7863a595b07df0ddc739de0d6219b7cbe5f3127",
+      "referenceSha256": "399597f3c4a64c41a70f01fa5a92696978db506fc597860a17535bf175975d10"
+    },
+    "audioLevels": {
+      "androidMusicVolumeBefore": 3,
+      "androidMusicVolumeAfter": 3,
+      "androidMusicVolumeMax": 15,
+      "androidMusicVolumeAfterKeys": 15,
+      "privateQemuStreamVolume": {
+        "front-left": "100%",
+        "front-right": "100%"
+      }
+    },
+    "layout": "mkv-h264-ac351",
+    "plannedPositions": [
+      [
+        5480,
+        10520
+      ],
+      [
+        1000,
+        1960
+      ],
+      [
+        6000,
+        12000
+      ],
+      [
+        2000,
+        2040
+      ],
+      [
+        4000,
+        4001
+      ],
+      [
+        12345,
+        12346
+      ],
+      [
+        3001,
+        3961
+      ],
+      [
+        3039,
+        7999
+      ],
+      [
+        1600,
+        3200
+      ],
+      [
+        4800,
+        9600
+      ],
+      [
+        1595,
+        3195
+      ],
+      [
+        1594,
+        3194
+      ],
+      [
+        5131,
+        8331
+      ],
+      [
+        2333,
+        6654
+      ],
+      [
+        4040,
+        8361
+      ],
+      [
+        6143,
+        10464
+      ],
+      [
+        7013,
+        7509
+      ],
+      [
+        8888,
+        13017
+      ],
+      [
+        9216,
+        11215
+      ],
+      [
+        10999,
+        15001
+      ],
+      [
+        15360,
+        16000
+      ],
+      [
+        0,
+        1000
+      ],
+      [
+        0,
+        1001
+      ],
+      [
+        18000,
+        1000000000
+      ]
+    ],
+    "tuple": {
+      "adapterId": "mpv-edl",
+      "adapterRevision": "4",
+      "appId": "Wholphin",
+      "appVersion": "1.1.2-0-gc530f5c5",
+      "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+      "backend": "mpv",
+      "deviceMode": "Dolby cons_noisegen 1, Google TV API 36 x86_64 emulator 1280x720, 1536 MiB, llvmpipe with 2 requested llvmpipe workers, software video vo-gpu Android GLES, stereo PCM",
+      "jellyfinVersion": "12.4.0",
+      "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+      "source": {
+        "container": "mkv",
+        "videoCodec": "h264",
+        "audioCodec": "ac3",
+        "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio ac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+        "durationMs": 20000
+      }
+    },
+    "positions": [],
+    "admitted": false,
+    "lastTake": {
+      "label": "positive",
+      "runtime": {
+        "speed": 1,
+        "fixtureDurationS": 20,
+        "wallCeilingS": 34.0,
+        "endSignal": "Jellyfin session no longer reports the item",
+        "displayTap": "Android compositor screenrecord 320x180 MP4",
+        "displayPrerollS": 2,
+        "presentationTiming": {
+          "probe": "SurfaceFlinger --latency; actual-present fences, no picture identities",
+          "failedPolls": 0,
+          "layers": [
+            {
+              "periodNs": 16666666,
+              "polls": 15,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{Background for 31a581f SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity]#258 parentId=256 relativeParentId=250 z=-2147483648}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            },
+            {
+              "periodNs": 16666666,
+              "polls": 15,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{31a581f SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity](BLAST)#257 parentId=256}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            },
+            {
+              "periodNs": 16666666,
+              "polls": 15,
+              "possibleLostRing": false,
+              "layer": "RequestedLayerState{31a581f SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity]#256 parentId=255 relativeParentId=250 z=-2}",
+              "presentCount": 0,
+              "largestGapsNs": [],
+              "actualPresentNs": []
+            }
+          ]
+        },
+        "observedAudioDriver": "audiotrack",
+        "libmpvVO": "gpu 1280x720 yuv420p",
+        "libmpvAudioCodecs": [
+          "ac3"
+        ],
+        "audioUnderruns": 1,
+        "libmpvEof": false,
+        "playMethod": "DirectPlay",
+        "activeQemuAudioRoute": [
+          {
+            "sink": "fixture",
+            "mute": false,
+            "corked": false
+          }
+        ],
+        "watchedS": 21.21,
+        "videoBytes": 513933,
+        "audioBytes": 5364480,
+        "audioDurationS": 27.94,
+        "audioRouteVerified": true,
+        "runtimeVerified": false,
+        "grantRouteDeltas": [
+          0,
+          0,
+          0
+        ],
+        "observedCodec": true
+      }
+    },
+    "controls": {
+      "positive": {
+        "pictureCount": 500,
+        "runtime": {
+          "speed": 1,
+          "fixtureDurationS": 20,
+          "wallCeilingS": 34.0,
+          "endSignal": "Jellyfin session no longer reports the item",
+          "displayTap": "Android compositor screenrecord 320x180 MP4",
+          "displayPrerollS": 2,
+          "presentationTiming": {
+            "probe": "SurfaceFlinger --latency; actual-present fences, no picture identities",
+            "failedPolls": 0,
+            "layers": [
+              {
+                "periodNs": 16666666,
+                "polls": 15,
+                "possibleLostRing": false,
+                "layer": "RequestedLayerState{Background for 31a581f SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity]#258 parentId=256 relativeParentId=250 z=-2147483648}",
+                "presentCount": 0,
+                "largestGapsNs": [],
+                "actualPresentNs": []
+              },
+              {
+                "periodNs": 16666666,
+                "polls": 15,
+                "possibleLostRing": false,
+                "layer": "RequestedLayerState{31a581f SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity](BLAST)#257 parentId=256}",
+                "presentCount": 0,
+                "largestGapsNs": [],
+                "actualPresentNs": []
+              },
+              {
+                "periodNs": 16666666,
+                "polls": 15,
+                "possibleLostRing": false,
+                "layer": "RequestedLayerState{31a581f SurfaceView[com.github.damontecres.wholphin/com.github.damontecres.wholphin.MainActivity]#256 parentId=255 relativeParentId=250 z=-2}",
+                "presentCount": 0,
+                "largestGapsNs": [],
+                "actualPresentNs": []
+              }
+            ]
+          },
+          "observedAudioDriver": "audiotrack",
+          "libmpvVO": "gpu 1280x720 yuv420p",
+          "libmpvAudioCodecs": [
+            "ac3"
+          ],
+          "audioUnderruns": 1,
+          "libmpvEof": false,
+          "playMethod": "DirectPlay",
+          "activeQemuAudioRoute": [
+            {
+              "sink": "fixture",
+              "mute": false,
+              "corked": false
+            }
+          ],
+          "watchedS": 21.21,
+          "videoBytes": 513933,
+          "audioBytes": 5364480,
+          "audioDurationS": 27.94,
+          "audioRouteVerified": true,
+          "runtimeVerified": false,
+          "grantRouteDeltas": [
+            0,
+            0,
+            0
+          ],
+          "observedCodec": true
+        },
+        "complete": true,
+        "fullMaxGapMs": 166.51099999999985,
+        "captured": 713,
+        "unreadable": 210,
+        "flatFrames": 27,
+        "tapVerified": false
+      }
+    },
+    "blockerSites": [
+      "tv-harness.py:main:2065",
+      "tv_r24.py:measure:187"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 2.86,
+    "cpus": 24,
+    "availableGiB": 15.02,
+    "ioFull10sPct": 0.51,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "declaredGpu": "host",
+  "llvmpipeThreadsRequested": 2,
+  "guestRamMiB": 1536,
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "audioInputFormat": "s16le 2ch 48000Hz",
+  "guestKernelMemTotalKiB": 1502720,
+  "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+  "fixtureSha256": "9e1bddb0badd954cacb7f451fb9ccc532ad2de066b3d7d0364e6d70397806fd9",
+  "splitCapture": false,
+  "privateAdbExited": true,
+  "scratchPeakBytesObserved": 1333518336,
+  "hostWorstObservedIo": {
+    "load1": 2.86,
+    "cpus": 24,
+    "availableGiB": 14.95,
+    "ioFull10sPct": 0.76,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 1.09,
+    "scopeIOFull10sPct": 0.18
+  },
+  "hostAfterRun": {
+    "load1": 3.48,
+    "cpus": 24,
+    "availableGiB": 14.71,
+    "ioFull10sPct": 0.26,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 318.2,
+  "blocker": "uncut Dolby control lacks verified sound, all 500 pictures, EOF or real-time playback",
+  "claims": [
+    "not-measured R24 mkv-h264-ac351 \u2014 uncut Dolby control lacks verified sound, all 500 pictures, EOF or real-time playback"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T051120Z-67a61c7c94",
+  "candidateWritten": false
+}

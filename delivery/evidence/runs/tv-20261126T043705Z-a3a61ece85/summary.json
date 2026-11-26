@@ -1,0 +1,144 @@
+{
+  "startedUtc": "20261126T043705Z",
+  "recording": "Synthetic Android screenrecord with per-frame PTS and libmpv ao=pcm decoded WAV; no AudioTrack, HDMI or passthrough witness",
+  "mode": "device-internal",
+  "dryRun": true,
+  "captureHarnessSha256": "1197445675fe0271a2824d9725af58d1571142d6590728af6f114349ad604702",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "Wholphin login, enrollment and MPV settings",
+    "blockerSites": [
+      "tv-harness.py:main:2007",
+      "tv-harness.py:setup:502"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 3.75,
+    "cpus": 24,
+    "availableGiB": 15.39,
+    "ioFull10sPct": 0.46,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "device": {
+    "uiSize": "1280x720",
+    "manufacturer": "Google",
+    "brand": "google",
+    "model": "sdk_google_atv64_amati_x86_64",
+    "device": "emu64xa",
+    "soc": "ranchu",
+    "securityPatch": "2026-04-01",
+    "abiList": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "android": "16",
+    "sdk": "36",
+    "build": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+    "abi": "x86_64",
+    "characteristics": "emulator",
+    "leanback": true,
+    "googleTvLauncher": true,
+    "emulator": true
+  },
+  "manifestBefore": {
+    "packageCount": 108,
+    "packageListSha256": "32941675dae62e73ab1ee0e31d505edd1b8a8412aaeda865594594b7942856e4",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": null
+  },
+  "internalRestore": {
+    "wholphinAbsentBefore": true,
+    "pathsVerifiedAbsentBeforeOptions": false,
+    "labAppAndMpvOptionsRemoved": true
+  },
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+  "fixtureSha256": "01158e3afa350b7dc4b922d7cc8cfb487c25876457e45a860432f6ea73dc3e2e",
+  "restoreSteps": [
+    "removed adb reverse port",
+    "stopped Wholphin",
+    "cleared Wholphin data (lab server entry, backend, mpv.conf)",
+    "uninstalled Wholphin"
+  ],
+  "manifestAfter": {
+    "packageCount": 108,
+    "packageListSha256": "32941675dae62e73ab1ee0e31d505edd1b8a8412aaeda865594594b7942856e4",
+    "legacyAdb5555": "listening",
+    "settings": {
+      "global/encoded_surround_output": null,
+      "secure/match_content_frame_rate": null,
+      "global/encoded_surround_output_enabled_formats": null,
+      "global/user_preferred_resolution_width": null,
+      "global/user_preferred_resolution_height": null,
+      "global/user_preferred_refresh_rate": null,
+      "global/adb_wifi_enabled": "0"
+    },
+    "musicVolume": {
+      "value": 3,
+      "min": 0,
+      "max": 15
+    },
+    "wholphinVersion": null
+  },
+  "manifestDiff": [],
+  "unexpectedResidue": [],
+  "restored": true,
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 1332273152,
+  "hostWorstObservedIo": {
+    "load1": 12.69,
+    "cpus": 24,
+    "availableGiB": 11.91,
+    "ioFull10sPct": 2.94,
+    "scopeMemoryFull10sPct": 0.08,
+    "scopeIOFull10sPct": 0.22,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 5.25,
+    "scopeIOFull10sPct": 0.82
+  },
+  "hostAfterRun": {
+    "load1": 5.18,
+    "cpus": 24,
+    "availableGiB": 16.02,
+    "ioFull10sPct": 0.0,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 177.9,
+  "blocker": "playback backend selection ambiguous",
+  "claims": [
+    "not-measured R24 mp4-h264-eac351 \u2014 playback backend selection ambiguous"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T043705Z-a3a61ece85",
+  "candidateWritten": false
+}

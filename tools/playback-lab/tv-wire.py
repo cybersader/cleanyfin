@@ -209,8 +209,9 @@ class Relay(socketserver.StreamRequestHandler):
 
 
 if __name__ == '__main__':
-    path, original, pointer = sys.argv[1:]
-    with socketserver.ThreadingTCPServer(('127.0.0.1',18096), Relay) as server:
+    path, original, pointer, *ports = sys.argv[1:]
+    if ports not in ([],['18097']):raise ValueError('unexpected private relay port')
+    with socketserver.ThreadingTCPServer(('127.0.0.1',int(ports[0]) if ports else 18096), Relay) as server:
         server.path = path
         server.ids = {original:'original', pointer:'pointer'}
         server.serve_forever()

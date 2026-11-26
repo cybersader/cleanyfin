@@ -1,0 +1,107 @@
+{
+  "startedUtc": "20261126T045808Z",
+  "recording": "Synthetic fixture only; Android compositor display (host recorder fallback), isolated PipeWire sink monitor s16le stereo 48000 Hz",
+  "observations": {
+    "milestone": "separate stock transport test input install",
+    "verifiedSettings": {
+      "backend": "MPV",
+      "mpvOptions": [
+        "hwdec=no",
+        "vo=gpu",
+        "gpu-context=android",
+        "opengl-es=yes",
+        "msg-level=all=v",
+        "ad-lavc-o=cons_noisegen=1"
+      ],
+      "verification": "MPV-only preferences visible and saved mpv.conf reopened"
+    },
+    "sessionIdentity": {
+      "client": "Wholphin",
+      "version": "1.1.2-0-gc530f5c5",
+      "deviceIdSha256": "082f96ea3d81b5874c9f6795fcc113e6acb0790ee2ebfa68b456e904fcd76c2a",
+      "exactDeviceEnrollment": true,
+      "labTuple": {
+        "adapterId": "mpv-edl",
+        "adapterRevision": "4",
+        "appId": "Wholphin",
+        "appVersion": "1.1.2-0-gc530f5c5",
+        "appBuild": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+        "backend": "mpv",
+        "deviceMode": "Dolby cons_noisegen 1, Google TV API 36 x86_64 emulator 1280x720, 1536 MiB, llvmpipe with 2 requested llvmpipe workers, software video vo-gpu Android GLES, stereo PCM",
+        "jellyfinVersion": "12.4.0",
+        "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+        "source": {
+          "container": "mkv",
+          "videoCodec": "h264",
+          "audioCodec": "ac3",
+          "trackLayout": "0 video h264 High 8 bit SDR 1280x720 25 fps tb 1/1000 at 0 ms, 1 audio ac3 6 ch 48000 Hz tb 1/1000 at 0 ms plays",
+          "durationMs": 20000
+        }
+      }
+    },
+    "blockerSites": [
+      "tv-harness.py:main:2049",
+      "tv_r24.py:measure:164"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 2.8,
+    "cpus": 24,
+    "availableGiB": 14.84,
+    "ioFull10sPct": 0.71,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.61,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "apkSha256": "60305215500d033ffd55333adc0066a8ab15dc146f2262735cbb6e7e60ce692d",
+  "declaredGpu": "host",
+  "llvmpipeThreadsRequested": 2,
+  "guestRamMiB": 1536,
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "androidFingerprint": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+  "audioInputFormat": "s16le 2ch 48000Hz",
+  "guestKernelMemTotalKiB": 1502724,
+  "pluginBuild": "05bb2afb80230f84c2d8d8d998f61f2f5adc95b7012f8a366f3a2a3b44a636af",
+  "fixtureSha256": "b8cc3b34a4f6954373c5c9563cc93656235dccf6521d31fa562502b7bfec1fd1",
+  "splitCapture": false,
+  "privateAdbExited": true,
+  "scratchPeakBytesObserved": 1336221696,
+  "hostWorstObservedIo": {
+    "load1": 2.87,
+    "cpus": 24,
+    "availableGiB": 14.56,
+    "ioFull10sPct": 1.59,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 1.68,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 2.11,
+    "scopeIOFull10sPct": 1.68
+  },
+  "hostAfterRun": {
+    "load1": 3.5,
+    "cpus": 24,
+    "availableGiB": 14.56,
+    "ioFull10sPct": 0.38,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 283.5,
+  "blocker": "missing complete source-clock control",
+  "claims": [
+    "not-measured R24 mkv-h264-ac351 \u2014 missing complete source-clock control"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T045808Z-faf8b78583",
+  "candidateWritten": false
+}

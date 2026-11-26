@@ -53,6 +53,7 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
             var gate = ctx.RequestServices.GetRequiredService<FixtureGate>();
             var (binding,ticks) = await gate.Prepare(ctx,id,backend); // both ACLs, immutable original, exact evidence tuple
             var permit = binding.Evidence!; var measured = permit.Tuple.Source;
+            if (permit.Test && video.Overview != PointerMetadata.TestNotice) throw new Refused(RefusalCode.RevisionMismatch);
             // Only the measured layout as it plays by itself: its own default sound track, no subtitle selection by the server.
             if (Field("AudioStreamIndex") is int chosen && chosen != permit.AudioIndex) { action.Result = denied; return; }
             if (profile.ContainerProfiles.Length != 0 || profile.CodecProfiles.Length != 0 ||
@@ -78,7 +79,7 @@ internal sealed class PointerPlaybackFilter : IAsyncActionFilter
             binding = binding with { Subtitles = subtitles };
             var evidence = permit.Status;
             var projected = new MediaSourceInfo { Id=id.ToString("N"), Protocol=MediaProtocol.Http, IsRemote=true,
-                Name=evidence == EvidenceStatus.Experimental ? "Cleanyfin sample (experimental)" : "Cleanyfin filtered",
+                Name=permit.Test ? "Test filtering" : evidence == EvidenceStatus.Experimental ? "Cleanyfin sample (experimental)" : "Cleanyfin filtered",
                 SupportsDirectPlay=true, SupportsDirectStream=false, SupportsTranscoding=false, Container=measured.Container, RunTimeTicks=ticks,
                 Bitrate=src.Bitrate, DefaultAudioStreamIndex=permit.AudioIndex,
                 MediaStreams=subtitles?.Project(src) ?? PointerFixture.Streams(src), Path=gate.Issue(binding) };

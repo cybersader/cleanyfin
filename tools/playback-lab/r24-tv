@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Owner-operated. Internal decoded-output and HDMI measurements are distinct.
+set -euo pipefail
+here=$(cd -- "$(dirname -- "$0")" && pwd)
+export CLEANYFIN_APK_FEED=${CLEANYFIN_APK_FEED:-$HOME/.cache/cleanyfin-scratch/apks}
+export CLEANYFIN_NUGET_FEED=${CLEANYFIN_NUGET_FEED:-$HOME/.cache/cleanyfin-scratch/nuget-feed}
+mode=(--no-capture --frame-rate-match leave)
+case ${1:-} in --hdmi) mode=(); shift;; --no-capture) shift;; esac
+policy=(--after uninstall)
+if [[ ${1:-} == --existing-wholphin=update ]]; then policy=(--existing-wholphin=update); shift; fi
+if [[ $# -gt 1 ]]; then echo 'Usage: r24-tv [--no-capture|--hdmi] [--existing-wholphin=update] [layout]' >&2; exit 2; fi
+if [[ ! -t 0 ]]; then echo 'Use an interactive terminal: the pairing code is prompted privately.' >&2; exit 2; fi
+if [[ ! -d $CLEANYFIN_NUGET_FEED ]]; then echo 'Stage the offline NuGet packages first; the box has not been contacted.' >&2; exit 2; fi
+exec heavy-run --unit-slice heavy-builds.slice --max-runtime 14400 --label cleanyfin-tv-r24 -- python3 -EP "$here/tv-harness.py" --device --r24 "${mode[@]}" --jellyfin 12.4 --layout "${1:-mp4-h264-eac351}" "${policy[@]}"
