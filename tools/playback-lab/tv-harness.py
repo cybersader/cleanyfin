@@ -1568,7 +1568,12 @@ def device_session(opts,work,sdk,stack,summary,history):
         apk=release(work,found['abi'],offline=True);tv.app_digest=dev.ASSETS[found['abi']][1]
         tv.family=Update(tv,FamilyUI(DeviceScreen(tv)),work,sdk/'build-tools/36.0.0',run,summary.setdefault('familyUpdate',{}))
         stack.callback(lambda:finish_family(tv,before,state,summary,text))
-        tv.family.begin(apk,before,authorized=True)
+        try:tv.family.begin(apk,before,authorized=True)
+        except (ValueError,RuntimeError):
+            if opts.dry_run_emulator:
+                try:tv.family.receipt['rehearsalScreenAtStop']=stock_labels(tv.family.ui.ui,apk)
+                except Exception:pass
+            raise
         tv.adb('reverse','--no-rebind',f'tcp:{LAB_PORT}',f'tcp:{LAB_PORT}',timeout=10);state['reverse']=True
         summary['androidFingerprint']=found['build']
         return tv
@@ -1627,8 +1632,9 @@ def finish_family(tv,before,state,summary,text):
     after=manifest(text);summary['manifestAfter']=manifest_digest(after);summary['manifestDiff']=diff(before,after)
     # Exactly the approved versionCode/versionName may differ. Compare all original settings,
     # volume, package names, versions, and scratch membership independently of the UI proof.
-    expected=dict(before,packages=dict(before['packages']),wholphinVersion=tx.target.version if tx.target else None)
-    if tx.target:expected['packages'][package]=str(tx.target.code)
+    expected=dict(before,packages=dict(before['packages']))
+    if tx.receipt.get('inPlaceUpdateReported'):
+        expected['wholphinVersion']=tx.target.version;expected['packages'][package]=str(tx.target.code)
     summary['unexpectedResidue']=diff(expected,after)
     summary['restored']=bool(tx.receipt.get('visibleStateRestored') and not summary['unexpectedResidue'] and
                              tv.internal_state.get('pcmRemoved') and tv.internal_state.get('screenrecordRemoved'))

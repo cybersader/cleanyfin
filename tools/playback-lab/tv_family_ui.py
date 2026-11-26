@@ -1,6 +1,7 @@
 """Opt-in preservation rehearsal, stock Wholphin controls only; no app-private storage."""
 from collections import Counter
 import re
+import time
 
 from tv_device import APP
 from tv_update import Visible
@@ -10,17 +11,37 @@ def labels(nodes):
     return [n.get('text') for n in nodes if n.get('package')==APP and n.get('text')]
 
 
+def identify_profile(names,page):
+    # The avatar can contribute one visible initial in addition to the full
+    # user/server labels. Verify both names independently on the user picker.
+    if page.count('Select User')!=1:raise ValueError('ambiguous signed-in profile')
+    i=page.index('Select User')+1;server=page[i] if i<len(page) else None
+    if not server or server not in names:raise ValueError('ambiguous signed-in profile')
+    others=set(names)-{server};candidates=[]
+    for user in others:
+        if user not in page[i+1:]:continue
+        extras=others-{user}
+        if not extras or all(len(v)==1 and v.casefold() in (user[:1].casefold(),server[:1].casefold()) for v in extras):candidates.append(user)
+    if len(candidates)!=1:raise ValueError('ambiguous signed-in profile')
+    return server,candidates[0]
+
+
 class FamilyUI:
     def __init__(self,screen):self.ui=screen;self.tv=screen.tv;self.lab_name=None
 
     def restart(self):
         self.tv.adb('shell','am','force-stop',APP);self.tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity',timeout=20)
-        if not self.ui.home_drawer():raise ValueError('authenticated Home not verified; refusing to log in as the family')
+        # A cold start may briefly show only a splash screen. Focus-only moves
+        # cannot sign in or choose a user, and are bounded by elapsed time.
+        end=time.monotonic()+35
+        while time.monotonic()<end:
+            if self.ui.home_drawer():return
+        raise ValueError('authenticated Home not verified')
 
     def focus_profile(self):
         self.restart();s=self.ui
         for _ in range(5):
-            if s.get('Settings'):break
+            if s.get('Settings') is not None:break
             s.key('DPAD_LEFT')
         for _ in range(18):
             ns=s.tree();focus=next((n for n in ns if n.get('package')==APP and n.get('focused')=='true'),None)
@@ -30,11 +51,19 @@ class FamilyUI:
             home=next((n for n in ns if n.get('package')==APP and n.get('text')=='Home'),None)
             rect=lambda n:[int(i) for i in re.findall(r'-?\d+',n.get('bounds',''))] if n is not None else []
             f,b=rect(focus),rect(home)
-            if len(names)==2 and len(set(names))==2 and len(f)==len(b)==4 and f[0]<=b[0]<f[2] and f[3]<=b[1]:
+            if getattr(self.tv,'emulator',None) is not None and self.tv.found.get('emulator'):
+                trace=self.tv.family.receipt.setdefault('syntheticDrawerShapes',[])
+                if len(trace)<30:
+                    # Structural facts plus fixed seeded labels only, never arbitrary text.
+                    known={'one','Synthetic Household','Home','Settings','Search','Favorites'}
+                    entry={'focusRect':f,'homeTextRect':b,'subtreeLabels':len(names),'seedLabels':sorted(set(names)&known)}
+                    if not trace or trace[-1]!=entry:trace.append(entry)
+            search=next((n for n in ns if n.get('package')==APP and n.get('text')=='Search'),None)
+            top=rect(search)
+            if (2<=len(names)<=3 and len(set(names))>=2 and len(f)==len(b)==len(top)==4 and
+                f[0]<=b[0]<f[2] and f[3]<=top[1]<b[1]):
                 s.key('DPAD_CENTER');s.wait_label('Select User');page=labels(s.tree())
-                i=page.index('Select User');server=page[i+1];remaining=set(names)-{server}
-                if server not in names or len(remaining)!=1 or next(iter(remaining)) not in page:raise ValueError('ambiguous signed-in profile')
-                return server,next(iter(remaining))
+                return identify_profile(names,page)
             s.key('DPAD_UP')
         raise ValueError('cannot read back an authenticated active profile')
 
@@ -72,10 +101,19 @@ class FamilyUI:
 
     def snapshot(self):
         try:
-            active,user=self.focus_profile();self.servers_page();servers=self.server_entries()
-            backend,options=self.read_settings();self.restart()
+            phase='active profile';active,user=self.focus_profile()
+            phase='server selection';self.servers_page()
+            phase='server inventory';servers=self.server_entries()
+            phase='player settings';backend,options=self.read_settings()
+            phase='signed-in Home';self.restart()
+            phase='visible state'
             return Visible(servers,active,user,backend,options).validate()
-        except Exception:raise ValueError('could not verify complete server list, signed-in profile, backend and restorable mpv.conf in the stock UI') from None
+        except Exception as exc:
+            # No screen text, names or personal settings in exceptions or receipts.
+            codes={'authenticated Home not verified','ambiguous signed-in profile','cannot read back an authenticated active profile',
+                   'server list has no focused card','cannot identify exact server popup','duplicate server labels','server list cannot be completely enumerated'}
+            detail=str(exc) if str(exc) in codes else type(exc).__name__
+            raise ValueError('Stock UI did not verify '+phase+' ('+detail+')') from None
 
     def prepare_lab(self,name,original):
         if not name.startswith('Cleanyfin Lab ') or name in original.servers:raise ValueError('lab server name is not unique')

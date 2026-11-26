@@ -60,3 +60,11 @@ class FamilyProtection(unittest.TestCase):
         with patch('tv_update.installed_build',return_value=OLD),patch.object(Build,'inspect',return_value=NEW),self.assertRaises(ValueError):
             tx.begin('test.apk',{'wholphinVersion':OLD.version,'packages':{APP:'60'}},authorized=True)
         tv.adb.assert_not_called()
+
+    def test_profile_name_and_server_confirmed_independently_of_avatar_initial(self):
+        from tv_family_ui import identify_profile
+        for header in (['one','House'],['O','one','House'],['H','House','one']):
+            self.assertEqual(identify_profile(header,['Select User','House','O','one','Add User']),('House','one'))
+        for header,page in ((['one','House','unrelated'],['Select User','House','one']),(['O','House','one'],['Select User','Else','one']),
+                            (['one','House'],['Select User','House','two'])):
+            with self.assertRaises(ValueError):identify_profile(header,page)
