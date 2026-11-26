@@ -93,10 +93,15 @@ class InternalTests(unittest.TestCase):
         row=dict(mode='device-combined',unexpectedResidue=[],dryRun=True,device={'emulator':True},captureHarnessSha256='x',restored=True,
                  privateAdbExited=True,privateNamespaceExited=True,emulatorExited=True,scratchRemoved=True,ownedContainersRemaining=0,
                  observations={'procedureCompleted':True,'audioSignature':'timecode','controls':{k:{'tapVerified':True} for k in ('positive','held-out')}},internalRestore=restore,
-                 familyUpdate=dict(visibleStateRestored=True,inPlaceUpdateReported=True,syntheticBaselineSeeded=True,labAbsentAfter=True,
+                 familyUpdate=dict(liveLabProfileVerified=True,exactLabDeleteActivated=True,visibleStateRestored=True,inPlaceUpdateReported=True,syntheticBaselineSeeded=True,labAbsentAfter=True,
                                    beforeBuild={'code':60,'certificate':OFFICIAL_CERT},beforeUI=dict.fromkeys(('servers','active','user'),'hash'),afterUpdate={'servers':'hash'},afterRestore={'servers':'hash'},
                                    labSettingsBefore={'backend':'hash','options':'hash'},labSettingsAfter={'backend':'hash','options':'hash'},afterUpdateBuild=build,afterRestoreBuild=build))
         self.assertTrue(tap.emulator_proof(row,'x',update=True));self.assertFalse(tap.emulator_proof(row,'x'))
+        removal=copy.deepcopy(row);removal['mode']='lab-removal-only';removal['observations']={'exactLabAdditionVerified':True}
+        self.assertTrue(tap.removal_proof(removal,'x'));self.assertFalse(tap.removal_proof(row,'x'));self.assertFalse(tap.emulator_proof(removal,'x',update=True))
+        for k in ('exactLabDeleteActivated','labAbsentAfter'):
+            miss=copy.deepcopy(removal);miss['familyUpdate'][k]=False;self.assertFalse(tap.removal_proof(miss,'x'))
+        self.assertFalse(tap.removal_proof(removal,'other'))
         for key in ('syntheticBaselineSeeded','visibleStateRestored','afterUpdate','afterRestore','labAbsentAfter','labSettingsAfter','afterRestoreBuild'):
             miss=copy.deepcopy(row);del miss['familyUpdate'][key];self.assertFalse(tap.emulator_proof(miss,'x',update=True))
 

@@ -131,6 +131,15 @@ class FamilyProtection(unittest.TestCase):
     def test_lab_server_reentry_never_selects_household_user_card(self):
         from tv_family_ui import FamilyUI
         family=FamilyUI(Mock());family.lab_name='Cleanyfin Lab 0000000000';family.focus_profile=Mock(return_value=('B','synthetic'))
-        family.select_user=Mock()
+        family.select_user=Mock();node=Mock();node.get=lambda k:dict(package=APP,text='Home').get(k);family.ui.tree.return_value=[node]
         with self.assertRaises(ValueError):family.verify_lab_home('synthetic')
-        family.select_user.assert_not_called()
+        family.select_user.assert_not_called();family.focus_profile.assert_called_once_with(restart=False)
+
+    def test_stock_delete_popup_accepts_only_release_icon_title_and_exact_actions(self):
+        from collections import Counter
+        from tv_family_ui import exact_delete_popup
+        title='Cleanyfin Lab 0000000000';expected=Counter([title,'Delete','Switch servers']);before=Counter([title,'Select Server','Synthetic Household'])
+        for bg in (before,Counter()):
+            for icon in (Counter(),Counter([''])):self.assertTrue(exact_delete_popup(bg+expected+icon,before,title))
+        for invalid in (['Delete','Switch servers'],['other','Switch servers','Delete'],[title,'Delete'],[title,'Switch servers','delete'],[title,'Switch servers','Delete','unknown']):
+            self.assertFalse(exact_delete_popup(Counter(invalid),before,title))

@@ -134,7 +134,7 @@ def emulator_proof(row,digest,*,update=False):
     if update:
         from tv_update import TARGET,OFFICIAL_CERT
         key=family.get('beforeUI',{}).get('servers');settings=family.get('labSettingsBefore');after=family.get('afterUpdateBuild',{});before=family.get('beforeBuild',{})
-        if not (family.get('visibleStateRestored') is True and family.get('inPlaceUpdateReported') is True and
+        if not (family.get('liveLabProfileVerified') is True and family.get('exactLabDeleteActivated') is True and family.get('visibleStateRestored') is True and family.get('inPlaceUpdateReported') is True and
                 family.get('labAbsentAfter') is True and {'servers','active','user'}==set(family.get('beforeUI',{})) and key and key==family.get('afterUpdate',{}).get('servers')==family.get('afterRestore',{}).get('servers') and
                 before.get('code')==60 and before.get('certificate')==OFFICIAL_CERT and after.get('code')==63 and after.get('version')==TARGET and after.get('certificate')==OFFICIAL_CERT and after==family.get('afterRestoreBuild') and
                 settings and set(settings)=={'backend','options'} and settings==family.get('labSettingsAfter') and restore.get('combinedCleanupVerified') is True and
@@ -149,6 +149,27 @@ def emulator_proof(row,digest,*,update=False):
             and row.get('privateAdbExited') is True and row.get('privateNamespaceExited') is True and row.get('emulatorExited') is True and row.get('ownedContainersRemaining')==0
             and all(restore.get(k) is True for k in keys)
             and all(controls.get(k,{}).get('tapVerified') is True for k in ('positive','held-out')))
+
+
+def removal_proof(row,digest):
+    from tv_update import TARGET,OFFICIAL_CERT
+    f=row.get('familyUpdate',{});orig=f.get('beforeUI',{});inv=orig.get('servers');new=f.get('afterUpdateBuild',{});old=f.get('beforeBuild',{})
+    return bool(row.get('mode')=='lab-removal-only' and row.get('dryRun') is True and row.get('device',{}).get('emulator') is True
+        and row.get('captureHarnessSha256')==digest and not row.get('blocker') and row.get('unexpectedResidue')==[]
+        and row.get('observations',{}).get('exactLabAdditionVerified') is True and row.get('ownedContainersRemaining')==0
+        and all(row.get(k) is True for k in ('restored','scratchRemoved','privateNamespaceExited','privateAdbExited','emulatorExited'))
+        and all(f.get(k) is True for k in ('syntheticBaselineSeeded','inPlaceUpdateReported','exactLabDeleteActivated','labAbsentAfter','visibleStateRestored'))
+        and set(orig)=={'servers','active','user'} and inv and inv==f.get('afterUpdate',{}).get('servers')==f.get('afterRestore',{}).get('servers')
+        and old.get('code')==60 and old.get('certificate')==OFFICIAL_CERT and new.get('code')==63 and new.get('version')==TARGET
+        and new.get('certificate')==OFFICIAL_CERT and new==f.get('afterRestoreBuild'))
+
+
+def prior_removal(runs,digest):
+    for path in sorted(runs.glob('tv-*/summary.json'),reverse=True):
+        try:
+            if removal_proof(json.loads(path.read_bytes()),digest):return path.parent.name
+        except (ValueError,OSError,AttributeError):continue
+    return None
 
 
 def prior_dry_run(runs,digest,*,update=False,layout=None):

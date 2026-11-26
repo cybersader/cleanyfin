@@ -84,6 +84,14 @@ def picker_cards(nodes):
     return cards
 
 
+def exact_delete_popup(popup,before,lab):
+    # v1.1.2 Dialogs.kt renders the switch icon as Text; the pinned release's
+    # fa_arrow_left_arrow_right is U+F0EC. No other icon or text is exempted.
+    if not re.fullmatch('Cleanyfin Lab [a-f0-9]{10}',lab):return False
+    actions=Counter([lab,'Switch servers','Delete'])
+    return any(popup==base+actions+icon for base in (Counter(),before) for icon in (Counter(),Counter(['\uf0ec'])))
+
+
 class FamilyUI:
     def __init__(self,screen):self.ui=screen;self.tv=screen.tv;self.lab_name=None;self.lab_user=None
 
@@ -100,8 +108,9 @@ class FamilyUI:
             if self.ui.home_drawer():return
         raise ValueError('authenticated Home not verified')
 
-    def focus_profile(self):
-        self.restart();s=self.ui
+    def focus_profile(self,*,restart=True):
+        if restart:self.restart()
+        s=self.ui
         for _ in range(5):
             if s.get('Settings') is not None:break
             s.key('DPAD_LEFT')
@@ -151,11 +160,15 @@ class FamilyUI:
             if not delete:s.key('DPAD_CENTER');return
             if not self.lab_name or select!=self.lab_name:raise ValueError('refusing to remove a non-lab server')
             before=Counter(labels(nodes));self.tv.adb('shell','input','keyevent','--longpress','DPAD_CENTER');s.wait_label('Delete')
-            popup=Counter(labels(s.tree()));expected=Counter([select,'Switch servers','Delete'])
-            # Stock DialogPopup may replace the accessibility window entirely.
-            # In either representation require its full exact lab title plus BOTH actions.
-            if popup!=expected and popup!=before+expected:raise ValueError('cannot identify exact server popup')
-            s.dpad('Delete',cap=4);return
+            for _ in range(5):
+                menu=s.tree();popup=Counter(labels(menu))
+                if not exact_delete_popup(popup,before,select):raise ValueError('cannot identify exact server popup')
+                focus=[n for n in menu if n.get('package')==APP and n.get('focused')=='true']
+                if len(focus)!=1:raise ValueError('ambiguous server popup focus')
+                if labels(focus[0].iter())==['Delete'] and focus[0].get('enabled')=='true':
+                    s.key('DPAD_CENTER');self.tv.family.receipt['exactLabDeleteActivated']=True;return
+                s.key('DPAD_DOWN')
+            raise ValueError('cannot verify focused Delete action')
         raise ValueError('server list cannot be completely enumerated')
 
     def select_known_profile(self,server,user):
@@ -179,8 +192,19 @@ class FamilyUI:
     def verify_lab_home(self,user):
         if not self.lab_name or not user:raise ValueError('synthetic session lacks its verified user label')
         self.lab_user=user
-        if self.focus_profile()!=(self.lab_name,user):raise ValueError('active profile is not the signed-in lab session')
+        # A Jellyfin session can exist before the app has saved its local user.
+        # Observe this live activity first; force-stop would interrupt that transaction.
+        end=time.monotonic()+35
+        while time.monotonic()<end:
+            nodes=self.ui.tree();page=labels(nodes)
+            if 'Home' in page:break
+            if 'Select User' in page and user in page and not any(n.get('class')=='android.widget.EditText' for n in nodes) and not any('Quick Connect' in v for v in page):
+                self.select_user(self.lab_name,user);break
+            time.sleep(.25)
+        else:raise ValueError('lab login did not reach local Home or its exact user picker')
+        if self.focus_profile(restart=False)!=(self.lab_name,user):raise ValueError('active profile is not the signed-in lab session')
         self.select_user(self.lab_name,user)
+        self.tv.family.receipt['liveLabProfileVerified']=True
 
     def read_backend(self):
         self.restart();self.ui.enter_advanced();return self.ui.focus_backend()

@@ -498,7 +498,7 @@ class Screen:
         if not re.fullmatch(r'[a-zA-Z0-9:/._=-]+',text): raise ValueError('Unexpected lab text')
         self.tv.adb('shell','input','text',text)
 
-    def connect_lab(self,lab):
+    def add_lab_server(self,lab):
         if not getattr(self.tv,'family',None):self.tv.adb('shell','am','start','-n',APP+'/.MainActivity')
         self.activate('Add Server');self.activate('Enter server address')
         eventually(lambda:self.get(edit=0) is not None,20,'Server URL field unavailable')
@@ -510,6 +510,9 @@ class Screen:
                 words=labels(self.tree())
                 return words.count('Select User')==1 and words[words.index('Select User')+1:][:1]==[expected]
             eventually(lab_user_picker,20,'new user picker is not the unique lab server')
+
+    def connect_lab(self,lab):
+        self.add_lab_server(lab)
         self.activate('Add User')
         def code():
             return next((n.get('text') for n in self.tree() if n.get('package')==APP and re.fullmatch(r'\d{6}',n.get('text',''))),None)
@@ -1660,7 +1663,7 @@ def finish_family(tv,before,state,summary,text):
         expected['wholphinVersion']=tx.target.version;expected['packages'][package]=str(tx.target.code)
     summary['unexpectedResidue']=diff(expected,after)
     summary['restored']=bool(tx.receipt.get('visibleStateRestored') and not summary['unexpectedResidue'] and
-                             (tv.internal_state.get('combinedCleanupVerified') if tv.combined else
+                             ((tv.emulator is not None and summary['observations'].get('exactLabAdditionVerified') is True and tx.receipt.get('exactLabDeleteActivated') is True and tv.transport.helper_absent()) if summary.get('mode')=='lab-removal-only' else tv.internal_state.get('combinedCleanupVerified') if tv.combined else
                               tv.internal_state.get('pcmRemoved') and tv.internal_state.get('screenrecordRemoved')))
     print('Original server list, lab settings and device restore verified (authentication not tested):',summary['restored'],file=sys.stderr)
 
@@ -1945,11 +1948,13 @@ def main():
     box.add_argument('--preflight',action='store_true',help='list local capture adapters; no adb or device connection')
     box.add_argument('--capture-usb',action='append',metavar='VID:PID',help='accept this USB id as the HDMI capture adapter')
     box.add_argument('--capture-file',action='append',metavar='[TAKE=]PATH',help='dry run: score recorded files instead of the adapter (no candidate row)')
+    box.add_argument('--lab-removal-only',action='store_true',help='private signed-update rehearsal: add and delete the unique lab server, no playback')
     box.add_argument('--dry-run-emulator',action='store_true',help='dry run: drive the harness emulator through the device path over adb TCP')
     box.add_argument('--expect-model',help='refuse unless ro.product.model equals this')
     box.add_argument('--frame-rate-match',choices=('leave','never','seamless','always'),default='never',help='box "match content frame rate" for the run (default never: a constant 60 Hz signal for the adapter; restored afterwards)')
     box.add_argument('--after',choices=('keep','uninstall'),help='Wholphin at the end, if the harness installed it (default: ask; keep)')
     opts=parser.parse_args()
+    if opts.lab_removal_only and not (opts.device and opts.dry_run_emulator and opts.existing_wholphin and opts.no_capture and opts.r24):parser.error('standalone removal requires the private signed-update rehearsal')
     if opts.projection_control and (not opts.r24 or opts.device or opts.preflight or opts.keep or opts.capture_usb or opts.split_capture):parser.error('projection control needs only the fresh private R24 emulator')
     if opts.layout and not opts.r24:parser.error('--layout needs --r24')
     if opts.existing_wholphin and (not opts.no_capture or opts.after or opts.frame_rate_match!='leave'):
@@ -1976,11 +1981,11 @@ def main():
     if opts.llvmpipe_threads is not None and opts.gpu!='host':parser.error('--llvmpipe-threads requires --gpu host')
     proof=None
     if opts.no_capture:
-        from tv_internal import harness_digest,prior_dry_run
+        from tv_internal import harness_digest,prior_dry_run,prior_removal
         digest=harness_digest(HERE)
         if not opts.dry_run_emulator:
             runs=HERE.parents[1]/'delivery/evidence/runs'
-            proof={'signedUpdateAndCombinedCapture':prior_dry_run(runs,digest,update=True,layout=opts.layout)}
+            proof={'standaloneLabRemoval':prior_removal(runs,digest),'signedUpdateAndCombinedCapture':prior_dry_run(runs,digest,update=True,layout=opts.layout)}
             if not all(proof.values()):parser.error('Required isolated emulator capture/preservation rehearsal missing for this harness; the physical box was not contacted')
     if opts.r24:
         from tv_device import ASSETS
@@ -2002,6 +2007,7 @@ def main():
                                   'Synthetic fixture only; box HDMI output via USB capture adapter: UVC video stored 320x180 gray FFV1, UAC s16le stereo 48000 Hz'))
     if opts.no_capture:summary.update(captureHarnessSha256=digest,emulatorProof=proof)
     if opts.existing_wholphin:summary.update(mode='device-combined',recording='Android screenrecord + Wholphin UID/USAGE_MEDIA playback mix; no shared clock or HDMI')
+    if opts.lab_removal_only:summary.update(mode='lab-removal-only',recording='none; private stock server cleanup only')
     from collections import deque
     raw=summary['observations']={};row=None;error=None;peak=0;over=threading.Event();done=threading.Event()
     history=deque(maxlen=5);worst_io=host_health()
@@ -2083,28 +2089,34 @@ def main():
                 tv.family.ui.prepare_lab(name,tv.family.original)
                 tv.family.lab_added=True;stack.callback(restore_family_ui,tv)
             ui=(DeviceScreen if opts.device else Screen)(tv)
-            try:ui.setup(lab)
-            except Exception:
-                if opts.dry_run_emulator and opts.existing_wholphin:
-                    try:raw['syntheticSetupStop']=stock_labels(ui,work/('release-'+tv.found['abi'])/ASSETS[tv.found['abi']][0])
-                    except Exception:pass
-                raise
-            raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
-            print('Disposable TV enrollment:',json.dumps(lab.tv_identity),file=sys.stderr,flush=True)
-            if not opts.device:
-                raw['milestone']='separate stock transport test input install'
-                install_input(tv)
-            if getattr(tv,'combined',False):tv.capture.prepare(sys.modules[__name__],tv,stack)
-            summary['splitCapture']=opts.split_capture
-            if opts.projection_control:
-                import tv_projection
-                row=None;raw['milestone']='AudioPlaybackCapture uncut control'
-                tv_projection.measure(sys.modules[__name__],tv,lab,raw,module('format-matrix'))
-            elif opts.r24:
-                import tv_r24
-                row=None
-                tv_r24.measure(sys.modules[__name__],tv,lab,ui,raw,module('format-matrix'))
-            else: measure(tv,lab,ui,raw,opts.split_capture)
+            if opts.lab_removal_only:
+                raw['milestone']='private standalone exact lab removal'
+                ui.add_lab_server(lab)
+                if tv.family.ui.inventory()!=tuple(sorted((*tv.family.original.servers,name))):raise ValueError('lab inventory delta not verified')
+                raw['exactLabAdditionVerified']=True
+            else:
+                try:ui.setup(lab)
+                except Exception:
+                    if opts.dry_run_emulator and opts.existing_wholphin:
+                        try:raw['syntheticSetupStop']=stock_labels(ui,work/('release-'+tv.found['abi'])/ASSETS[tv.found['abi']][0])
+                        except Exception:pass
+                    raise
+                raw['verifiedSettings']=ui.verified;raw['sessionIdentity']=lab.tv_identity
+                print('Disposable TV enrollment:',json.dumps(lab.tv_identity),file=sys.stderr,flush=True)
+                if not opts.device:
+                    raw['milestone']='separate stock transport test input install'
+                    install_input(tv)
+                if getattr(tv,'combined',False):tv.capture.prepare(sys.modules[__name__],tv,stack)
+                summary['splitCapture']=opts.split_capture
+                if opts.projection_control:
+                    import tv_projection
+                    row=None;raw['milestone']='AudioPlaybackCapture uncut control'
+                    tv_projection.measure(sys.modules[__name__],tv,lab,raw,module('format-matrix'))
+                elif opts.r24:
+                    import tv_r24
+                    row=None
+                    tv_r24.measure(sys.modules[__name__],tv,lab,ui,raw,module('format-matrix'))
+                else: measure(tv,lab,ui,raw,opts.split_capture)
     except (Exception,KeyboardInterrupt) as exc:
         # Never serialize child command lines, queries, login codes, file paths or stderr.
         import traceback
@@ -2132,7 +2144,10 @@ def main():
         summary['scratchRemoved']=not work.exists()
     if opts.no_capture and harness_digest(HERE)!=digest:error=error or 'harness changed during rehearsal; cannot arm a physical run'
     summary.update(elapsedSeconds=round(time.monotonic()-start,1),blocker=error)
-    if opts.projection_control:
+    if opts.lab_removal_only:
+        from tv_internal import removal_proof
+        row=None;passed=removal_proof(summary,digest);claims={'standalone lab removal':('PASS' if passed else 'not-measured',error or ('exact addition, deletion and original inventory verified' if passed else 'cleanup not verified'))}
+    elif opts.projection_control:
         row=None
         result=raw.get('projection',{}).get('comparison',{}).get('outcome','unmeasured')
         claims={'projection uncut control':('PASS' if result=='bit-exact' and not error else 'not-measured' if result=='unmeasured' or error else 'deviation',error or result)}
