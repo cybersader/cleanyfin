@@ -8,7 +8,7 @@ unit-gain, clock-stable tap: a known uncut positive and its independent repetiti
 from datetime import datetime, timezone
 from fractions import Fraction
 import json
-from uuid import UUID
+from tv_stock_transport import StockTransport,TransportLimit
 
 
 import format_fixtures as ff
@@ -127,25 +127,7 @@ def measure(h,tv,lab,ui,out,matrix):
         if measured_route!=baseline_route:raise ValueError('uncut capture route changed before held-out calibration')
         controls.append(raw)
 
-    def session():
-        return h.eventually(lambda:next((s for s in lab.api('/Sessions',user=lab.admin) if s.get('DeviceId')==lab.tv_device),None),8,'no exact TV session')
-    def command(s,op,query=''):
-        lab.api('/Sessions/'+s['Id']+'/Playing/'+op+query,'POST',user=lab.admin)
-    def start_at(ticks):
-        def begin():
-            tv.adb('shell','am','start','-W','-n',h.APP+'/.MainActivity');s=session()
-            lab.api('/Sessions/'+s['Id']+'/Playing?playCommand=PlayNow&itemIds='+lab.pointer+'&startPositionTicks='+str(ticks),'POST',user=lab.admin)
-        return begin
-    def seek_and_stop(target,mark,witness):
-        def begin():
-            h.play(tv,lab,lab.pointer);s=h.eventually(lambda:h.now(lab,lab.pointer),15,'no playing session for seek')
-            if not ui.action('pause'):raise ValueError('stock pause unavailable')
-            h.eventually(ui.paused,8,'stock pause not acknowledged')
-            for ms in (target+200 if mark.landing(Fraction(target+200,1000)) is not None else max(0,target-200),target):
-                command(s,'Seek','?seekPositionTicks='+str(ms*10000));wanted=mark.landing(Fraction(ms,1000))
-                h.eventually(lambda:h.shown_frame(tv,scorer)==wanted,5,'stock seek did not reach the intended barcode');witness.append(wanted)
-            if not ui.action('play'):raise ValueError('stock resume unavailable')
-        return begin
+    transport=StockTransport(h,tv,lab,ui,scorer)
     # Rehearse the entire transaction including starts, seeks and resume, not all 24 marks.
     positions=matrix.POSITIONS[:1] if getattr(tv,'combined',False) and tv.emulator is not None else matrix.POSITIONS
     out['requestedPositionCount']=len(positions)
@@ -155,33 +137,29 @@ def measure(h,tv,lab,ui,out,matrix):
         pos={'mark':mark.label(),'takes':{},'clear':False};out['positions'].append(pos)
         target=rel if mark.landing(Fraction(rel,1000)) is not None else max(0,rel-200)
         starts=sorted({max(0,rel-200),max(0,rel-1),rel,rel+520});landings=[]
-        modes=[('straight',None,mark.kept_frames[0]),*[(f'start-{t}',start_at(t*10000),mark.landing(Fraction(t,1000))) for t in starts if mark.landing(Fraction(t,1000)) is not None],('seek-resume',seek_and_stop(target,mark,landings),mark.kept_frames[0])]
-        # Restart the app and choose the stock Resume action on a real, persisted filtered bookmark.
-        def resume():
-            tv.adb('shell','am','start','-n',h.APP+'/.MainActivity','-a','android.intent.action.VIEW','--es','itemId',str(UUID(lab.pointer)),'--es','userId',str(UUID(lab.viewer)),'--es','serverId',str(UUID(lab.server_ref)))
-            node=h.eventually(lambda:next((n for n in ui.tree() if n.get('package')==h.APP and any('resume' in n.get(k,'').lower() for k in ('text','content-desc'))),None),15,'no stock Resume choice')
-            ui.activate(node.get('content-desc') or node['text'])
-        for key,begin,first in modes+[('persisted-resume',resume,None)]:
+        modes=[('straight',None,mark.kept_frames[0]),*[(f'start-{t}',lambda i,t=t:transport.start_at(t,i),mark.landing(Fraction(t,1000))) for t in starts if mark.landing(Fraction(t,1000)) is not None],('seek-resume',lambda i:transport.seek_and_resume(target,mark,landings,i),mark.kept_frames[0]),('persisted-resume',transport.resume,None)]
+        for key,begin,first in modes:
+            command_info=pos.setdefault('transport',{}).setdefault(key,{})
             if key=='persisted-resume':
-                # Establish the bookmark by stopping real playback; never manufacture user-data ticks.
-                h.play(tv,lab,lab.pointer);s=h.eventually(lambda:h.now(lab,lab.pointer),15,'no playing session for bookmark')
-                ms=max(1000,min(target,int(lab.r24_duration*1000)-1200));command(s,'Seek','?seekPositionTicks='+str(ms*10000))
-                h.eventually(lambda:abs((h.now(lab,lab.pointer) or {}).get('PlayState',{}).get('PositionTicks',-10**9)/10000-ms)<500,6,'bookmark seek not witnessed');ui.key('BACK')
-                h.eventually(lambda:not h.now(lab,lab.pointer),8,'stock player did not stop');tick=lab.api('/Users/'+lab.viewer+'/Items/'+lab.pointer,user=lab.one).get('UserData',{}).get('PlaybackPositionTicks',0)
-                if not tick or abs(tick/10000-ms)>1200:raise ValueError('no corresponding persisted filtered bookmark')
-                tv.adb('shell','am','force-stop',h.APP);pos['bookmarkTicks']=tick;first=mark.landing(Fraction(tick,10**7))
-            info,pic,raw=take('r24-take',lab.pointer,begin);ids=pic.pop('samples')
+                try:tick=transport.bookmark(mark,command_info)
+                except TransportLimit as exc:
+                    command_info['limit']=str(exc);tv.adb('shell','am','force-stop',h.APP);continue
+                first=mark.landing(Fraction(tick,10**7))
+            def witnessed_begin():
+                try:begin(command_info)
+                except TransportLimit as exc:command_info['limit']=str(exc)
+            info,pic,raw=take('r24-take',lab.pointer,witnessed_begin if begin else None);ids=pic.pop('samples')
             present=set(i for i in ids if i is not None); marked=len(present & mark.marked_frames)
             evidence=pos['takes'][key]=dict(markedPictures=marked,first=pic['first'],last=pic['last'],verified=False,clear=False,
                 fullMaxGapMs=pic.get('fullCaptureMaxGapMs'),captured=pic['captured'],unreadable=pic.get('unreadableFrames'),flatFrames=pic.get('flatFrames'))
-            evidence['bothTapsObserved']=bool(info.get('audioRouteVerified') and info.get('runtimeVerified') and info['observedCodec'] and h.has_routes(info) and present and raw and route(info)==baseline_route)
-            evidence['runtime']={k:info.get(k) for k in ('libmpvAO','libmpvVO','libmpvEof','playMethod','grantRouteDeltas','audioBytes','audioCaptureFailure','activeTrack','transferComplete')}
+            evidence['bothTapsObserved']=bool(not command_info.get('limit') and info.get('audioRouteVerified') and info.get('runtimeVerified') and info['observedCodec'] and h.has_routes(info) and present and raw and route(info)==baseline_route)
+            evidence['runtime']={k:info.get(k) for k in ('libmpvAO','libmpvVO','libmpvEof','libmpvAudioCodecs','observedCodec','playMethod','grantRouteDeltas','audioBytes','audioCaptureFailure','activeTrack','transferComplete')}
             sound=evidence['sound']=marked_audio(raw)
             required=[f for f in mark.kept_frames if first is not None and f>=first]
             seam=seam_observation(source,controls,raw,mark,first,key) if evidence['bothTapsObserved'] else {'unmeasured':'playback route not verified'}
             seam['missingKeptPictures']=len(set(required)-present)
             coverage=bool(all(c['coverageComplete'] for c in out['controls'].values()) and info.get('libmpvEof') and h.has_routes(info) and resolution(pic,info) and not seam['missingKeptPictures'] and pic['first']==first and pic['last']==mark.kept_frames[-1] and (key!='seek-resume' or len(landings)==2))
             evidence.update(seams=seam,pictureCoverageComplete=coverage,verified=False,clear=False)
-        pos['clear']=all(t['clear'] for t in pos['takes'].values());pos['pausedLandings']=landings
+        pos['clear']=len(pos['takes'])==len(modes) and all(t['clear'] for t in pos['takes'].values());pos['pausedLandings']=landings
     out['procedureCompleted']=len(out['positions'])==len(positions) and all(set(p['takes'])>={'straight','seek-resume','persisted-resume'} and all(t['bothTapsObserved'] for t in p['takes'].values()) for p in out['positions'])
     out['admitted']=len(out['positions'])==24 and all(p['clear'] for p in out['positions'])

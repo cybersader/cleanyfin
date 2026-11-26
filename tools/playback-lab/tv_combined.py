@@ -13,8 +13,8 @@ class CombinedCapture(InternalCapture):
         tv.internal_state['screenrecordAbsentBefore']=True
         if not tv.transport.helper_absent():raise ValueError('capture helper already installed; no replacement')
         tv.internal_state['helperAbsentBefore']=True
+        stack.callback(self.cleanup,tv)  # an interrupted install also needs a residue check
         h.install_input(tv,capture_only=True)
-        stack.callback(self.cleanup,tv)
         tv.transport.projection('grant-audio')  # Required for playback capture; the helper has no mic source.
 
     def cleanup(self,tv):

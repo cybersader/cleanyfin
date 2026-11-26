@@ -122,7 +122,7 @@ class InternalCapture:
 
 def harness_digest(here):
     h=hashlib.sha256()
-    for name in ('tv-harness.py','tv_internal.py','tv_r24.py','tv_device.py','tv_score.py','tv_pcm.py','tv_family_ui.py','tv_update.py','adb_lab.py','adb_lab_playback.py','tv-wire.py','tv_combined.py','tv_marked.py','r24_detector.py','marked_oracle.py','format_fixtures.py','format_measure.py','format-matrix.py','tv_dolby_control.py','ProjectionConsent.java','ProjectionRecorder.java','ProjectionManifest.xml'):
+    for name in ('tv-harness.py','tv_internal.py','tv_safety.py','tv_stock_transport.py','verify-adb-label.py','onn-test','tv_r24.py','tv_device.py','tv_score.py','tv_pcm.py','tv_family_ui.py','tv_update.py','adb_lab.py','adb_lab_playback.py','tv-wire.py','tv_combined.py','tv_marked.py','r24_detector.py','marked_oracle.py','format_fixtures.py','format_measure.py','format-matrix.py','tv_dolby_control.py','ProjectionConsent.java','ProjectionRecorder.java','ProjectionManifest.xml'):
         h.update((here/name).read_bytes());h.update(b'\0')
     return h.hexdigest()
 

@@ -1,0 +1,6 @@
+#!/bin/sh
+# Owner-only interactive entry point. No endpoints, secrets or optional modes in argv.
+set -eu
+[ "$#" = 0 ] && [ -t 0 ] && [ -t 2 ] || { echo 'Run in your own interactive terminal, without arguments.' >&2; exit 2; }
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+exec heavy-run --label onn-family-test --unit-slice heavy-builds.slice --max-runtime 14400 --term-grace 900 -- python3 -B -EP "$here/tv-harness.py" --device --existing-wholphin update --no-capture --frame-rate-match leave --r24 --layout mkv-h264-ac351

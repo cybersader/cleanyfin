@@ -654,11 +654,12 @@ class Screen:
         print('Verified MPV: saved options read back',file=sys.stderr)
 
 
-def play(tv,lab,item):
+def play(tv,lab,item,*,position_ms=None):
     from uuid import UUID
+    if position_ms is not None and (type(position_ms) is not int or not 0<=position_ms<=20000 or item!=lab.pointer):raise ValueError('invalid fixture start position')
     tv.adb('shell','am','start','-n',APP+'/.MainActivity','-a',APP+'.PLAYBACK',
            '--es','itemId',str(UUID(item)),'--es','userId',str(UUID(lab.viewer)),
-           '--es','serverId',str(UUID(lab.api('/System/Info/Public')['Id'])))
+           '--es','serverId',str(UUID(lab.api('/System/Info/Public')['Id'])),*(() if position_ms is None else ('--el','position',str(position_ms))))
 
 
 def now(lab,item):
@@ -1546,10 +1547,14 @@ def device_session(opts,work,sdk,stack,summary,history):
         tv.bind(emu.transport)
     else:
         import warnings
+        from tv_internal import harness_digest
+        digest=harness_digest(HERE)
+        if digest!=summary.get('captureHarnessSha256') or not summary.get('emulatorProof',{}).get('familySafety'):raise ValueError('safety proof no longer current; no device contacted')
+        client=stack.enter_context(AdbLab());client._witnessed();client._witnessed(harness=digest)
         with warnings.catch_warnings():
             warnings.simplefilter('error',getpass.GetPassWarning)
             pair,code,address=dev.connection({},input,getpass.getpass)
-        client=stack.enter_context(AdbLab());client.pair(pair,code);del code;client.connect(address)
+        client.pair(pair,code);del code;client.connect(address)
         tv=DeviceTV(work,sdk,stack,prefix=(),env=dev.env_without_secrets(os.environ),port=None,capture=capture)
         tv.bind(Playback(client,work,guest=False,family=bool(opts.existing_wholphin)))
     tv.host_history=history
@@ -1954,12 +1959,16 @@ def main():
     box.add_argument('--preflight',action='store_true',help='list local capture adapters; no adb or device connection')
     box.add_argument('--capture-usb',action='append',metavar='VID:PID',help='accept this USB id as the HDMI capture adapter')
     box.add_argument('--capture-file',action='append',metavar='[TAKE=]PATH',help='dry run: score recorded files instead of the adapter (no candidate row)')
+    box.add_argument('--private-transport-only',action='store_true',help='private one-mark stock transport diagnostic; no capture takes')
+    box.add_argument('--family-safety-only',action='store_true',help='private signed-update, idle recording interruption and full restoration; no movie')
     box.add_argument('--lab-removal-only',action='store_true',help='private signed-update rehearsal: add and delete the unique lab server, no playback')
     box.add_argument('--dry-run-emulator',action='store_true',help='dry run: drive the harness emulator through the device path over adb TCP')
     box.add_argument('--expect-model',help='refuse unless ro.product.model equals this')
     box.add_argument('--frame-rate-match',choices=('leave','never','seamless','always'),default='never',help='box "match content frame rate" for the run (default never: a constant 60 Hz signal for the adapter; restored afterwards)')
     box.add_argument('--after',choices=('keep','uninstall'),help='Wholphin at the end, if the harness installed it (default: ask; keep)')
     opts=parser.parse_args()
+    if opts.private_transport_only and (opts.family_safety_only or opts.lab_removal_only or not (opts.device and opts.dry_run_emulator and opts.existing_wholphin and opts.no_capture and opts.r24)):parser.error('transport probe requires the private update emulator')
+    if opts.family_safety_only and (opts.lab_removal_only or not (opts.device and opts.dry_run_emulator and opts.existing_wholphin and opts.no_capture and opts.r24)):parser.error('family safety rehearsal requires a private update emulator')
     if opts.lab_removal_only and not (opts.device and opts.dry_run_emulator and opts.existing_wholphin and opts.no_capture and opts.r24):parser.error('standalone removal requires the private signed-update rehearsal')
     if opts.projection_control and (not opts.r24 or opts.device or opts.preflight or opts.keep or opts.capture_usb or opts.split_capture):parser.error('projection control needs only the fresh private R24 emulator')
     if opts.layout and not opts.r24:parser.error('--layout needs --r24')
@@ -1987,12 +1996,13 @@ def main():
     if opts.llvmpipe_threads is not None and opts.gpu!='host':parser.error('--llvmpipe-threads requires --gpu host')
     proof=None
     if opts.no_capture:
-        from tv_internal import harness_digest,prior_dry_run,prior_removal
+        from tv_internal import harness_digest
+        from tv_safety import prior_safety
         digest=harness_digest(HERE)
         if not opts.dry_run_emulator:
             runs=HERE.parents[1]/'delivery/evidence/runs'
-            proof={'standaloneLabRemoval':prior_removal(runs,digest),'signedUpdateAndCombinedCapture':prior_dry_run(runs,digest,update=True,layout=opts.layout)}
-            if not all(proof.values()):parser.error('Required isolated emulator capture/preservation rehearsal missing for this harness; the physical box was not contacted')
+            try:proof={'familySafety':prior_safety(runs,digest)}
+            except ValueError as exc:parser.error(str(exc))
     if opts.r24:
         from tv_device import ASSETS
         try:import tv_r24
@@ -2013,7 +2023,10 @@ def main():
                                   'Synthetic fixture only; box HDMI output via USB capture adapter: UVC video stored 320x180 gray FFV1, UAC s16le stereo 48000 Hz'))
     if opts.no_capture:summary.update(captureHarnessSha256=digest,emulatorProof=proof)
     if opts.existing_wholphin:summary.update(mode='device-combined',recording='Android screenrecord + Wholphin UID/USAGE_MEDIA playback mix; no shared clock or HDMI')
+    if opts.private_transport_only:summary.update(mode='private-transport-only',recording='no capture takes; synthetic fixture barcode observations only')
+    if opts.family_safety_only:summary.update(mode='family-safety-only',recording='short idle capture on synthetic lab profile; no movie or R24 measurement')
     if opts.lab_removal_only:summary.update(mode='lab-removal-only',recording='none; private stock server cleanup only')
+    from tv_safety import PlannedSafetyStop
     from collections import deque
     raw=summary['observations']={};row=None;error=None;peak=0;over=threading.Event();done=threading.Event()
     history=deque(maxlen=5);worst_io=host_health()
@@ -2034,10 +2047,18 @@ def main():
                            timeout_label(raw.get('milestone','setup'),list(history)) if sig==signal.SIGALRM else 'Run interrupted')
     for sig in (signal.SIGTERM,signal.SIGALRM,signal.SIGINT):signal.signal(sig,interrupted)
     resource.setrlimit(resource.RLIMIT_CORE,(0,0));watcher=threading.Thread(target=budget,daemon=True);watcher.start()
+    class RunStack(ExitStack):
+        def __exit__(self,*exc):
+            if not opts.existing_wholphin:return super().__exit__(*exc)
+            # Do not interrupt family restoration with a second Ctrl-C or the measurement alarm.
+            signal.alarm(0);saved={s:signal.signal(s,signal.SIG_IGN) for s in (signal.SIGINT,signal.SIGTERM)}
+            try:return super().__exit__(*exc)
+            finally:
+                for sig,handler in saved.items():signal.signal(sig,handler)
     try:
         summary['hostBeforeRun']=wait_for_host()
         if not opts.device:signal.alarm(13500 if opts.r24 else 1200)
-        with ExitStack() as stack, redirect_stdout(sys.stderr):
+        with RunStack() as stack, redirect_stdout(sys.stderr):
             # Every Docker child, including fixture-generator subprocesses, gets
             # an ownership label so an interrupted image build is collected too.
             docker=shutil.which('docker')
@@ -2093,6 +2114,7 @@ def main():
                 cfg=lab.api('/System/Configuration',user=lab.admin);cfg['ServerName']=name;lab.api('/System/Configuration','POST',cfg,user=lab.admin)
                 if lab.api('/System/Info/Public').get('ServerName')!=name:raise RuntimeError('unique lab server identity not verified')
                 tv.family.ui.prepare_lab(name,tv.family.original)
+                if tv.emulator is None:print('For recovery, the only server this run adds is '+name,file=sys.stderr,flush=True)
                 tv.family.lab_added=True;stack.callback(restore_family_ui,tv)
             ui=(DeviceScreen if opts.device else Screen)(tv)
             if opts.lab_removal_only:
@@ -2114,7 +2136,14 @@ def main():
                     install_input(tv)
                 if getattr(tv,'combined',False):tv.capture.prepare(sys.modules[__name__],tv,stack)
                 summary['splitCapture']=opts.split_capture
-                if opts.projection_control:
+                if opts.family_safety_only:
+                    from tv_safety import rehearse
+                    raw['milestone']='interrupt short idle lab capture, then restore'
+                    rehearse(sys.modules[__name__],tv,raw)
+                elif opts.private_transport_only:
+                    from tv_stock_transport import probe
+                    raw['milestone']='one-mark stock transport probe';probe(sys.modules[__name__],tv,lab,ui,raw)
+                elif opts.projection_control:
                     import tv_projection
                     row=None;raw['milestone']='AudioPlaybackCapture uncut control'
                     tv_projection.measure(sys.modules[__name__],tv,lab,raw,module('format-matrix'))
@@ -2123,6 +2152,9 @@ def main():
                     row=None
                     tv_r24.measure(sys.modules[__name__],tv,lab,ui,raw,module('format-matrix'))
                 else: measure(tv,lab,ui,raw,opts.split_capture)
+    except PlannedSafetyStop:
+        if not opts.family_safety_only:raise
+        raw['familyTransactionUnwound']=True
     except (Exception,KeyboardInterrupt) as exc:
         # Never serialize child command lines, queries, login codes, file paths or stderr.
         import traceback
@@ -2150,7 +2182,10 @@ def main():
         summary['scratchRemoved']=not work.exists()
     if opts.no_capture and harness_digest(HERE)!=digest:error=error or 'harness changed during rehearsal; cannot arm a physical run'
     summary.update(elapsedSeconds=round(time.monotonic()-start,1),blocker=error)
-    if opts.lab_removal_only:
+    if opts.family_safety_only:
+        from tv_safety import safety_proof
+        row=None;passed=safety_proof(summary,digest);claims={'family safety rehearsal':('PASS' if passed else 'not-measured',error or ('update, fresh consent callback and restoration verified' if passed else 'incomplete safety evidence'))}
+    elif opts.lab_removal_only:
         from tv_internal import removal_proof
         row=None;passed=removal_proof(summary,digest);claims={'standalone lab removal':('PASS' if passed else 'not-measured',error or ('exact addition, deletion and original inventory verified' if passed else 'cleanup not verified'))}
     elif opts.projection_control:

@@ -145,7 +145,8 @@ class AdbLab:
                 raise LabError('Unexpected file in private Android home.')
             _file(p, secret=p.name == 'adbkey')
         self.tmp = Path(self.stack.enter_context(tempfile.TemporaryDirectory(prefix='cf-adb-', dir='/tmp')))
-        ns = _spawn(self.stack, ['unshare', '-Urn', 'sh', '-ec', 'ip link set lo up; exec sleep 7200'])
+        # Outlive the four-hour job plus restoration grace; ExitStack normally stops this keeper.
+        ns = _spawn(self.stack, ['unshare', '-Urn', 'sh', '-ec', 'ip link set lo up; exec sleep 18000'])
         _wait(lambda: os.readlink(f'/proc/{ns.pid}/ns/net') != os.readlink('/proc/self/ns/net'), ns)
         self.ns = ['nsenter', '--preserve-credentials', '-t', str(ns.pid), '-U', '-n', '--']
         _wait(lambda: b'127.0.0.1' in _run(self.ns + ['ip', '-4', 'addr', 'show', 'lo']), ns)
@@ -189,12 +190,16 @@ class AdbLab:
         _wait(lambda: bool(_run(self.ns + ['ss', '-Hlnt', f'sport = :{local}'])), inside)
         return f'127.0.0.1:{local}'
 
-    def _receipt(self):
-        return (_digest(b'wireless-pair-v1\0' + ADB_SHA.encode() + self.public + Path(__file__).read_bytes())+'\n').encode()
+    def _receipt(self, *, harness=None):
+        binding=b'wireless-pair-v1\0' + ADB_SHA.encode() + self.public + Path(__file__).read_bytes()
+        if harness is not None:
+            if not re.fullmatch('[0-9a-f]{64}',harness):raise LabError('Invalid harness digest.')
+            binding+=b'\0tv-harness\0'+harness.encode()
+        return (_digest(binding)+'\n').encode()
 
-    def _witnessed(self):
-        p = self.state/'witness'
-        if not p.exists() or _file(p) != self._receipt():
+    def _witnessed(self, *, harness=None):
+        p = self.state/('witness' if harness is None else 'witness-tv')
+        if not p.exists() or _file(p) != self._receipt(harness=harness):
             raise LabError('No matching emulator pairing witness for this tool and key.')
 
     def _pair_at(self, host, port, code, *, outer=()):

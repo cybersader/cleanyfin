@@ -227,8 +227,8 @@ class Playback:
         if a[:1]==('logcat',) and len(a)==5:safe=(a[1]=='-d' and self.logpid and self.logpid.isdecimal() and a[2]=='--pid='+self.logpid and a[3]=='-v' and a[4] in ('threadtime','tag'))
         if a==('logcat','-c'):safe=self.guest
         if s in (('am','force-stop',APP),('am','start','-n',ACT),('am','start','-W','-n',ACT),('input','keycombination','113','29')):safe=True
-        if len(s)==15 and s[:5]==('am','start','-n',ACT,'-a') and s[5] in (APP+'.PLAYBACK','android.intent.action.VIEW'):
-            safe=(s[6:8]==('--es','itemId') and s[9:11]==('--es','userId') and s[12:14]==('--es','serverId') and all(re.fullmatch('[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}',s[i]) for i in (8,11,14)))
+        if len(s) in (15,18) and s[:5]==('am','start','-n',ACT,'-a') and s[5] in (APP+'.PLAYBACK','android.intent.action.VIEW'):
+            safe=(s[6:8]==('--es','itemId') and s[9:11]==('--es','userId') and s[12:14]==('--es','serverId') and all(re.fullmatch('[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}',s[i]) for i in (8,11,14)) and (len(s)==15 or s[5]==APP+'.PLAYBACK' and s[15:17]==('--el','position') and re.fullmatch(r'(?:0|[1-9][0-9]{0,4})',s[17]) and int(s[17])<=20000))
         if s[:2]==('input','keyevent'):safe=s[2:] in [(k,) for k in KEYS] or s[2:]==('--longpress','DPAD_CENTER')
         if s[:2]==('input','text') and len(s)==3:safe=self.permitted_text(s[2])
         if len(s)==3 and s[:2]==('uiautomator','dump'):safe=s[2] in self.xml
