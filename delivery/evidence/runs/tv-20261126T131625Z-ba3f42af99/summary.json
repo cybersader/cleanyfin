@@ -261,6 +261,12 @@
   "hostSinkListUnchanged": false,
   "defaultSourceUnchanged": true,
   "hostSourceListUnchanged": false,
+  "hostAudioFollowUp": {
+    "source": "coordinator post-run host inspection",
+    "assessment": "host hardware hot-plug; defaults unchanged; no harness residue",
+    "observations": "All current sinks and sources corresponded to hardware: built-in audio, Jabra, Shure MV7, GPU HDMI, UGREEN capture adapter and Insta360 Link 2. No virtual or emulator audio device remained. Both defaults were the Shure MV7.",
+    "limit": "Consistent with USB hot-plug and re-enumeration; a specific plug or unplug event was not traced."
+  },
   "ownedContainersRemaining": 0,
   "scratchRemoved": true,
   "elapsedSeconds": 360.0,
