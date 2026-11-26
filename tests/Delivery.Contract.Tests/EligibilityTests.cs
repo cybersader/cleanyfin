@@ -20,8 +20,7 @@ public class EligibilityTests
         Assert.True(SchemaAccepts(Seed));
         var register = Read(Seed);
         Assert.All(register.Rows.Take(5), row => Assert.Equal(EvidenceStatus.Refused, row.Status));
-        // Common-format rows (format-matrix.py): desktop lab mpv only, never a TV tuple, never eligible. An exact layout is
-        // experimental (lab flag only); an inexact one is refused.
+        // Common-format rows: only R22-passing Dolby layouts may be experimental, in desktop lab mpv only.
         Assert.All(register.Rows.Skip(5), row =>
         {
             Assert.Equal(("mpv", "mpv"), (row.Tuple.AppId, row.Tuple.Backend));
@@ -34,11 +33,14 @@ public class EligibilityTests
             Assert.Equal(row.Status == EvidenceStatus.Experimental, row.Results.MarkedPicture.Outcome == Measurement.Pass &&
                 row.Results.MarkedSound.Outcome == Measurement.Pass && row.Results.KeptPictureAtJoin.Outcome == Measurement.Pass &&
                 row.Results.KeptSoundAtJoin.Outcome == Measurement.Pass);
-            Assert.True(File.Exists(Path.Combine(RepoRoot(), row.EvidenceRef)), row.EvidenceRef);
+            var evidence = Path.Combine(RepoRoot(), row.EvidenceRef);
+            Assert.True(File.Exists(evidence), row.EvidenceRef);
             if (row.Status == EvidenceStatus.Experimental)
             {
+                Assert.Contains(row.Tuple.Source.AudioCodec, new[] { "ac3", "eac3" });
                 Assert.Contains("24/24 positions passed", row.Observation);
-                Assert.Contains("R21: at most one extra kept sample before a fresh start or resume", row.Observation);
+                Assert.Contains("R22:", row.Observation);
+                Assert.StartsWith("R22:", JsonNode.Parse(File.ReadAllBytes(evidence))!["admissionStandard"]!.GetValue<string>());
                 Assert.Equal(EvidenceStatus.Experimental, register.Admit(row.Tuple, ["cut"], allowExperimental: true).Value!.Status);
             }
         });
