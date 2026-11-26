@@ -39,6 +39,16 @@ class InternalTests(unittest.TestCase):
         r={};h.app_runtime('cplayer, AO: [pcm] 48000Hz stereo 2ch s16',r);self.assertNotIn('libmpvAO',r)
         h.app_runtime('cplayer, AO: [audiotrack] 48000Hz stereo 2ch float',r);self.assertIn('libmpvAO',r)
 
+    def test_lazy_backend_row_can_be_focused_without_changing_setting(self):
+        from unittest.mock import Mock
+        from xml.etree.ElementTree import Element,SubElement
+        s=Mock();row=Element('node',package=h.APP,focused='true');other=Element('node',text='ExoPlayer');SubElement(row,'node',text='MPV')
+        s.tree.side_effect=[[other],[row,other]]
+        self.assertEqual(h.Screen.focus_backend(s,1),'MPV');s.key.assert_called_once_with('DPAD_DOWN')
+        SubElement(row,'node',text='ExoPlayer');s.tree.side_effect=[[row]];s.key.reset_mock()
+        with self.assertRaises(RuntimeError):h.Screen.focus_backend(s,1)
+        s.key.assert_not_called()
+
     def test_device_binds_to_playback_before_querying_guest(self):
         from unittest.mock import Mock
         with tempfile.TemporaryDirectory() as root:

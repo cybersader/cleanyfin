@@ -464,6 +464,16 @@ class Screen:
             if i==cap:raise RuntimeError(f'No focused {label} row after {i} {step} moves')
             self.key(step)
 
+    def focus_backend(self,cap=42):
+        # Compose does not materialize off-screen rows. Walk the menu without
+        # selecting anything, and read the exact value in the focused subtree.
+        for i in range(cap+1):
+            nodes=self.tree();focus=next((n for n in nodes if n.get('package')==APP and n.get('focused')=='true'),None)
+            values=({c.get(k) for c in focus.iter() for k in ('text','content-desc')} & {'ExoPlayer','MPV'}) if focus is not None else set()
+            if len(values)==1:return values.pop()
+            if values or i==cap:raise RuntimeError('focused playback backend value is ambiguous or unavailable')
+            self.key('DPAD_DOWN')
+
     def wait_label(self,label):
         eventually(lambda:self.get(label) is not None,18,'Wholphin did not display '+label)
 
@@ -497,9 +507,8 @@ class Screen:
             try:self.seek_settings={'verifiedSkipForwardMs':self.skip_forward_five_seconds()}
             except RuntimeError as exc:self.seek_settings={'seekLimit':str(exc)}
         self.dpad('Advanced Settings');self.wait_label('Show Clock')
-        if self.get('ExoPlayer'):
-            self.dpad('ExoPlayer');self.wait_label('Prefer MPV');self.dpad('MPV',cap=5)
-        elif not self.get('MPV'):raise RuntimeError('playback backend selection ambiguous')
+        if self.focus_backend()=='ExoPlayer':
+            self.key('DPAD_CENTER');self.wait_label('Prefer MPV');self.dpad('MPV',cap=5)
         self.wait_label('Edit mpv.conf');self.key('BACK');self.dpad('Advanced Settings')
         options=MPV_OPTIONS + ("\nad-lavc-o=cons_noisegen=1" if hasattr(lab, "r24_layout") else "")
         if getattr(self.tv,'internal',False):
@@ -1414,7 +1423,11 @@ def stock_labels(screen,apk):
     pool=run(screen.tv.sdk/'build-tools/36.0.0/aapt2','dump','strings',apk).decode(errors='replace')
     known={v for v in re.findall(r'(?m)^String #\d+ : ([^\n]+)$',pool) if re.fullmatch(r"[A-Za-z][A-Za-z ,!?'’-]{0,58}",v)}
     app=[n for n in screen.tree() if n.get('package')==APP]
-    return {'appVisible':bool(app),'stockLabels':sorted({n.get(k) for n in app for k in ('text','content-desc') if n.get(k) in known})[:30]}
+    labels={n.get(k) for n in app for k in ('text','content-desc') if n.get(k)}
+    return {'appVisible':bool(app),'appNodeCount':len(app),'labelCount':len(labels),
+            'hasProgressIndicator':any(n.get('class','').endswith('ProgressBar') for n in app),
+            'errorTextPresent':any(re.search(r'error|exception|failed|not found',v,re.I) for v in labels),
+            'stockLabels':sorted(labels & known)[:30]}
 
 
 def seed_update_rehearsal(tv,work,stack,receipt):
@@ -1444,9 +1457,17 @@ def seed_update_rehearsal(tv,work,stack,receipt):
         return False
     try:eventually(signed_home,30,'signed-in 1.0.9 did not reach Home')
     except RuntimeError:
-        receipt['screenAfterLogin']=stock_labels(ui,old);raise
+        receipt['screenAfterLogin']=stock_labels(ui,old)
+        # The seed is not established until the same local profile survives an
+        # app restart. Do not reauthenticate or clear app data to pass this check.
+        tv.adb('shell','am','force-stop',APP);tv.adb('shell','am','start','-W','-n',APP+'/.MainActivity',timeout=20)
+        try:eventually(signed_home,30,'signed-in 1.0.9 did not reach Home after restart')
+        except RuntimeError:
+            receipt['screenAfterRestart']=stock_labels(ui,old);raise
     ui.enter_advanced()
-    ui.dpad('ExoPlayer');ui.wait_label('Prefer MPV');ui.dpad('MPV',cap=5);ui.wait_label('Edit mpv.conf')
+    if ui.focus_backend()=='ExoPlayer':
+        ui.key('DPAD_CENTER');ui.wait_label('Prefer MPV');ui.dpad('MPV',cap=5)
+    ui.wait_label('Edit mpv.conf')
     ui.save_mpv('hwdec=no')  # Nonempty synthetic baseline must survive upgrade and test.
 
 

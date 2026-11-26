@@ -65,11 +65,10 @@ class FamilyUI:
         raise ValueError('server list cannot be completely enumerated')
 
     def read_settings(self):
-        self.restart();s=self.ui;s.enter_advanced();names=labels(s.tree());backends=set(names)&{'ExoPlayer','MPV'}
-        if len(backends)!=1 or 'Edit mpv.conf' not in names:raise ValueError('backend and mpv options not visible before changes')
+        self.restart();s=self.ui;s.enter_advanced();backend=s.focus_backend()
         s.dpad('Edit mpv.conf');s.wait_label('Save');edits=[n for n in s.tree() if n.get('package')==APP and n.get('class')=='android.widget.EditText']
         if len(edits)!=1:raise ValueError('saved mpv options not uniquely readable')
-        return backends.pop(),edits[0].get('text','')
+        return backend,edits[0].get('text','')
 
     def snapshot(self):
         try:
