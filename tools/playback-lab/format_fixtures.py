@@ -115,7 +115,7 @@ def tone(level, channel=0):
 # decoded uncut file is then a unique 96-bit key to its own source position; marked_oracle.py verifies uniqueness
 # on the decode it actually uses, never assumes it. Marks move per sweep position, so one code identifies every
 # position instead of a marked-only code baked into the file.
-SIGNATURES = ('tone', 'timecode')
+SIGNATURES = ('tone', 'timecode', 'tv-spread-v1')
 TIMECODE_LEVEL = 0.2   # peak of each code channel; channel 0 tone stays at TONE_LEVEL
 TIMECODE_SEED = 0x43_4C_45_41_4E_59_46_49   # 'CLEANYFI'
 
@@ -167,7 +167,7 @@ def generate(out, name, signature='tone'):
         raise ValueError(f'unknown audio signature {signature}')
     spec = LAYOUTS[name]
     file = f"{name}.{spec['container']}"
-    if signature == 'timecode' and (name == HARD_AAC or spec['audio'][0] not in (('ac3', 6), ('eac3', 6))):
+    if signature != 'tone' and (name == HARD_AAC or spec['audio'][0] not in (('ac3', 6), ('eac3', 6))):
         raise ValueError(f'{name}: the timecode signature is defined for 5.1 AC-3/E-AC-3 default tracks only')
     if name == HARD_AAC:
         # Re-test the original periodic stereo AAC source behind the legacy eligibility rows, not its pilot copy.
@@ -187,9 +187,13 @@ def generate(out, name, signature='tone'):
     code = None
     for i, (codec, channels) in enumerate(spec['audio']):
         layout_name, levels = CHANNELS[channels]
-        if signature == 'timecode' and i == 0:
-            code = out/f'{name}-timecode.f32'
-            code.write_bytes(timecode_pcm(channels).astype('<f4').tobytes())
+        if signature != 'tone' and i == 0:
+            code = out/f'{name}-{signature}.f32'
+            if signature == 'tv-spread-v1':
+                from tv_sound import source_pcm
+                wave = source_pcm(SOURCE_SAMPLES)
+            else:wave = timecode_pcm(channels)
+            code.write_bytes(wave.astype('<f4').tobytes())
             inputs += ['-f', 'f32le', '-ar', str(HZ), '-ch_layout', layout_name, '-i', f'/lab/{code.name}']
         else:
             exprs = '|'.join(tone(level, c) for c, level in enumerate(levels))

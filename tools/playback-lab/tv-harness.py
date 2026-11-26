@@ -167,6 +167,20 @@ def eventually(fn, limit, reason):
     raise RuntimeError(reason)
 
 
+def owned_sink(work):
+    # Opaque per-run identifier; never include the owner's path in a route name.
+    return 'cf_lab_'+hashlib.sha256(str(work).encode()).hexdigest()[:20]
+
+
+def host_audio_cleanup(before,after,sink):
+    # Other desktop sessions can add or remove devices while this job runs.
+    # Do not delete, list by name in receipts, or claim ownership of those.
+    return dict(defaultSinkUnchanged=before[0]==after[0], defaultSourceUnchanged=before[2]==after[2],
+                hostSinkListUnchanged=before[1]==after[1],hostSourceListUnchanged=before[3]==after[3],
+                ownedHostAudioAbsent=sink not in before[1]+after[1] and sink+'.monitor' not in before[3]+after[3],
+                hostSinkNamesChanged=len(set(before[1])^set(after[1])),hostSourceNamesChanged=len(set(before[3])^set(after[3])))
+
+
 class TV:
     def __init__(self, work, sdk, stack, gpu='swangle', ram_mib=2048, llvmpipe_threads=None, r24=False):
         self.work, self.sdk, self.stack, self.gpu = work, sdk, stack, gpu
@@ -174,13 +188,14 @@ class TV:
         self.home = work/'home'; self.runtime = work/'runtime'
         for d in (self.home, self.runtime, work/'tmp'):
             d.mkdir(mode=0o700)
+        self.sink = owned_sink(work)
         self.env = dict(os.environ, HOME=str(self.home), TMPDIR=str(work/'tmp'),
                         ANDROID_HOME=str(sdk), ANDROID_SDK_ROOT=str(sdk),
                         ANDROID_USER_HOME=str(self.home/'.android'),
                         ANDROID_EMULATOR_HOME=str(self.home/'.android'),
                         ANDROID_AVD_HOME=str(self.home/'.android/avd'),
                         XDG_RUNTIME_DIR=str(self.runtime),
-                        PULSE_SERVER='unix:'+str(self.runtime/'pulse/native'), PULSE_SINK='fixture',
+                        PULSE_SERVER='unix:'+str(self.runtime/'pulse/native'), PULSE_SINK=self.sink,
                         DBUS_SESSION_BUS_ADDRESS='unix:path=/dev/null',
                         DISPLAY='', ADB_MDNS_AUTO_CONNECT='0', ADB_LOCAL_TRANSPORT_MAX_PORT='0')
         self.env.pop('WAYLAND_DISPLAY', None)
@@ -233,7 +248,7 @@ class TV:
         video=None
         if sound:
             mon=s.enter_context(audio.open('wb')); err=s.enter_context((self.work/(label+'-audio.log')).open('wb'))
-            proc=sp.Popen(self.prefix+['parec','--device=fixture.monitor','--format=s16le','--rate=48000','--channels=2','--raw','--latency-msec=20'],env=self.env,stdout=mon,stderr=err)
+            proc=sp.Popen(self.prefix+['parec','--device='+self.sink+'.monitor','--format=s16le','--rate=48000','--channels=2','--raw','--latency-msec=20'],env=self.env,stdout=mon,stderr=err)
             def stop():
                 proc.terminate()
                 try: proc.wait(timeout=5)
@@ -263,8 +278,8 @@ class TV:
         self.spawn(self.prefix+['wireplumber','-p','policy'], 'audio-policy')
         self.spawn(self.prefix+['pipewire-pulse'], 'pulse')
         eventually(lambda: self.call('pactl','info'), 8, 'Private Pulse server unavailable')
-        self.call('pactl','load-module','module-null-sink','sink_name=fixture','rate=48000','channels=2')
-        self.env.update(QEMU_AUDIO_DRV='pa', QEMU_PA_SERVER=self.env['PULSE_SERVER'], QEMU_PA_SINK='fixture',
+        self.call('pactl','load-module','module-null-sink','sink_name='+self.sink,'rate=48000','channels=2')
+        self.env.update(QEMU_AUDIO_DRV='pa', QEMU_PA_SERVER=self.env['PULSE_SERVER'], QEMU_PA_SINK=self.sink,
                         QEMU_AUDIO_DAC_FIXED_SETTINGS='1',QEMU_AUDIO_DAC_FIXED_FREQ='48000',QEMU_AUDIO_DAC_FIXED_CHANNELS='2')
         if hasattr(self,'transport'):self.transport.boot_guest(self)
         else:  # Only verify-adb-label.py's independent, neutral bootstrap-key witness.
@@ -908,8 +923,8 @@ def configure_audio(tv):
             result['androidMusicVolumeAfterKeys']=int(keys[1]) if keys else None
     else:
         result['androidMusicVolumeReadback']='unavailable; not assuming unity'
-    tv.call('pactl','set-sink-volume','fixture','100%')
-    tv.call('pactl','set-source-volume','fixture.monitor','100%')
+    tv.call('pactl','set-sink-volume',tv.sink,'100%')
+    tv.call('pactl','set-source-volume',tv.sink+'.monitor','100%')
     inputs=tv.call('pactl','list','short','sink-inputs').decode().splitlines()
     if len(inputs)==1:
         stream=inputs[0].split()[0]
@@ -924,7 +939,7 @@ def audio_route(tv):
     rows=json.loads(tv.call('pactl','-f','json','list','sink-inputs',timeout=2))
     sinks={r['index']:r['name'] for r in json.loads(tv.call('pactl','-f','json','list','sinks',timeout=2))}
     qemu=[r for r in rows if r.get('properties',{}).get('application.process.binary','').startswith('qemu-system-')]
-    return [{'sink':sinks.get(r['sink']),'mute':r.get('mute'),'corked':r.get('corked')} for r in qemu]
+    return [{'sink':'fixture' if sinks.get(r['sink'])==tv.sink else 'unexpected','mute':r.get('mute'),'corked':r.get('corked')} for r in qemu]
 
 
 def has_routes(info):
@@ -2171,8 +2186,7 @@ def main():
         signal.alarm(0);done.set();watcher.join(timeout=3);peak=max(peak,allocated(work));summary['scratchPeakBytesObserved']=peak
         summary['hostWorstObservedIo']=worst_io;summary['hostWorstScopedFullPsi']=worst_scoped;summary['hostAfterRun']=host_health()
         if 'before' in locals():
-            after=host_audio();summary['defaultSinkUnchanged']=before[0]==after[0];summary['hostSinkListUnchanged']=before[1]==after[1]
-            summary['defaultSourceUnchanged']=before[2]==after[2];summary['hostSourceListUnchanged']=before[3]==after[3]
+            summary.update(host_audio_cleanup(before,host_audio(),owned_sink(work)))
         emu=tv.emulator if 'tv' in locals() and isinstance(tv,DeviceTV) else tv if 'tv' in locals() else None
         if emu is not None:summary['privateNamespaceExited']=emu.ns.poll() is not None
         if emu is not None and hasattr(emu,'emu'):summary['emulatorExited']=emu.emu.poll() is not None
@@ -2200,6 +2214,9 @@ def main():
     else:
         claims=verdicts(raw,error)
         if opts.device:summary['calibration']=calibration(raw)
+    if opts.r24 and (opts.family_safety_only or not (opts.lab_removal_only or opts.projection_control)):
+        from tv_r24 import material_claims
+        claims.update(material_claims(raw,error))
     summary['claims']=[status+' '+name+' — '+limit for name,(status,limit) in claims.items()]
     # Never turn the supplemental quarter-speed or FLAC observation into a
     # verdict about the candidate's 1x AAC tuple.
@@ -2222,13 +2239,16 @@ def main():
     else:
         if 'verifiedSettings' not in raw:print('Effective backend and mpv options: not verified; no playback evidence')
         print('\n'.join(summary['claims']));print('Run',summary['evidenceDirectory'],f"({summary['elapsedSeconds']} s, {peak} scratch bytes observed)")
-        if 'before' in locals():print('Cleanup:',{k:summary.get(k) for k in ('emulatorExited','ownedContainersRemaining','privateNamespaceExited','hostSinkListUnchanged','defaultSinkUnchanged','hostSourceListUnchanged','defaultSourceUnchanged','scratchRemoved') if k in summary})
+        if 'before' in locals():print('Cleanup:',{k:summary.get(k) for k in ('emulatorExited','ownedContainersRemaining','privateNamespaceExited','ownedHostAudioAbsent','hostSinkListUnchanged','defaultSinkUnchanged','hostSourceListUnchanged','defaultSourceUnchanged','scratchRemoved') if k in summary})
         if opts.device:
             print('Box put back:',summary.get('restored'),'| before/after differences:',summary.get('manifestDiff'))
             if summary.get('calibration'):print('HDMI path calibration:',json.dumps(summary['calibration']))
         if error:print('Stopped:',error)
         if opts.keep:print('Private retained data:',work)
-    return 0 if all(v[0]=='PASS' for v in claims.values()) and not error else 1
+    # No movie is played during the family rehearsal. Reporting material as
+    # unmeasured must neither veto safety nor masquerade as a material pass.
+    required=[claims['family safety rehearsal']] if opts.family_safety_only else claims.values()
+    return 0 if all(v[0]=='PASS' for v in required) and not error else 1
 
 if __name__=='__main__':sys.exit(main())
 

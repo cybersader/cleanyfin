@@ -1,0 +1,154 @@
+{
+  "witness": "tv-spread-v1",
+  "image": "jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db",
+  "results": {
+    "ac3": {
+      "passed": true,
+      "fixtureSha256": "36e7a6b7cbe7509cade359bd65e125c3c4671252db8d2beb9b84ecd6973de836",
+      "decoded51Sha256": "37bb35cf46c06a3716e491b76dbfbfa27360436e6db8185bd6c8b1177d0384a9",
+      "clock": {
+        "referenceFrames": 959760,
+        "expectedReferenceFrames": 959760,
+        "pictureClockFrames": 960000,
+        "firstDecodedSample": -240,
+        "referenceOrigin": 0,
+        "decodedFrames": 960000,
+        "discardedBeforeOrigin": 240,
+        "prefixAndReferenceVerified": true,
+        "prefixSha256": "1a7284bae5d7b696d51195ed812a66857841c5aceb202d4234a2020c5e7f71c3",
+        "referenceSha256": "5163a2420b3428bce4ca7f16fe3e2b03ed80424eb3ec5cddf1caf90f9d90701b"
+      },
+      "controlCounts": {
+        "positive": [
+          7999,
+          0,
+          "pass"
+        ],
+        "held-out": [
+          7999,
+          0,
+          "pass"
+        ]
+      },
+      "challenge": {
+        "passed": true,
+        "positive": {
+          "captureFrame": 384127,
+          "sourceFrameLR": [
+            384127,
+            384127
+          ],
+          "expectedMarked": true,
+          "ok": true
+        },
+        "held-out": {
+          "captureFrame": 600971,
+          "sourceFrameLR": [
+            600971,
+            600971
+          ],
+          "expectedMarked": false,
+          "ok": true
+        }
+      },
+      "alternateFold": [
+        {
+          "ppm": -400,
+          "blocks": 5986,
+          "keptBlocks": 5985,
+          "unidentifiedBlocks": 1,
+          "markedSoundDetections": 0,
+          "blockOutcome": "unmeasured",
+          "outcome": "unmeasured",
+          "maxKeptResidualLSB": 141.226
+        },
+        {
+          "ppm": 400,
+          "blocks": 5981,
+          "keptBlocks": 5980,
+          "unidentifiedBlocks": 1,
+          "markedSoundDetections": 0,
+          "blockOutcome": "unmeasured",
+          "outcome": "unmeasured",
+          "maxKeptResidualLSB": 139.521
+        }
+      ],
+      "outcome": "pass",
+      "reason": "all blocks identified; residual <=1 capture LSB"
+    },
+    "eac3": {
+      "passed": true,
+      "fixtureSha256": "5181d7ecefbacac69aa7c2e8b8e59b9a74d17cf368b3e3ec9dda1d73287861c3",
+      "decoded51Sha256": "db3bd5e3c92d2089bf0205bf2d74b4d5d6b8e418e98e84f779fa9edd4f3c1a83",
+      "clock": {
+        "referenceFrames": 959744,
+        "expectedReferenceFrames": 959744,
+        "pictureClockFrames": 960000,
+        "firstDecodedSample": 0,
+        "referenceOrigin": 0,
+        "decodedFrames": 959744,
+        "discardedBeforeOrigin": 0,
+        "prefixAndReferenceVerified": true,
+        "prefixSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "referenceSha256": "c44b839081117522a7e0bfc088459d5a4c676bf1e89d8b996c77ce66a06a7097"
+      },
+      "controlCounts": {
+        "positive": [
+          7997,
+          0,
+          "pass"
+        ],
+        "held-out": [
+          7997,
+          0,
+          "pass"
+        ]
+      },
+      "challenge": {
+        "passed": true,
+        "positive": {
+          "captureFrame": 383880,
+          "sourceFrameLR": [
+            383880,
+            383880
+          ],
+          "expectedMarked": true,
+          "ok": true
+        },
+        "held-out": {
+          "captureFrame": 600840,
+          "sourceFrameLR": [
+            600840,
+            600840
+          ],
+          "expectedMarked": false,
+          "ok": true
+        }
+      },
+      "alternateFold": [
+        {
+          "ppm": -400,
+          "blocks": 5984,
+          "keptBlocks": 5984,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "blockOutcome": "pass",
+          "outcome": "unmeasured",
+          "maxKeptResidualLSB": 65.81
+        },
+        {
+          "ppm": 400,
+          "blocks": 5979,
+          "keptBlocks": 5979,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "blockOutcome": "pass",
+          "outcome": "unmeasured",
+          "maxKeptResidualLSB": 65.79
+        }
+      ],
+      "outcome": "pass",
+      "reason": "all blocks identified; residual <=1 capture LSB"
+    }
+  }
+}

@@ -43,3 +43,14 @@ def read(lab,matrix):
                firstDecodedSample=begin,referenceOrigin=origin,decodedFrames=decoded_frames,discardedBeforeOrigin=skip,
                prefixAndReferenceVerified=True,prefixSha256=hashlib.sha256(prefix).hexdigest(),referenceSha256=hashlib.sha256(reference).hexdigest())
     return reference,whole,facts
+
+
+def playback_mix_reference(lab,decoded_frames):
+    """Preserve the already-verified whole decoder clock, including any priming."""
+    import numpy as np
+    from tv_sound import android_mix
+    name=lab.r24_layout+'.'+ff.LAYOUTS[lab.r24_layout]['container']
+    raw=media(lab.fixtures,'ffmpeg','-copyts','-cons_noisegen','1','-i','/lab/'+name,'-map','0:a:0',
+              '-ch_layout','5.1(side)','-ar','48000','-f','f32le','pipe:1',readonly=True)
+    if len(raw)!=decoded_frames*6*4:raise ValueError('unexpected six-channel decoder length')
+    return android_mix(np.frombuffer(raw,'<f4').reshape(-1,6)),hashlib.sha256(raw).hexdigest()

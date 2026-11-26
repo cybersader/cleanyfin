@@ -30,7 +30,9 @@ def make_lab(matrix, directory, line, layout, tv, origin):
             return json.loads(self.register_path.read_text())
 
     fixtures=directory/'movies'; fixtures.mkdir()
-    facts=ff.generate(fixtures, layout,signature='tone' if getattr(tv,'projection_control',False) else 'timecode')
+    signature = ('tone' if getattr(tv,'projection_control',False) else
+                 'tv-spread-v1' if getattr(tv,'combined',False) else 'timecode')
+    facts=ff.generate(fixtures,layout,signature=signature)
     if getattr(tv,'projection_control',False):
         from tv_channel_control import generate
         generate(fixtures,ff.LAYOUTS[layout]['audio'][0][0])
@@ -83,10 +85,26 @@ def verdict(observations, blocker):
     return 'not-measured',blocker or f'{count}/24 fully observed positions clear; no admission'
 
 
+def material_claims(obs,blocker):
+    """Report both materials even after interruption or a safety-only run."""
+    positions=obs.get('positions',[]); takes=[t for p in positions for t in p['takes'].values()]
+    complete=bool(not blocker and len(positions)==24 and all(p.get('plannedTakes') and
+                  set(p['plannedTakes'])==set(p['takes']) for p in positions))
+    def claim(failed,clear,reason):
+        if failed:return ('FAIL',f'{failed} positive windows/IDs in observed takes')
+        if complete and clear==len(takes):return ('PASS',reason)
+        return ('not-measured',f'{clear}/{len(takes)} observed takes clear; no admission')
+    return {'marked sound':claim(sum((t.get('sound',{}).get('markedSoundDetections') or 0) for t in takes),
+               sum(t.get('sound',{}).get('clear') is True for t in takes),'all scheduled takes clear at stated capture resolution'),
+            'marked picture':claim(sum(t.get('markedPictures',0) for t in takes),
+               sum(t.get('pictureCoverageComplete') is True and t.get('verified') is True for t in takes),'all scheduled takes resolved')}
+
+
 def measure(h,tv,lab,ui,out,matrix):
     from tv_dolby_control import read
     layout=lab.r24_layout; spec=ff.LAYOUTS[layout]; binding=lab.r24_binding; av=lab.r24_anchor
-    source,_,out['controlClock']=read(lab,matrix)
+    source,whole,out['controlClock']=read(lab,matrix)
+    lead=out['controlClock']['discardedBeforeOrigin']
     scorer=h.module('analyze-capture');out['audioLevels']=tv.configure_audio();out['layout']=layout;out['audioSignature']=lab.r24_fixture['audioSignature']
     out['plannedPositions']=matrix.POSITIONS;out['tuple']=lab.stub_register()['rows'][0]['tuple'];out['positions']=[]
     out['admitted']=False
@@ -107,6 +125,12 @@ def measure(h,tv,lab,ui,out,matrix):
                 if path:path.unlink(missing_ok=True)
             (tv.work/(label+'-logcat.log')).unlink(missing_ok=True)
 
+    from tv_sound import Witness, VERSION, route_challenge
+    witness=None
+    if out['audioSignature']==VERSION and getattr(tv,'combined',False):
+        from tv_dolby_control import playback_mix_reference
+        mix,out['decoded51Sha256']=playback_mix_reference(lab,len(whole)//4)
+        witness=Witness(mix)
     controls=[];baseline_route=None
     def route(info):
         track=info.get('activeTrack') or {}
@@ -117,7 +141,7 @@ def measure(h,tv,lab,ui,out,matrix):
             complete=pic['controlComplete'],fullMaxGapMs=pic.get('fullCaptureMaxGapMs'),captured=pic['captured'],
             unreadable=pic.get('unreadableFrames'),flatFrames=pic.get('flatFrames'),tapVerified=False)
         from tv_marked import marked_audio, seam_observation
-        control['markedAudioInput']=marked_audio(raw)
+        if not witness:control['markedAudioInput']=marked_audio(raw)
         control['singleRefreshResolved']=resolution(pic,info)
         control['tapVerified']=bool(info.get('audioRouteVerified') and info.get('runtimeVerified') and info['observedCodec'] and raw and pic['distinct'])
         control['coverageComplete']=bool(h.picture_calibrated(pic,info) and info.get('libmpvEof') and control['singleRefreshResolved'])
@@ -125,6 +149,11 @@ def measure(h,tv,lab,ui,out,matrix):
         measured_route=route(info)
         if baseline_route is None:baseline_route=measured_route
         if measured_route!=baseline_route:raise ValueError('uncut capture route changed before held-out calibration')
+        if witness:
+            control['soundControl']=witness.score(raw,preroll=lead)
+            control['soundCalibrated']=bool(control['tapVerified'] and info.get('transferComplete') and
+                info.get('freshProjectionCallback') and info.get('libmpvEof') and not info.get('captureDeadline') and
+                control['soundControl']['blockOutcome']=='pass')
         controls.append(raw)
 
     transport=StockTransport(h,tv,lab,ui,scorer)
@@ -135,9 +164,14 @@ def measure(h,tv,lab,ui,out,matrix):
         end=min(end,binding['durationMs']-av);mark=fm.Mark(dict(videoAnchorMs=av,durationMs=binding['durationMs']),av+rel,av+end)
         lab.arm(lab.item,binding,av+rel,av+end);lab.r24_duration=(binding['durationMs']-end+rel)/1000
         pos={'mark':mark.label(),'takes':{},'clear':False};out['positions'].append(pos)
+        bounds=(lead+mark.a if mark.a else 0,lead+mark.b)
+        if witness:
+            pos['soundRouteChallenge']=route_challenge(witness,{label:(raw,out['controls'][label])
+                for label,raw in zip(('positive','held-out'),controls)},bounds)
         target=rel if mark.landing(Fraction(rel,1000)) is not None else max(0,rel-200)
         starts=sorted({max(0,rel-200),max(0,rel-1),rel,rel+520});landings=[]
         modes=[('straight',None,mark.kept_frames[0]),*[(f'start-{t}',lambda i,t=t:transport.start_at(t,i),mark.landing(Fraction(t,1000))) for t in starts if mark.landing(Fraction(t,1000)) is not None],('seek-resume',lambda i:transport.seek_and_resume(target,mark,landings,i),mark.kept_frames[0]),('persisted-resume',transport.resume,None)]
+        pos['plannedTakes']=[m[0] for m in modes]
         for key,begin,first in modes:
             command_info=pos.setdefault('transport',{}).setdefault(key,{})
             if key=='persisted-resume':
@@ -155,11 +189,26 @@ def measure(h,tv,lab,ui,out,matrix):
             evidence['bothTapsObserved']=bool(not command_info.get('limit') and info.get('audioRouteVerified') and info.get('runtimeVerified') and info['observedCodec'] and h.has_routes(info) and present and raw and route(info)==baseline_route)
             evidence['runtime']={k:info.get(k) for k in ('libmpvAO','libmpvVO','libmpvEof','libmpvAudioCodecs','observedCodec','playMethod','grantRouteDeltas','audioBytes','audioCaptureFailure','activeTrack','transferComplete')}
             sound=evidence['sound']=marked_audio(raw)
+            if witness:
+                verified = bool(info.get('audioRouteVerified') and info.get('runtimeVerified') and info['observedCodec'] and
+                    info.get('freshProjectionCallback') and info.get('transferComplete') and h.has_routes(info) and route(info)==baseline_route)
+                if verified:
+                    start=(0 if key=='straight' else int(key[6:])*48 if key.startswith('start-') else
+                           round(tick*48000/10**7) if key=='persisted-resume' else None)
+                    # Source zero can follow a decoded pre-roll. A cut from zero drops
+                    # that prefix, as does a nonzero start on the filtered clock.
+                    if start and mark.a:start+=lead
+                    sound=evidence['sound']=witness.score(raw,bounds,start,preroll=lead if not start and mark.a else 0)
+                    if sound['outcome']=='pass' and not (not command_info.get('limit') and info.get('libmpvEof') and
+                            not info.get('captureDeadline') and pos['soundRouteChallenge']['passed']):
+                        sound.update(outcome='unmeasured',clear=False,reason='uncut controls, transport or EOF incomplete')
+                else:evidence['sound']={'outcome':'unmeasured','clear':False,'reason':'playback mix or grant route unverified'}
             required=[f for f in mark.kept_frames if first is not None and f>=first]
             seam=seam_observation(source,controls,raw,mark,first,key) if evidence['bothTapsObserved'] else {'unmeasured':'playback route not verified'}
             seam['missingKeptPictures']=len(set(required)-present)
             coverage=bool(all(c['coverageComplete'] for c in out['controls'].values()) and info.get('libmpvEof') and h.has_routes(info) and resolution(pic,info) and not seam['missingKeptPictures'] and pic['first']==first and pic['last']==mark.kept_frames[-1] and (key!='seek-resume' or len(landings)==2))
-            evidence.update(seams=seam,pictureCoverageComplete=coverage,verified=False,clear=False)
+            evidence.update(seams=seam,pictureCoverageComplete=coverage,verified=evidence['bothTapsObserved'],
+                            clear=bool(evidence['bothTapsObserved'] and coverage and not marked and sound.get('clear')))
         pos['clear']=len(pos['takes'])==len(modes) and all(t['clear'] for t in pos['takes'].values());pos['pausedLandings']=landings
     out['procedureCompleted']=len(out['positions'])==len(positions) and all(set(p['takes'])>={'straight','seek-resume','persisted-resume'} and all(t['bothTapsObserved'] for t in p['takes'].values()) for p in out['positions'])
     out['admitted']=len(out['positions'])==24 and all(p['clear'] for p in out['positions'])

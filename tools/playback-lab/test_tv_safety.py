@@ -25,7 +25,7 @@ def fixture():
     before={'code':60,'version':'1.0.9','certificate':OFFICIAL_CERT,'package':APP};after=dict(before,code=63,version=TARGET)
     hashes={'servers':'a'*64,'active':'b'*64,'user':'c'*64};settings={'backend':'d'*64,'options':'e'*64}
     return dict(mode='family-safety-only',captureHarnessSha256='1'*64,device={'emulator':True},unexpectedResidue=[],ownedContainersRemaining=0,
-        **yes('dryRun restored scratchRemoved privateAdbExited privateNamespaceExited emulatorExited'),familyUpdate=dict(
+        **yes('dryRun restored scratchRemoved privateAdbExited privateNamespaceExited emulatorExited defaultSinkUnchanged defaultSourceUnchanged ownedHostAudioAbsent'),familyUpdate=dict(
         **yes('authenticatedSyntheticSession syntheticBaselineSeeded inPlaceUpdateReported liveLabProfileVerified restoreAttempted exactLabDeleteActivated labAbsentAfter visibleStateRestored'),
         beforeBuild=before,afterUpdateBuild=after,afterRestoreBuild=after,beforeUI=hashes,afterUpdate={'servers':hashes['servers']},afterRestore={'servers':hashes['servers']},labSettingsBefore=settings,labSettingsAfter=settings),
         observations=dict(verifiedSettings={'backend':'MPV','mpvOptions':['hwdec=no']},interruptedRecordingRemoved=True,familyTransactionUnwound=True,idleCapture=yes('freshProjectionCallback videoRemoved')),

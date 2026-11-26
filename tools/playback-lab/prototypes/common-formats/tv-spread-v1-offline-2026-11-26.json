@@ -1,0 +1,516 @@
+{
+  "witness": "tv-spread-v1",
+  "image": "jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db",
+  "results": {
+    "ac3": {
+      "passed": true,
+      "injected": {
+        "48": {
+          "start": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "join": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "end": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          }
+        },
+        "120": {
+          "start": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "join": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "end": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          }
+        },
+        "240": {
+          "start": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "join": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "end": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 1,
+            "unmeasured": 11,
+            "pass": 0
+          }
+        },
+        "360": {
+          "start": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "join": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "end": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          }
+        },
+        "480": {
+          "start": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "join": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "end": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          }
+        },
+        "960": {
+          "start": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "join": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "end": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          }
+        }
+      },
+      "negative": {
+        "ideal": {
+          "blocks": 5249,
+          "keptBlocks": 5249,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.771,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        },
+        "heldOut": {
+          "blocks": 5249,
+          "keptBlocks": 5249,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.707,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        },
+        "ffmpegDefault": {
+          "blocks": 5249,
+          "keptBlocks": 5249,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.718,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        },
+        "heldOutSlow": {
+          "blocks": 5251,
+          "keptBlocks": 5251,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.756,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        },
+        "heldOutFast": {
+          "blocks": 5247,
+          "keptBlocks": 5247,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.692,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        }
+      },
+      "sourceFrames": 960000
+    },
+    "eac3": {
+      "passed": true,
+      "injected": {
+        "48": {
+          "start": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "join": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "end": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          }
+        },
+        "120": {
+          "start": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "join": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "end": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          }
+        },
+        "240": {
+          "start": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "join": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "end": {
+            "fail": 11,
+            "unmeasured": 1,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 0,
+            "unmeasured": 12,
+            "pass": 0
+          }
+        },
+        "360": {
+          "start": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "join": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "end": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          }
+        },
+        "480": {
+          "start": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "join": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "end": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          }
+        },
+        "960": {
+          "start": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "join": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "interior": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "end": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "left-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          },
+          "right-flank": {
+            "fail": 12,
+            "unmeasured": 0,
+            "pass": 0
+          }
+        }
+      },
+      "negative": {
+        "ideal": {
+          "blocks": 5249,
+          "keptBlocks": 5249,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.699,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        },
+        "heldOut": {
+          "blocks": 5249,
+          "keptBlocks": 5249,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.701,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        },
+        "ffmpegDefault": {
+          "blocks": 5249,
+          "keptBlocks": 5249,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.722,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        },
+        "heldOutSlow": {
+          "blocks": 5251,
+          "keptBlocks": 5251,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.695,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        },
+        "heldOutFast": {
+          "blocks": 5247,
+          "keptBlocks": 5247,
+          "unidentifiedBlocks": 0,
+          "markedSoundDetections": 0,
+          "continuousCoverage": true,
+          "maxKeptResidualLSB": 0.706,
+          "blockOutcome": "pass",
+          "outcome": "pass",
+          "reason": "all blocks identified; residual <=1 capture LSB"
+        }
+      },
+      "sourceFrames": 960000
+    }
+  }
+}

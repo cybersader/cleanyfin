@@ -1,0 +1,95 @@
+{
+  "startedUtc": "20261126T210648Z",
+  "recording": "short idle capture on synthetic lab profile; no movie or R24 measurement",
+  "mode": "family-safety-only",
+  "dryRun": true,
+  "captureHarnessSha256": "bb57d586644d7828cce73078cef0e52030eed0b0c67c5120aa81577d8116e6b3",
+  "emulatorProof": null,
+  "observations": {
+    "milestone": "box connection, identity and change manifest",
+    "blockerSites": [
+      "tv-harness.py:main:2101",
+      "tv-harness.py:device_session:1591",
+      "tv-harness.py:seed_update_rehearsal:1504",
+      "check-plugin.py:setup:94",
+      "tv-harness.py:interrupted:2061"
+    ]
+  },
+  "hostBeforeRun": {
+    "load1": 6.69,
+    "cpus": 24,
+    "availableGiB": 13.71,
+    "ioFull10sPct": 0.12,
+    "scopeMemoryFull10sPct": 0.0,
+    "scopeIOFull10sPct": 0.0,
+    "busy": false
+  },
+  "emulatorVersion": "37.2.12",
+  "graphicsAdapter": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 22.1.8, 256 bits))",
+  "device": {
+    "uiSize": "1280x720",
+    "manufacturer": "Google",
+    "brand": "google",
+    "model": "sdk_google_atv64_amati_x86_64",
+    "device": "emu64xa",
+    "soc": "ranchu",
+    "securityPatch": "2026-04-01",
+    "abiList": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "android": "16",
+    "sdk": "36",
+    "build": "google/sdk_google_atv64_amati_x86_64/emu64xa:16/BT2A.260319.001/15058170:user/dev-keys",
+    "abi": "x86_64",
+    "characteristics": "emulator",
+    "leanback": true,
+    "googleTvLauncher": true,
+    "emulator": true
+  },
+  "familyUpdate": {},
+  "privateAdbExited": true,
+  "privateNamespaceExited": true,
+  "emulatorExited": true,
+  "scratchPeakBytesObserved": 1261547520,
+  "hostWorstObservedIo": {
+    "load1": 8.49,
+    "cpus": 24,
+    "availableGiB": 15.63,
+    "ioFull10sPct": 1.65,
+    "scopeMemoryFull10sPct": 0.14,
+    "scopeIOFull10sPct": 0.01,
+    "busy": false
+  },
+  "hostWorstScopedFullPsi": {
+    "scopeMemoryFull10sPct": 1.54,
+    "scopeIOFull10sPct": 1.1
+  },
+  "hostAfterRun": {
+    "load1": 8.49,
+    "cpus": 24,
+    "availableGiB": 15.62,
+    "ioFull10sPct": 1.65,
+    "scopeMemoryFull10sPct": 0.14,
+    "scopeIOFull10sPct": 0.01,
+    "busy": false
+  },
+  "defaultSinkUnchanged": true,
+  "defaultSourceUnchanged": true,
+  "hostSinkListUnchanged": true,
+  "hostSourceListUnchanged": true,
+  "ownedHostAudioAbsent": true,
+  "hostSinkNamesChanged": 0,
+  "hostSourceNamesChanged": 0,
+  "ownedContainersRemaining": 0,
+  "scratchRemoved": true,
+  "elapsedSeconds": 54.6,
+  "blocker": "Run interrupted",
+  "claims": [
+    "not-measured family safety rehearsal \u2014 Run interrupted",
+    "not-measured marked sound \u2014 0/0 observed takes clear; no admission",
+    "not-measured marked picture \u2014 0/0 observed takes clear; no admission"
+  ],
+  "evidenceDirectory": "delivery/evidence/runs/tv-20261126T210648Z-8f8934629a",
+  "candidateWritten": false
+}
