@@ -33,7 +33,7 @@ def safety_proof(row,digest):
     def hashes(obj,keys):return isinstance(obj,dict) and set(obj)==set(keys) and all(isinstance(v,str) and re.fullmatch('[a-f0-9]{64}',v) for v in obj.values())
     if not (row.get('mode')=='family-safety-only' and row.get('captureHarnessSha256')==digest and not row.get('blocker')
             and row.get('device',{}).get('emulator') is True and row.get('unexpectedResidue')==[] and row.get('ownedContainersRemaining')==0
-            and yes(row,'dryRun','restored','scratchRemoved','privateAdbExited','privateNamespaceExited','emulatorExited')):return False
+            and yes(row,'dryRun','restored','scratchRemoved','privateAdbExited','privateNamespaceExited','emulatorExited','defaultSinkUnchanged','defaultSourceUnchanged','ownedHostAudioAbsent')):return False
     f=row.get('familyUpdate',{});r=row.get('internalRestore',{});o=row.get('observations',{});before=f.get('beforeUI');settings=f.get('labSettingsBefore')
     try:
         old=Build(**f['beforeBuild']);new=Build(**f['afterUpdateBuild']);check_upgrade(old,new,authorized=True)

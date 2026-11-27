@@ -1,6 +1,35 @@
 # Marked-sound detector v2 (R24 test tier)
 
-**2026-11-26 · desktop mpv lab only.** This page explains how the R24 test tier now decides "no marked sound was presented" after lossy AC-3/E-AC-3 decoding. It also explains how small a leak the test can catch, and what the re-run sweep found. It does not qualify any TV, Wholphin, HDMI or passthrough path.
+**2026-11-26 · two different witnesses.** The desktop R24 sweep measured six-channel PCM at mpv's output. The TV harness instead identifies source positions in Android's recorded stereo mix. Its sensitivity figures below come from offline challenges, not from a TV playing a movie. Neither the desktop results nor the TV harness implementation qualify Wholphin, HDMI or passthrough.
+
+## Android stereo playback mix
+
+The TV test measures **what was in the recording**, not what a decoder timestamp says should have been there. The desktop method below still owns sample-level, six-channel identity. The TV method has a different fixture, resolution and refusal policy. Neither one certifies what comes out of an HDMI receiver or speaker.
+
+**Signal.** The original 20 s barcoded movie is unchanged in length, codec, channel layout and video. `tv-spread-v1` puts one deterministic aperiodic waveform (linear interpolation between random 6 kHz chips) at different positive levels in all five full-range lanes; LFE is silent. That preserves the position code instead of cancelling it during a 5.1→stereo fold. No mark is baked into the code. Decode this edition uncut with the verified Dolby clock, **including** any prefix before picture zero. Fold its six float lanes using the previously observed Android mix as a hypothesis, never as evidence about this TV. Two same-route uncut captures must independently recover the full programme. For each mark, reclassify a known marked block from the first capture and a kept block from the other. No thresholds are trained on the filtered takes.
+
+**Reading a block.** On each ear independently, query a fingerprint index and verify candidates against the entire 240-sample waveform. Fit positive gain and a bounded local sampling phase/rate, not arbitrary equalization; check the source and the one legal splice hypothesis. Overlap windows every 120 samples and anchor the last window at the very end. A verified window wholly inside the mark in either ear fails the take. A negative requires both ears to cover the kept path, with its witnessed entry and end and no timing holes. The complete compact position maps are in `traceDeltaZlibLR`: base64, zlib, little-endian int32 deltas, cumulative sum. Each entry is a kept-path sample index, `-1` (unknown), or `-(sourceIndex+2)` (marked). `sourceMarkFrames`, `activeFrames`, and the zero-only recorder padding locate the map on both clocks. No edited movie or PCM is retained.
+
+**Two distinct results.** `blockOutcome=pass` means every active window was identified on the kept path. `outcome=pass` additionally requires that no sample differs by more than one captured s16 count from its fitted kept waveform. It is not enough to recognize the louder sound if a quieter echo is still unexplained. One count is a digital measurement limit, **not a hearing threshold**. Saturation, an incompatible fold, uncertain clocks, unknown pauses/seeks, incomplete route/transfer, missing EOF or unresolved energy can leave clearance unmeasured. The full gate remains closed if any required take or mark is unresolved. In particular the 1 ms marks are below this test's negative-verdict floor. This test does not measure R22 pop, lost kept sound, or A/V sync, and the common code cannot establish six independent channel identities.
+
+**Offline challenge.** `tv-sound-validation.py` uses the pinned lab FFmpeg image to encode/decode full-length AC-3 and E-AC-3, then independently folds the six decoded lanes with a second matrix and different L/R levels, quantizes to s16, and varies the sample clock by ±400 ppm. It tests starts, arbitrary interior replacements, join replacements, ends, and under-cuts contiguous with either flank. The numbers refer to these finite synthetic challenges; overlapping windows are not independent trials. A 5 ms analysis window is **not** a 5 ms guaranteed detection limit. A complete box run still needs its own evidence.
+
+**Reporting floor: 10 ms (480 frames at 48 kHz), for substitutions of the marked programme at the tested levels.** At each duration and for each codec the [frozen challenge](../../../tools/playback-lab/prototypes/common-formats/tv-spread-v1-offline-2026-11-26.json) used 12 placements of each of six kinds. The table counts takes with a **confirmed marked block**; other takes abstained, none cleared. The injected takes are excerpts, not full movies, so abstentions on these do not measure the false-clear probability of a complete movie. These numbers do not establish sensitivity to an arbitrary low-level echo.
+
+| Injected duration | AC-3 confirmed / 72 | E-AC-3 confirmed / 72 |
+|---|---:|---:|
+| 1 ms | 0 | 0 |
+| 2.5 ms | 0 | 0 |
+| 5 ms | 25 | 23 |
+| 7.5 ms | 72 | 72 |
+| 10 ms | 72 | 72 |
+| 20 ms | 72 | 72 |
+
+The [earlier four-placement challenge](../../../tools/playback-lab/prototypes/common-formats/tv-spread-development-offline-2026-11-26.json) missed two 7.5 ms substitutions per codec (46/48 for each), while confirming 48/48 at both 10 and 20 ms for each. Its whole-take endpoint checks also abstained; it is not the passing validation receipt. The fresh result does not lower the predeclared 10 ms floor.
+
+**Specificity on the frozen near-model folds:** all ten full kept takes cleared, with **0 false alarms and 0 unknowns in 52,490 overlapping stereo windows**. Each codec supplied five complete takes: the ideal cut, independently rounded fold with unequal ear gains at nominal rate and ±400 ppm, and FFmpeg's default stereo decode. The largest kept residual was 0.771 s16 counts. The alternative coefficients in this battery are close to the reference fold (`0.707` versus `1/√2`); these results do not establish clearance under an arbitrary TV downmix.
+
+**Actual muxed fixtures, still offline.** The [MKV AC-3 and MP4 E-AC-3 check](../../../tools/playback-lab/prototypes/common-formats/tv-spread-v1-muxed-2026-11-26.json) used the TV harness's own fixture generator and reference reader. Decoded pre-roll was 240 and 0 frames respectively. Both ideal cuts, all four generated uncut controls and both per-mark positive/negative challenges passed. With a substantially different channel fold (centre 0.50, surround 0.35, no LFE; independent ear gains and ±400 ppm), **none of four clean cuts cleared**. There were 0 false alarms in 23,930 overlapping windows, but two AC-3 windows were unidentified, and residuals in all four takes exceeded one count (worst: 141.226). E-AC-3 identified every position in both altered-fold takes; a position match alone would have incorrectly claimed unexplained sound was clear. An unfamiliar real route may likewise abstain.
 
 ## Why the v1 detector could not decide
 

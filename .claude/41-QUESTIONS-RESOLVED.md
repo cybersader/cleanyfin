@@ -142,3 +142,13 @@ Locked 2026-11-25 (owner decision after the R22/R23 sweep found no Dolby layout 
 - **Opt-in and labelled:** off by default. Only a household admin can turn it on. Filtered items offered under it are clearly marked as test playback. It never weakens the full tier (R22/R23), which remains the bar for normal filtered playback.
 - **Scope:** Dolby (AC-3/E-AC-3) layouts first. AAC stays refused (marked sound was presented). FLAC stays refused pending the owner. Each player tuple (desktop mpv, Wholphin on the emulator, Wholphin on the onn. box over HDMI) needs its own test-tier measurement; desktop evidence does not carry over to the TV.
 
+---
+
+Locked 2026-11-26 (owner answer in the [TV sound floor dialog](t3-thread://v2/c9bd2e20-d8f9-45de-b0d4-30086d5bfb6d/bf5c8388-c0c3-41e4-a80a-0284ccce8171)):
+
+**R26 — On Google TV, the test tier's marked-sound gate is proven to a 10 ms floor.** Asked "On the TV, we can prove no marked sound played down to 10 ms (shorter than a syllable, about a click). The desktop proof is still sample-level. Is a 10 ms floor good enough for the TV test mode?", the owner chose "Yes, 10 ms is fine for test mode (Recommended) — TV runs count as a sound pass when nothing of 10 ms or more got through. Anything the test can't identify still blocks a pass. The desktop keeps the sample-level proof."
+
+- A TV take clears the R24 marked-sound gate only when the stereo witness accounts for both channels and detects no marked substitution at its tested 10 ms resolution (AC-3 and E-AC-3: 72/72 at 10 ms and at 20 ms; some 7.5 ms misses, so no finer claim).
+- Unknown windows, unexplained sound above recording resolution, a possible quiet echo, or a mark shorter than the floor make the take **unmeasured**, which does not pass.
+- Test tier only. The full tier (R22/R23) and the desktop sample-level detector are unchanged. This is not an audibility claim.
+
